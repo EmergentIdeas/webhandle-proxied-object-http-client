@@ -1,7 +1,3 @@
-function isFirstCharLowerCase(str) {
-	return !!((str[0] + '').match(/[a-z]/))
-}
-
 export class ServiceWrapperProxy {
 
 	constructor(options) {

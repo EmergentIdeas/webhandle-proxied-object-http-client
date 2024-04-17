@@ -11,7 +11,7 @@ export default class ServiceServer {
 	 * @param {boolean} [options.allowCrossDomainRequests] Set to true to allow cross domain requests 
 	 * @param {function} [options.isAuthorizedToService] Determine if the caller is allowed to interact in any way with the service. This is done
 	 * before the arguments are parsed
-	 * @param {function} [options.isAuthorizedToService] Determine if the the caller is allowed to make this call based on these arguments.
+	 * @param {function} [options.isAuthorizedToCall] Determine if the the caller is allowed to make this call based on these arguments.
 	 * @param {function} [options.addOperationCorsHeaders] Add CORS headers for the option call
 	 * @param {function} [options.addOptionCorsHeaders] Add CORS headers for the data calls 
 	 */

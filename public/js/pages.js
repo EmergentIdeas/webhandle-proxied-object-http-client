@@ -37049,10 +37049,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   ServiceWrapperProxy: () => (/* binding */ ServiceWrapperProxy),
 /* harmony export */   "default": () => (/* binding */ proxyService)
 /* harmony export */ });
-function isFirstCharLowerCase(str) {
-	return !!((str[0] + '').match(/[a-z]/))
-}
-
 class ServiceWrapperProxy {
 
 	constructor(options) {
