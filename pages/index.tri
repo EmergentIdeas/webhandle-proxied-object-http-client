@@ -1,0 +1,5 @@
+__::start__
+<div class="page page-landing">
+	<div id="mocha"></div>
+</div>
+__::end__
