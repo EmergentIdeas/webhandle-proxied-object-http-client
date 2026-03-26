@@ -37047,7 +37047,8 @@ module.exports = { nanoid, customAlphabet }
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ServiceWrapperProxy: () => (/* binding */ ServiceWrapperProxy),
-/* harmony export */   "default": () => (/* binding */ proxyService)
+/* harmony export */   "default": () => (/* binding */ proxyService),
+/* harmony export */   proxyService: () => (/* binding */ proxyService)
 /* harmony export */ });
 class ServiceWrapperProxy {
 
@@ -37197,6 +37198,8 @@ function proxyService(options = {}, baseObject = {}) {
 
 
 }
+
+
 
 /***/ }),
 

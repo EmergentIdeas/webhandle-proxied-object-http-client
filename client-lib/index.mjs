@@ -146,3 +146,5 @@ export default function proxyService(options = {}, baseObject = {}) {
 
 
 }
+
+export {proxyService}

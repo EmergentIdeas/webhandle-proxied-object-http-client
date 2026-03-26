@@ -19,7 +19,6 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
-		"webhandle-js-widget-setup": "^1.0.6",
 		"browserify": "^14.4.0",
 		"chai": "^4.3.4",
 		"exorcist": "^2.0.0",
@@ -37,9 +36,12 @@
 		"tripartite": "^1.1.1",
 		"uglify-js": "^3.17.4",
 		"webhandle": "^1.0.32",
+		"webhandle-js-widget-setup": "^1.0.6",
 		"webpack-cli": "^5.1.4"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@webhandle/initialize-webhandle-component": "^1.0.4"
+	},
 	"browserify": {
 		"transform": [
 			"tripartite/browserify-transform"
@@ -48,7 +50,8 @@
 	"files": [
 		"/client-lib",
 		"/server-lib",
-		"/README.md"
+		"/README.md",
+		"initialize-webhandle-component.mjs"
 	],
 	"type": "module"
 }

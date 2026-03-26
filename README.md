@@ -13,7 +13,35 @@ npm install @webhandle/proxied-object-http-client
 This package doesn't require Express, but the addToRouter method expects that you pass it an express
 router or something similar.
 
+## Intialization
+
+As a webhandle component
+
+### Server side
+
+```js
+import setupProxyObjects from "@webhandle/proxied-object-http-client/initialize-webhandle-component.mjs"
+let managerProxyObjects = await setupProxyObjects(webhandle)
+managerProxyObjects.addExternalResources(externalResourceManager)
+
+```
+
+### Config
+```json
+{
+	"@webhandle/proxied-object-http-client": {
+		{
+			"publicFilesPrefix": "@webhandle/proxied-object-http-client/files"
+			, "alwaysProvideResources": false
+		}
+	}
+}
+
+```
+
 ## Usage
+
+
 
 ### Server side
 
@@ -46,7 +74,7 @@ app.use('/service1', router)
 ### Client side
 
 ```js
-import proxyService from "@webhandle/proxied-object-http-client"
+import { proxyService } from "@webhandle/proxied-object-http-client"
 
 let service = proxyService({
 	urlPrefix: '/service1/'
