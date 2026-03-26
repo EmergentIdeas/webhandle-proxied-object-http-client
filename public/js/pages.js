@@ -37367,7 +37367,7 @@ function addTests() {
 
 			}
 			catch (e) {
-				console.log('caught in test. check that server is running.')
+				console.log('caught in test. check that server is running and that "servicetest" in the hosts file.')
 				throw (e)
 			}
 
@@ -37376,7 +37376,7 @@ function addTests() {
 				chai__WEBPACK_IMPORTED_MODULE_0__.assert.equal(data[0].firstName, 'Jim')
 			}
 			catch (e) {
-				console.log('caught in test. check that server is running.')
+				console.log('caught in test. check that server is running and that "servicetest" in the hosts file.')
 				throw (e)
 			}
 

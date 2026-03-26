@@ -110,7 +110,7 @@ export default function addTests() {
 
 			}
 			catch (e) {
-				console.log('caught in test. check that server is running.')
+				console.log('caught in test. check that server is running and that "servicetest" in the hosts file.')
 				throw (e)
 			}
 
@@ -119,7 +119,7 @@ export default function addTests() {
 				assert.equal(data[0].firstName, 'Jim')
 			}
 			catch (e) {
-				console.log('caught in test. check that server is running.')
+				console.log('caught in test. check that server is running and that "servicetest" in the hosts file.')
 				throw (e)
 			}
 
