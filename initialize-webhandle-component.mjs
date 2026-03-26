@@ -10,7 +10,7 @@ initializeWebhandleComponent.defaultConfig = {
 	"publicFilesPrefix": '/' + initializeWebhandleComponent.componentName + "/files"
 	, "alwaysProvideResources": false
 }
-initializeWebhandleComponent.staticFilePath = 'client-js'
+initializeWebhandleComponent.staticFilePath = 'client-lib'
 
 
 initializeWebhandleComponent.setup = async function(webhandle, config) {
@@ -25,11 +25,6 @@ initializeWebhandleComponent.setup = async function(webhandle, config) {
 	})
 	
 	manager.addExternalResources = (externalResourceManager, options) => {
-		externalResourceManager.includeResource({
-			mimeType: 'text/css'
-			, url: config.publicFilesPrefix + '/css/styles.css'
-		})
-
 		externalResourceManager.provideResource({
 			url: config.publicFilesPrefix + '/index.mjs'
 			, mimeType: 'application/javascript'
