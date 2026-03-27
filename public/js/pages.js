@@ -1,526 +1,10 @@
 /******/ var __webpack_modules__ = ({
 
-/***/ "./node_modules/assert/assert.js":
-/*!***************************************!*\
-  !*** ./node_modules/assert/assert.js ***!
-  \***************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var objectAssign = __webpack_require__(/*! object.assign/polyfill */ "./node_modules/object.assign/polyfill.js")();
-
-// compare and isBuffer taken from https://github.com/feross/buffer/blob/680e9e5e488f22aac27599a57dc844a6315928dd/index.js
-// original notice:
-
-/*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-function compare(a, b) {
-  if (a === b) {
-    return 0;
-  }
-
-  var x = a.length;
-  var y = b.length;
-
-  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
-    if (a[i] !== b[i]) {
-      x = a[i];
-      y = b[i];
-      break;
-    }
-  }
-
-  if (x < y) {
-    return -1;
-  }
-  if (y < x) {
-    return 1;
-  }
-  return 0;
-}
-function isBuffer(b) {
-  if (__webpack_require__.g.Buffer && typeof __webpack_require__.g.Buffer.isBuffer === 'function') {
-    return __webpack_require__.g.Buffer.isBuffer(b);
-  }
-  return !!(b != null && b._isBuffer);
-}
-
-// based on node assert, original notice:
-// NB: The URL to the CommonJS spec is kept just for tradition.
-//     node-assert has evolved a lot since then, both in API and behavior.
-
-// http://wiki.commonjs.org/wiki/Unit_Testing/1.0
-//
-// THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
-//
-// Originally from narwhal.js (http://narwhaljs.org)
-// Copyright (c) 2009 Thomas Robinson <280north.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the 'Software'), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var util = __webpack_require__(/*! util/ */ "./node_modules/util/util.js");
-var hasOwn = Object.prototype.hasOwnProperty;
-var pSlice = Array.prototype.slice;
-var functionsHaveNames = (function () {
-  return function foo() {}.name === 'foo';
-}());
-function pToString (obj) {
-  return Object.prototype.toString.call(obj);
-}
-function isView(arrbuf) {
-  if (isBuffer(arrbuf)) {
-    return false;
-  }
-  if (typeof __webpack_require__.g.ArrayBuffer !== 'function') {
-    return false;
-  }
-  if (typeof ArrayBuffer.isView === 'function') {
-    return ArrayBuffer.isView(arrbuf);
-  }
-  if (!arrbuf) {
-    return false;
-  }
-  if (arrbuf instanceof DataView) {
-    return true;
-  }
-  if (arrbuf.buffer && arrbuf.buffer instanceof ArrayBuffer) {
-    return true;
-  }
-  return false;
-}
-// 1. The assert module provides functions that throw
-// AssertionError's when particular conditions are not met. The
-// assert module must conform to the following interface.
-
-var assert = module.exports = ok;
-
-// 2. The AssertionError is defined in assert.
-// new assert.AssertionError({ message: message,
-//                             actual: actual,
-//                             expected: expected })
-
-var regex = /\s*function\s+([^\(\s]*)\s*/;
-// based on https://github.com/ljharb/function.prototype.name/blob/adeeeec8bfcc6068b187d7d9fb3d5bb1d3a30899/implementation.js
-function getName(func) {
-  if (!util.isFunction(func)) {
-    return;
-  }
-  if (functionsHaveNames) {
-    return func.name;
-  }
-  var str = func.toString();
-  var match = str.match(regex);
-  return match && match[1];
-}
-assert.AssertionError = function AssertionError(options) {
-  this.name = 'AssertionError';
-  this.actual = options.actual;
-  this.expected = options.expected;
-  this.operator = options.operator;
-  if (options.message) {
-    this.message = options.message;
-    this.generatedMessage = false;
-  } else {
-    this.message = getMessage(this);
-    this.generatedMessage = true;
-  }
-  var stackStartFunction = options.stackStartFunction || fail;
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(this, stackStartFunction);
-  } else {
-    // non v8 browsers so we can have a stacktrace
-    var err = new Error();
-    if (err.stack) {
-      var out = err.stack;
-
-      // try to strip useless frames
-      var fn_name = getName(stackStartFunction);
-      var idx = out.indexOf('\n' + fn_name);
-      if (idx >= 0) {
-        // once we have located the function frame
-        // we need to strip out everything before it (and its line)
-        var next_line = out.indexOf('\n', idx + 1);
-        out = out.substring(next_line + 1);
-      }
-
-      this.stack = out;
-    }
-  }
-};
-
-// assert.AssertionError instanceof Error
-util.inherits(assert.AssertionError, Error);
-
-function truncate(s, n) {
-  if (typeof s === 'string') {
-    return s.length < n ? s : s.slice(0, n);
-  } else {
-    return s;
-  }
-}
-function inspect(something) {
-  if (functionsHaveNames || !util.isFunction(something)) {
-    return util.inspect(something);
-  }
-  var rawname = getName(something);
-  var name = rawname ? ': ' + rawname : '';
-  return '[Function' +  name + ']';
-}
-function getMessage(self) {
-  return truncate(inspect(self.actual), 128) + ' ' +
-         self.operator + ' ' +
-         truncate(inspect(self.expected), 128);
-}
-
-// At present only the three keys mentioned above are used and
-// understood by the spec. Implementations or sub modules can pass
-// other keys to the AssertionError's constructor - they will be
-// ignored.
-
-// 3. All of the following functions must throw an AssertionError
-// when a corresponding condition is not met, with a message that
-// may be undefined if not provided.  All assertion methods provide
-// both the actual and expected values to the assertion error for
-// display purposes.
-
-function fail(actual, expected, message, operator, stackStartFunction) {
-  throw new assert.AssertionError({
-    message: message,
-    actual: actual,
-    expected: expected,
-    operator: operator,
-    stackStartFunction: stackStartFunction
-  });
-}
-
-// EXTENSION! allows for well behaved errors defined elsewhere.
-assert.fail = fail;
-
-// 4. Pure assertion tests whether a value is truthy, as determined
-// by !!guard.
-// assert.ok(guard, message_opt);
-// This statement is equivalent to assert.equal(true, !!guard,
-// message_opt);. To test strictly for the value true, use
-// assert.strictEqual(true, guard, message_opt);.
-
-function ok(value, message) {
-  if (!value) fail(value, true, message, '==', assert.ok);
-}
-assert.ok = ok;
-
-// 5. The equality assertion tests shallow, coercive equality with
-// ==.
-// assert.equal(actual, expected, message_opt);
-
-assert.equal = function equal(actual, expected, message) {
-  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
-};
-
-// 6. The non-equality assertion tests for whether two objects are not equal
-// with != assert.notEqual(actual, expected, message_opt);
-
-assert.notEqual = function notEqual(actual, expected, message) {
-  if (actual == expected) {
-    fail(actual, expected, message, '!=', assert.notEqual);
-  }
-};
-
-// 7. The equivalence assertion tests a deep equality relation.
-// assert.deepEqual(actual, expected, message_opt);
-
-assert.deepEqual = function deepEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected, false)) {
-    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
-  }
-};
-
-assert.deepStrictEqual = function deepStrictEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected, true)) {
-    fail(actual, expected, message, 'deepStrictEqual', assert.deepStrictEqual);
-  }
-};
-
-function _deepEqual(actual, expected, strict, memos) {
-  // 7.1. All identical values are equivalent, as determined by ===.
-  if (actual === expected) {
-    return true;
-  } else if (isBuffer(actual) && isBuffer(expected)) {
-    return compare(actual, expected) === 0;
-
-  // 7.2. If the expected value is a Date object, the actual value is
-  // equivalent if it is also a Date object that refers to the same time.
-  } else if (util.isDate(actual) && util.isDate(expected)) {
-    return actual.getTime() === expected.getTime();
-
-  // 7.3 If the expected value is a RegExp object, the actual value is
-  // equivalent if it is also a RegExp object with the same source and
-  // properties (`global`, `multiline`, `lastIndex`, `ignoreCase`).
-  } else if (util.isRegExp(actual) && util.isRegExp(expected)) {
-    return actual.source === expected.source &&
-           actual.global === expected.global &&
-           actual.multiline === expected.multiline &&
-           actual.lastIndex === expected.lastIndex &&
-           actual.ignoreCase === expected.ignoreCase;
-
-  // 7.4. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if ((actual === null || typeof actual !== 'object') &&
-             (expected === null || typeof expected !== 'object')) {
-    return strict ? actual === expected : actual == expected;
-
-  // If both values are instances of typed arrays, wrap their underlying
-  // ArrayBuffers in a Buffer each to increase performance
-  // This optimization requires the arrays to have the same type as checked by
-  // Object.prototype.toString (aka pToString). Never perform binary
-  // comparisons for Float*Arrays, though, since e.g. +0 === -0 but their
-  // bit patterns are not identical.
-  } else if (isView(actual) && isView(expected) &&
-             pToString(actual) === pToString(expected) &&
-             !(actual instanceof Float32Array ||
-               actual instanceof Float64Array)) {
-    return compare(new Uint8Array(actual.buffer),
-                   new Uint8Array(expected.buffer)) === 0;
-
-  // 7.5 For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
-  } else if (isBuffer(actual) !== isBuffer(expected)) {
-    return false;
-  } else {
-    memos = memos || {actual: [], expected: []};
-
-    var actualIndex = memos.actual.indexOf(actual);
-    if (actualIndex !== -1) {
-      if (actualIndex === memos.expected.indexOf(expected)) {
-        return true;
-      }
-    }
-
-    memos.actual.push(actual);
-    memos.expected.push(expected);
-
-    return objEquiv(actual, expected, strict, memos);
-  }
-}
-
-function isArguments(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
-}
-
-function objEquiv(a, b, strict, actualVisitedObjects) {
-  if (a === null || a === undefined || b === null || b === undefined)
-    return false;
-  // if one is a primitive, the other must be same
-  if (util.isPrimitive(a) || util.isPrimitive(b))
-    return a === b;
-  if (strict && Object.getPrototypeOf(a) !== Object.getPrototypeOf(b))
-    return false;
-  var aIsArgs = isArguments(a);
-  var bIsArgs = isArguments(b);
-  if ((aIsArgs && !bIsArgs) || (!aIsArgs && bIsArgs))
-    return false;
-  if (aIsArgs) {
-    a = pSlice.call(a);
-    b = pSlice.call(b);
-    return _deepEqual(a, b, strict);
-  }
-  var ka = objectKeys(a);
-  var kb = objectKeys(b);
-  var key, i;
-  // having the same number of owned properties (keys incorporates
-  // hasOwnProperty)
-  if (ka.length !== kb.length)
-    return false;
-  //the same set of keys (although not necessarily the same order),
-  ka.sort();
-  kb.sort();
-  //~~~cheap key test
-  for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] !== kb[i])
-      return false;
-  }
-  //equivalent values for every corresponding key, and
-  //~~~possibly expensive deep test
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!_deepEqual(a[key], b[key], strict, actualVisitedObjects))
-      return false;
-  }
-  return true;
-}
-
-// 8. The non-equivalence assertion tests for any deep inequality.
-// assert.notDeepEqual(actual, expected, message_opt);
-
-assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected, false)) {
-    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
-  }
-};
-
-assert.notDeepStrictEqual = notDeepStrictEqual;
-function notDeepStrictEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected, true)) {
-    fail(actual, expected, message, 'notDeepStrictEqual', notDeepStrictEqual);
-  }
-}
-
-
-// 9. The strict equality assertion tests strict equality, as determined by ===.
-// assert.strictEqual(actual, expected, message_opt);
-
-assert.strictEqual = function strictEqual(actual, expected, message) {
-  if (actual !== expected) {
-    fail(actual, expected, message, '===', assert.strictEqual);
-  }
-};
-
-// 10. The strict non-equality assertion tests for strict inequality, as
-// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
-
-assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
-  if (actual === expected) {
-    fail(actual, expected, message, '!==', assert.notStrictEqual);
-  }
-};
-
-function expectedException(actual, expected) {
-  if (!actual || !expected) {
-    return false;
-  }
-
-  if (Object.prototype.toString.call(expected) == '[object RegExp]') {
-    return expected.test(actual);
-  }
-
-  try {
-    if (actual instanceof expected) {
-      return true;
-    }
-  } catch (e) {
-    // Ignore.  The instanceof check doesn't work for arrow functions.
-  }
-
-  if (Error.isPrototypeOf(expected)) {
-    return false;
-  }
-
-  return expected.call({}, actual) === true;
-}
-
-function _tryBlock(block) {
-  var error;
-  try {
-    block();
-  } catch (e) {
-    error = e;
-  }
-  return error;
-}
-
-function _throws(shouldThrow, block, expected, message) {
-  var actual;
-
-  if (typeof block !== 'function') {
-    throw new TypeError('"block" argument must be a function');
-  }
-
-  if (typeof expected === 'string') {
-    message = expected;
-    expected = null;
-  }
-
-  actual = _tryBlock(block);
-
-  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
-            (message ? ' ' + message : '.');
-
-  if (shouldThrow && !actual) {
-    fail(actual, expected, 'Missing expected exception' + message);
-  }
-
-  var userProvidedMessage = typeof message === 'string';
-  var isUnwantedException = !shouldThrow && util.isError(actual);
-  var isUnexpectedException = !shouldThrow && actual && !expected;
-
-  if ((isUnwantedException &&
-      userProvidedMessage &&
-      expectedException(actual, expected)) ||
-      isUnexpectedException) {
-    fail(actual, expected, 'Got unwanted exception' + message);
-  }
-
-  if ((shouldThrow && actual && expected &&
-      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
-    throw actual;
-  }
-}
-
-// 11. Expected to throw an error:
-// assert.throws(block, Error_opt, message_opt);
-
-assert.throws = function(block, /*optional*/error, /*optional*/message) {
-  _throws(true, block, error, message);
-};
-
-// EXTENSION! This is annoying to write outside this module.
-assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
-  _throws(false, block, error, message);
-};
-
-assert.ifError = function(err) { if (err) throw err; };
-
-// Expose a strict only variant of assert
-function strict(value, message) {
-  if (!value) fail(value, true, message, '==', strict);
-}
-assert.strict = objectAssign(strict, assert, {
-  equal: assert.strictEqual,
-  deepEqual: assert.deepStrictEqual,
-  notEqual: assert.notStrictEqual,
-  notDeepEqual: assert.notDeepStrictEqual
-});
-assert.strict.strict = assert.strict;
-
-var objectKeys = Object.keys || function (obj) {
-  var keys = [];
-  for (var key in obj) {
-    if (hasOwn.call(obj, key)) keys.push(key);
-  }
-  return keys;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/assertion-error/index.js":
+/***/ "./node_modules/assertion-error/index.js"
 /*!***********************************************!*\
   !*** ./node_modules/assertion-error/index.js ***!
   \***********************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * assertion-error
@@ -640,13 +124,13 @@ AssertionError.prototype.toJSON = function (stack) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/base64-js/index.js":
+/***/ "./node_modules/base64-js/index.js"
 /*!*****************************************!*\
   !*** ./node_modules/base64-js/index.js ***!
   \*****************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 
 
@@ -800,17 +284,15 @@ function fromByteArray (uint8) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/browser-stdout/index.js":
+/***/ "./node_modules/browser-stdout/index.js"
 /*!**********************************************!*\
   !*** ./node_modules/browser-stdout/index.js ***!
   \**********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
-var WritableStream = (__webpack_require__(/*! stream */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/index.js").Writable)
+var WritableStream = (__webpack_require__(/*! stream */ "./node_modules/node-stdlib-browser/node_modules/stream-browserify/index.js").Writable)
 var inherits = (__webpack_require__(/*! util */ "./node_modules/util/util.js").inherits)
 
 module.exports = BrowserStdout
@@ -837,15 +319,14 @@ BrowserStdout.prototype._write = function(chunks, encoding, cb) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/buffer/index.js":
+/***/ "./node_modules/buffer/index.js"
 /*!**************************************!*\
   !*** ./node_modules/buffer/index.js ***!
   \**************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2665,94 +2146,24 @@ var hexSliceLookupTable = (function () {
 })()
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/call-bind/callBound.js":
-/*!*********************************************!*\
-  !*** ./node_modules/call-bind/callBound.js ***!
-  \*********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var GetIntrinsic = __webpack_require__(/*! get-intrinsic */ "./node_modules/get-intrinsic/index.js");
-
-var callBind = __webpack_require__(/*! ./ */ "./node_modules/call-bind/index.js");
-
-var $indexOf = callBind(GetIntrinsic('String.prototype.indexOf'));
-
-module.exports = function callBoundIntrinsic(name, allowMissing) {
-	var intrinsic = GetIntrinsic(name, !!allowMissing);
-	if (typeof intrinsic === 'function' && $indexOf(name, '.prototype.') > -1) {
-		return callBind(intrinsic);
-	}
-	return intrinsic;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/call-bind/index.js":
-/*!*****************************************!*\
-  !*** ./node_modules/call-bind/index.js ***!
-  \*****************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var bind = __webpack_require__(/*! function-bind */ "./node_modules/function-bind/index.js");
-var GetIntrinsic = __webpack_require__(/*! get-intrinsic */ "./node_modules/get-intrinsic/index.js");
-var setFunctionLength = __webpack_require__(/*! set-function-length */ "./node_modules/set-function-length/index.js");
-
-var $TypeError = __webpack_require__(/*! es-errors/type */ "./node_modules/es-errors/type.js");
-var $apply = GetIntrinsic('%Function.prototype.apply%');
-var $call = GetIntrinsic('%Function.prototype.call%');
-var $reflectApply = GetIntrinsic('%Reflect.apply%', true) || bind.call($call, $apply);
-
-var $defineProperty = __webpack_require__(/*! es-define-property */ "./node_modules/es-define-property/index.js");
-var $max = GetIntrinsic('%Math.max%');
-
-module.exports = function callBind(originalFunction) {
-	if (typeof originalFunction !== 'function') {
-		throw new $TypeError('a function is required');
-	}
-	var func = $reflectApply(bind, $call, arguments);
-	return setFunctionLength(
-		func,
-		1 + $max(0, originalFunction.length - (arguments.length - 1)),
-		true
-	);
-};
-
-var applyBind = function applyBind() {
-	return $reflectApply(bind, $apply, arguments);
-};
-
-if ($defineProperty) {
-	$defineProperty(module.exports, 'apply', { value: applyBind });
-} else {
-	module.exports.apply = applyBind;
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/chai/index.js":
+/***/ "./node_modules/chai/index.js"
 /*!************************************!*\
   !*** ./node_modules/chai/index.js ***!
   \************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 module.exports = __webpack_require__(/*! ./lib/chai */ "./node_modules/chai/lib/chai.js");
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai.js":
+/***/ "./node_modules/chai/lib/chai.js"
 /*!***************************************!*\
   !*** ./node_modules/chai/lib/chai.js ***!
   \***************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*!
  * chai
@@ -2848,15 +2259,14 @@ var assert = __webpack_require__(/*! ./chai/interface/assert */ "./node_modules/
 exports.use(assert);
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/assertion.js":
+/***/ "./node_modules/chai/lib/chai/assertion.js"
 /*!*************************************************!*\
   !*** ./node_modules/chai/lib/chai/assertion.js ***!
   \*************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 /*!
  * chai
  * http://chaijs.com
@@ -3037,13 +2447,13 @@ module.exports = function (_chai, util) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/config.js":
+/***/ "./node_modules/chai/lib/chai/config.js"
 /*!**********************************************!*\
   !*** ./node_modules/chai/lib/chai/config.js ***!
   \**********************************************/
-/***/ ((module) => {
+(module) {
 
 module.exports = {
 
@@ -3167,13 +2577,13 @@ module.exports = {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/core/assertions.js":
+/***/ "./node_modules/chai/lib/chai/core/assertions.js"
 /*!*******************************************************!*\
   !*** ./node_modules/chai/lib/chai/core/assertions.js ***!
   \*******************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * chai
@@ -7027,13 +6437,13 @@ module.exports = function (chai, _) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/interface/assert.js":
+/***/ "./node_modules/chai/lib/chai/interface/assert.js"
 /*!********************************************************!*\
   !*** ./node_modules/chai/lib/chai/interface/assert.js ***!
   \********************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * chai
@@ -10150,13 +9560,13 @@ module.exports = function (chai, util) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/interface/expect.js":
+/***/ "./node_modules/chai/lib/chai/interface/expect.js"
 /*!********************************************************!*\
   !*** ./node_modules/chai/lib/chai/interface/expect.js ***!
   \********************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * chai
@@ -10207,13 +9617,13 @@ module.exports = function (chai, util) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/interface/should.js":
+/***/ "./node_modules/chai/lib/chai/interface/should.js"
 /*!********************************************************!*\
   !*** ./node_modules/chai/lib/chai/interface/should.js ***!
   \********************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * chai
@@ -10436,13 +9846,13 @@ module.exports = function (chai, util) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/addChainableMethod.js":
+/***/ "./node_modules/chai/lib/chai/utils/addChainableMethod.js"
 /*!****************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/addChainableMethod.js ***!
   \****************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - addChainingMethod utility
@@ -10598,13 +10008,13 @@ module.exports = function addChainableMethod(ctx, name, method, chainingBehavior
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/addLengthGuard.js":
+/***/ "./node_modules/chai/lib/chai/utils/addLengthGuard.js"
 /*!************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/addLengthGuard.js ***!
   \************************************************************/
-/***/ ((module) => {
+(module) {
 
 var fnLengthDesc = Object.getOwnPropertyDescriptor(function () {}, 'length');
 
@@ -10668,13 +10078,13 @@ module.exports = function addLengthGuard (fn, assertionName, isChainable) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/addMethod.js":
+/***/ "./node_modules/chai/lib/chai/utils/addMethod.js"
 /*!*******************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/addMethod.js ***!
   \*******************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - addMethod utility
@@ -10746,13 +10156,13 @@ module.exports = function addMethod(ctx, name, method) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/addProperty.js":
+/***/ "./node_modules/chai/lib/chai/utils/addProperty.js"
 /*!*********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/addProperty.js ***!
   \*********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - addProperty utility
@@ -10828,13 +10238,13 @@ module.exports = function addProperty(ctx, name, getter) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/compareByInspect.js":
+/***/ "./node_modules/chai/lib/chai/utils/compareByInspect.js"
 /*!**************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/compareByInspect.js ***!
   \**************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - compareByInspect utility
@@ -10869,13 +10279,13 @@ module.exports = function compareByInspect(a, b) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/expectTypes.js":
+/***/ "./node_modules/chai/lib/chai/utils/expectTypes.js"
 /*!*********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/expectTypes.js ***!
   \*********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - expectTypes utility
@@ -10930,13 +10340,13 @@ module.exports = function expectTypes(obj, types) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/flag.js":
+/***/ "./node_modules/chai/lib/chai/utils/flag.js"
 /*!**************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/flag.js ***!
   \**************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - flag utility
@@ -10973,13 +10383,13 @@ module.exports = function flag(obj, key, value) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getActual.js":
+/***/ "./node_modules/chai/lib/chai/utils/getActual.js"
 /*!*******************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getActual.js ***!
   \*******************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - getActual utility
@@ -11003,13 +10413,13 @@ module.exports = function getActual(obj, args) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getMessage.js":
+/***/ "./node_modules/chai/lib/chai/utils/getMessage.js"
 /*!********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getMessage.js ***!
   \********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - message composition utility
@@ -11063,13 +10473,13 @@ module.exports = function getMessage(obj, args) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getOperator.js":
+/***/ "./node_modules/chai/lib/chai/utils/getOperator.js"
 /*!*********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getOperator.js ***!
   \*********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 var type = __webpack_require__(/*! type-detect */ "./node_modules/type-detect/type-detect.js");
 
@@ -11128,13 +10538,13 @@ module.exports = function getOperator(obj, args) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getOwnEnumerableProperties.js":
+/***/ "./node_modules/chai/lib/chai/utils/getOwnEnumerableProperties.js"
 /*!************************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getOwnEnumerableProperties.js ***!
   \************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - getOwnEnumerableProperties utility
@@ -11167,13 +10577,13 @@ module.exports = function getOwnEnumerableProperties(obj) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getOwnEnumerablePropertySymbols.js":
+/***/ "./node_modules/chai/lib/chai/utils/getOwnEnumerablePropertySymbols.js"
 /*!*****************************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getOwnEnumerablePropertySymbols.js ***!
   \*****************************************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - getOwnEnumerablePropertySymbols utility
@@ -11204,13 +10614,13 @@ module.exports = function getOwnEnumerablePropertySymbols(obj) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/getProperties.js":
+/***/ "./node_modules/chai/lib/chai/utils/getProperties.js"
 /*!***********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/getProperties.js ***!
   \***********************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - getProperties utility
@@ -11250,13 +10660,13 @@ module.exports = function getProperties(object) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/index.js":
+/***/ "./node_modules/chai/lib/chai/utils/index.js"
 /*!***************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/index.js ***!
   \***************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*!
  * chai
@@ -11437,13 +10847,13 @@ exports.isNaN = __webpack_require__(/*! ./isNaN */ "./node_modules/chai/lib/chai
 
 exports.getOperator = __webpack_require__(/*! ./getOperator */ "./node_modules/chai/lib/chai/utils/getOperator.js");
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/inspect.js":
+/***/ "./node_modules/chai/lib/chai/utils/inspect.js"
 /*!*****************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/inspect.js ***!
   \*****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 // This is (almost) directly from Node.js utils
 // https://github.com/joyent/node/blob/f8c335d0caf47f16d31413f89aa28eda3878e3aa/lib/util.js
@@ -11480,13 +10890,13 @@ function inspect(obj, showHidden, depth, colors) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/isNaN.js":
+/***/ "./node_modules/chai/lib/chai/utils/isNaN.js"
 /*!***************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/isNaN.js ***!
   \***************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - isNaN utility
@@ -11516,13 +10926,13 @@ function isNaN(value) {
 module.exports = Number.isNaN || isNaN;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/isProxyEnabled.js":
+/***/ "./node_modules/chai/lib/chai/utils/isProxyEnabled.js"
 /*!************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/isProxyEnabled.js ***!
   \************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 var config = __webpack_require__(/*! ../config */ "./node_modules/chai/lib/chai/config.js");
 
@@ -11550,13 +10960,13 @@ module.exports = function isProxyEnabled() {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/objDisplay.js":
+/***/ "./node_modules/chai/lib/chai/utils/objDisplay.js"
 /*!********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/objDisplay.js ***!
   \********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - flag utility
@@ -11611,13 +11021,13 @@ module.exports = function objDisplay(obj) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/overwriteChainableMethod.js":
+/***/ "./node_modules/chai/lib/chai/utils/overwriteChainableMethod.js"
 /*!**********************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/overwriteChainableMethod.js ***!
   \**********************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - overwriteChainableMethod utility
@@ -11690,13 +11100,13 @@ module.exports = function overwriteChainableMethod(ctx, name, method, chainingBe
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/overwriteMethod.js":
+/***/ "./node_modules/chai/lib/chai/utils/overwriteMethod.js"
 /*!*************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/overwriteMethod.js ***!
   \*************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - overwriteMethod utility
@@ -11792,13 +11202,13 @@ module.exports = function overwriteMethod(ctx, name, method) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/overwriteProperty.js":
+/***/ "./node_modules/chai/lib/chai/utils/overwriteProperty.js"
 /*!***************************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/overwriteProperty.js ***!
   \***************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - overwriteProperty utility
@@ -11894,13 +11304,13 @@ module.exports = function overwriteProperty(ctx, name, getter) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/proxify.js":
+/***/ "./node_modules/chai/lib/chai/utils/proxify.js"
 /*!*****************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/proxify.js ***!
   \*****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 var config = __webpack_require__(/*! ../config */ "./node_modules/chai/lib/chai/config.js");
 var flag = __webpack_require__(/*! ./flag */ "./node_modules/chai/lib/chai/utils/flag.js");
@@ -12051,13 +11461,13 @@ function stringDistanceCapped(strA, strB, cap) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/test.js":
+/***/ "./node_modules/chai/lib/chai/utils/test.js"
 /*!**************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/test.js ***!
   \**************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 /*!
  * Chai - test utility
@@ -12089,13 +11499,13 @@ module.exports = function test(obj, args) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/lib/chai/utils/transferFlags.js":
+/***/ "./node_modules/chai/lib/chai/utils/transferFlags.js"
 /*!***********************************************************!*\
   !*** ./node_modules/chai/lib/chai/utils/transferFlags.js ***!
   \***********************************************************/
-/***/ ((module) => {
+(module) {
 
 /*!
  * Chai - transferFlags utility
@@ -12144,13 +11554,13 @@ module.exports = function transferFlags(assertion, object, includeAll) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/check-error/index.js":
+/***/ "./node_modules/check-error/index.js"
 /*!*******************************************!*\
   !*** ./node_modules/check-error/index.js ***!
   \*******************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 
@@ -12302,110 +11712,13 @@ module.exports = {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/console-browserify/index.js":
-/*!**************************************************!*\
-  !*** ./node_modules/console-browserify/index.js ***!
-  \**************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/*global window, global*/
-var util = __webpack_require__(/*! util */ "./node_modules/util/util.js")
-var assert = __webpack_require__(/*! assert */ "./node_modules/assert/assert.js")
-function now() { return new Date().getTime() }
-
-var slice = Array.prototype.slice
-var console
-var times = {}
-
-if (typeof __webpack_require__.g !== "undefined" && __webpack_require__.g.console) {
-    console = __webpack_require__.g.console
-} else if (typeof window !== "undefined" && window.console) {
-    console = window.console
-} else {
-    console = {}
-}
-
-var functions = [
-    [log, "log"],
-    [info, "info"],
-    [warn, "warn"],
-    [error, "error"],
-    [time, "time"],
-    [timeEnd, "timeEnd"],
-    [trace, "trace"],
-    [dir, "dir"],
-    [consoleAssert, "assert"]
-]
-
-for (var i = 0; i < functions.length; i++) {
-    var tuple = functions[i]
-    var f = tuple[0]
-    var name = tuple[1]
-
-    if (!console[name]) {
-        console[name] = f
-    }
-}
-
-module.exports = console
-
-function log() {}
-
-function info() {
-    console.log.apply(console, arguments)
-}
-
-function warn() {
-    console.log.apply(console, arguments)
-}
-
-function error() {
-    console.warn.apply(console, arguments)
-}
-
-function time(label) {
-    times[label] = now()
-}
-
-function timeEnd(label) {
-    var time = times[label]
-    if (!time) {
-        throw new Error("No such label: " + label)
-    }
-
-    delete times[label]
-    var duration = now() - time
-    console.log(label + ": " + duration + "ms")
-}
-
-function trace() {
-    var err = new Error()
-    err.name = "Trace"
-    err.message = util.format.apply(null, arguments)
-    console.error(err.stack)
-}
-
-function dir(object) {
-    console.log(util.inspect(object) + "\n")
-}
-
-function consoleAssert(expression) {
-    if (!expression) {
-        var arr = slice.call(arguments, 1)
-        assert.ok(false, util.format.apply(null, arr))
-    }
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/deep-eql/index.js":
+/***/ "./node_modules/deep-eql/index.js"
 /*!****************************************!*\
   !*** ./node_modules/deep-eql/index.js ***!
   \****************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 /* globals Symbol: false, Uint8Array: false, WeakMap: false */
@@ -12902,79 +12215,13 @@ function mapSymbols(arr) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/define-data-property/index.js":
-/*!****************************************************!*\
-  !*** ./node_modules/define-data-property/index.js ***!
-  \****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var $defineProperty = __webpack_require__(/*! es-define-property */ "./node_modules/es-define-property/index.js");
-
-var $SyntaxError = __webpack_require__(/*! es-errors/syntax */ "./node_modules/es-errors/syntax.js");
-var $TypeError = __webpack_require__(/*! es-errors/type */ "./node_modules/es-errors/type.js");
-
-var gopd = __webpack_require__(/*! gopd */ "./node_modules/gopd/index.js");
-
-/** @type {import('.')} */
-module.exports = function defineDataProperty(
-	obj,
-	property,
-	value
-) {
-	if (!obj || (typeof obj !== 'object' && typeof obj !== 'function')) {
-		throw new $TypeError('`obj` must be an object or a function`');
-	}
-	if (typeof property !== 'string' && typeof property !== 'symbol') {
-		throw new $TypeError('`property` must be a string or a symbol`');
-	}
-	if (arguments.length > 3 && typeof arguments[3] !== 'boolean' && arguments[3] !== null) {
-		throw new $TypeError('`nonEnumerable`, if provided, must be a boolean or null');
-	}
-	if (arguments.length > 4 && typeof arguments[4] !== 'boolean' && arguments[4] !== null) {
-		throw new $TypeError('`nonWritable`, if provided, must be a boolean or null');
-	}
-	if (arguments.length > 5 && typeof arguments[5] !== 'boolean' && arguments[5] !== null) {
-		throw new $TypeError('`nonConfigurable`, if provided, must be a boolean or null');
-	}
-	if (arguments.length > 6 && typeof arguments[6] !== 'boolean') {
-		throw new $TypeError('`loose`, if provided, must be a boolean');
-	}
-
-	var nonEnumerable = arguments.length > 3 ? arguments[3] : null;
-	var nonWritable = arguments.length > 4 ? arguments[4] : null;
-	var nonConfigurable = arguments.length > 5 ? arguments[5] : null;
-	var loose = arguments.length > 6 ? arguments[6] : false;
-
-	/* @type {false | TypedPropertyDescriptor<unknown>} */
-	var desc = !!gopd && gopd(obj, property);
-
-	if ($defineProperty) {
-		$defineProperty(obj, property, {
-			configurable: nonConfigurable === null && desc ? desc.configurable : !nonConfigurable,
-			enumerable: nonEnumerable === null && desc ? desc.enumerable : !nonEnumerable,
-			value: value,
-			writable: nonWritable === null && desc ? desc.writable : !nonWritable
-		});
-	} else if (loose || (!nonEnumerable && !nonWritable && !nonConfigurable)) {
-		// must fall back to [[Set]], and was not explicitly asked to make non-enumerable, non-writable, or non-configurable
-		obj[property] = value; // eslint-disable-line no-param-reassign
-	} else {
-		throw new $SyntaxError('This environment does not support defining a property as non-configurable, non-writable, or non-enumerable.');
-	}
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/diff/lib/convert/dmp.js":
+/***/ "./node_modules/diff/lib/convert/dmp.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/convert/dmp.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -12983,17 +12230,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.convertChangesToDMP = convertChangesToDMP;
-
 /*istanbul ignore end*/
 // See: http://code.google.com/p/google-diff-match-patch/wiki/API
 function convertChangesToDMP(changes) {
   var ret = [],
-      change,
-      operation;
-
+    change,
+    operation;
   for (var i = 0; i < changes.length; i++) {
     change = changes[i];
-
     if (change.added) {
       operation = 1;
     } else if (change.removed) {
@@ -13001,22 +12245,20 @@ function convertChangesToDMP(changes) {
     } else {
       operation = 0;
     }
-
     ret.push([operation, change.value]);
   }
-
   return ret;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9jb252ZXJ0L2RtcC5qcyJdLCJuYW1lcyI6WyJjb252ZXJ0Q2hhbmdlc1RvRE1QIiwiY2hhbmdlcyIsInJldCIsImNoYW5nZSIsIm9wZXJhdGlvbiIsImkiLCJsZW5ndGgiLCJhZGRlZCIsInJlbW92ZWQiLCJwdXNoIiwidmFsdWUiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBO0FBQ08sU0FBU0EsbUJBQVQsQ0FBNkJDLE9BQTdCLEVBQXNDO0FBQzNDLE1BQUlDLEdBQUcsR0FBRyxFQUFWO0FBQUEsTUFDSUMsTUFESjtBQUFBLE1BRUlDLFNBRko7O0FBR0EsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSixPQUFPLENBQUNLLE1BQTVCLEVBQW9DRCxDQUFDLEVBQXJDLEVBQXlDO0FBQ3ZDRixJQUFBQSxNQUFNLEdBQUdGLE9BQU8sQ0FBQ0ksQ0FBRCxDQUFoQjs7QUFDQSxRQUFJRixNQUFNLENBQUNJLEtBQVgsRUFBa0I7QUFDaEJILE1BQUFBLFNBQVMsR0FBRyxDQUFaO0FBQ0QsS0FGRCxNQUVPLElBQUlELE1BQU0sQ0FBQ0ssT0FBWCxFQUFvQjtBQUN6QkosTUFBQUEsU0FBUyxHQUFHLENBQUMsQ0FBYjtBQUNELEtBRk0sTUFFQTtBQUNMQSxNQUFBQSxTQUFTLEdBQUcsQ0FBWjtBQUNEOztBQUVERixJQUFBQSxHQUFHLENBQUNPLElBQUosQ0FBUyxDQUFDTCxTQUFELEVBQVlELE1BQU0sQ0FBQ08sS0FBbkIsQ0FBVDtBQUNEOztBQUNELFNBQU9SLEdBQVA7QUFDRCIsInNvdXJjZXNDb250ZW50IjpbIi8vIFNlZTogaHR0cDovL2NvZGUuZ29vZ2xlLmNvbS9wL2dvb2dsZS1kaWZmLW1hdGNoLXBhdGNoL3dpa2kvQVBJXG5leHBvcnQgZnVuY3Rpb24gY29udmVydENoYW5nZXNUb0RNUChjaGFuZ2VzKSB7XG4gIGxldCByZXQgPSBbXSxcbiAgICAgIGNoYW5nZSxcbiAgICAgIG9wZXJhdGlvbjtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBjaGFuZ2VzLmxlbmd0aDsgaSsrKSB7XG4gICAgY2hhbmdlID0gY2hhbmdlc1tpXTtcbiAgICBpZiAoY2hhbmdlLmFkZGVkKSB7XG4gICAgICBvcGVyYXRpb24gPSAxO1xuICAgIH0gZWxzZSBpZiAoY2hhbmdlLnJlbW92ZWQpIHtcbiAgICAgIG9wZXJhdGlvbiA9IC0xO1xuICAgIH0gZWxzZSB7XG4gICAgICBvcGVyYXRpb24gPSAwO1xuICAgIH1cblxuICAgIHJldC5wdXNoKFtvcGVyYXRpb24sIGNoYW5nZS52YWx1ZV0pO1xuICB9XG4gIHJldHVybiByZXQ7XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb252ZXJ0Q2hhbmdlc1RvRE1QIiwiY2hhbmdlcyIsInJldCIsImNoYW5nZSIsIm9wZXJhdGlvbiIsImkiLCJsZW5ndGgiLCJhZGRlZCIsInJlbW92ZWQiLCJwdXNoIiwidmFsdWUiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvY29udmVydC9kbXAuanMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8gU2VlOiBodHRwOi8vY29kZS5nb29nbGUuY29tL3AvZ29vZ2xlLWRpZmYtbWF0Y2gtcGF0Y2gvd2lraS9BUElcbmV4cG9ydCBmdW5jdGlvbiBjb252ZXJ0Q2hhbmdlc1RvRE1QKGNoYW5nZXMpIHtcbiAgbGV0IHJldCA9IFtdLFxuICAgICAgY2hhbmdlLFxuICAgICAgb3BlcmF0aW9uO1xuICBmb3IgKGxldCBpID0gMDsgaSA8IGNoYW5nZXMubGVuZ3RoOyBpKyspIHtcbiAgICBjaGFuZ2UgPSBjaGFuZ2VzW2ldO1xuICAgIGlmIChjaGFuZ2UuYWRkZWQpIHtcbiAgICAgIG9wZXJhdGlvbiA9IDE7XG4gICAgfSBlbHNlIGlmIChjaGFuZ2UucmVtb3ZlZCkge1xuICAgICAgb3BlcmF0aW9uID0gLTE7XG4gICAgfSBlbHNlIHtcbiAgICAgIG9wZXJhdGlvbiA9IDA7XG4gICAgfVxuXG4gICAgcmV0LnB1c2goW29wZXJhdGlvbiwgY2hhbmdlLnZhbHVlXSk7XG4gIH1cbiAgcmV0dXJuIHJldDtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7QUFBQTtBQUNPLFNBQVNBLG1CQUFtQkEsQ0FBQ0MsT0FBTyxFQUFFO0VBQzNDLElBQUlDLEdBQUcsR0FBRyxFQUFFO0lBQ1JDLE1BQU07SUFDTkMsU0FBUztFQUNiLEtBQUssSUFBSUMsQ0FBQyxHQUFHLENBQUMsRUFBRUEsQ0FBQyxHQUFHSixPQUFPLENBQUNLLE1BQU0sRUFBRUQsQ0FBQyxFQUFFLEVBQUU7SUFDdkNGLE1BQU0sR0FBR0YsT0FBTyxDQUFDSSxDQUFDLENBQUM7SUFDbkIsSUFBSUYsTUFBTSxDQUFDSSxLQUFLLEVBQUU7TUFDaEJILFNBQVMsR0FBRyxDQUFDO0lBQ2YsQ0FBQyxNQUFNLElBQUlELE1BQU0sQ0FBQ0ssT0FBTyxFQUFFO01BQ3pCSixTQUFTLEdBQUcsQ0FBQyxDQUFDO0lBQ2hCLENBQUMsTUFBTTtNQUNMQSxTQUFTLEdBQUcsQ0FBQztJQUNmO0lBRUFGLEdBQUcsQ0FBQ08sSUFBSSxDQUFDLENBQUNMLFNBQVMsRUFBRUQsTUFBTSxDQUFDTyxLQUFLLENBQUMsQ0FBQztFQUNyQztFQUNBLE9BQU9SLEdBQUc7QUFDWiIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/convert/xml.js":
+/***/ "./node_modules/diff/lib/convert/xml.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/convert/xml.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -13025,32 +12267,25 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.convertChangesToXML = convertChangesToXML;
-
 /*istanbul ignore end*/
 function convertChangesToXML(changes) {
   var ret = [];
-
   for (var i = 0; i < changes.length; i++) {
     var change = changes[i];
-
     if (change.added) {
       ret.push('<ins>');
     } else if (change.removed) {
       ret.push('<del>');
     }
-
     ret.push(escapeHTML(change.value));
-
     if (change.added) {
       ret.push('</ins>');
     } else if (change.removed) {
       ret.push('</del>');
     }
   }
-
   return ret.join('');
 }
-
 function escapeHTML(s) {
   var n = s;
   n = n.replace(/&/g, '&amp;');
@@ -13059,16 +12294,16 @@ function escapeHTML(s) {
   n = n.replace(/"/g, '&quot;');
   return n;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9jb252ZXJ0L3htbC5qcyJdLCJuYW1lcyI6WyJjb252ZXJ0Q2hhbmdlc1RvWE1MIiwiY2hhbmdlcyIsInJldCIsImkiLCJsZW5ndGgiLCJjaGFuZ2UiLCJhZGRlZCIsInB1c2giLCJyZW1vdmVkIiwiZXNjYXBlSFRNTCIsInZhbHVlIiwiam9pbiIsInMiLCJuIiwicmVwbGFjZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQU8sU0FBU0EsbUJBQVQsQ0FBNkJDLE9BQTdCLEVBQXNDO0FBQzNDLE1BQUlDLEdBQUcsR0FBRyxFQUFWOztBQUNBLE9BQUssSUFBSUMsQ0FBQyxHQUFHLENBQWIsRUFBZ0JBLENBQUMsR0FBR0YsT0FBTyxDQUFDRyxNQUE1QixFQUFvQ0QsQ0FBQyxFQUFyQyxFQUF5QztBQUN2QyxRQUFJRSxNQUFNLEdBQUdKLE9BQU8sQ0FBQ0UsQ0FBRCxDQUFwQjs7QUFDQSxRQUFJRSxNQUFNLENBQUNDLEtBQVgsRUFBa0I7QUFDaEJKLE1BQUFBLEdBQUcsQ0FBQ0ssSUFBSixDQUFTLE9BQVQ7QUFDRCxLQUZELE1BRU8sSUFBSUYsTUFBTSxDQUFDRyxPQUFYLEVBQW9CO0FBQ3pCTixNQUFBQSxHQUFHLENBQUNLLElBQUosQ0FBUyxPQUFUO0FBQ0Q7O0FBRURMLElBQUFBLEdBQUcsQ0FBQ0ssSUFBSixDQUFTRSxVQUFVLENBQUNKLE1BQU0sQ0FBQ0ssS0FBUixDQUFuQjs7QUFFQSxRQUFJTCxNQUFNLENBQUNDLEtBQVgsRUFBa0I7QUFDaEJKLE1BQUFBLEdBQUcsQ0FBQ0ssSUFBSixDQUFTLFFBQVQ7QUFDRCxLQUZELE1BRU8sSUFBSUYsTUFBTSxDQUFDRyxPQUFYLEVBQW9CO0FBQ3pCTixNQUFBQSxHQUFHLENBQUNLLElBQUosQ0FBUyxRQUFUO0FBQ0Q7QUFDRjs7QUFDRCxTQUFPTCxHQUFHLENBQUNTLElBQUosQ0FBUyxFQUFULENBQVA7QUFDRDs7QUFFRCxTQUFTRixVQUFULENBQW9CRyxDQUFwQixFQUF1QjtBQUNyQixNQUFJQyxDQUFDLEdBQUdELENBQVI7QUFDQUMsRUFBQUEsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQUYsQ0FBVSxJQUFWLEVBQWdCLE9BQWhCLENBQUo7QUFDQUQsRUFBQUEsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQUYsQ0FBVSxJQUFWLEVBQWdCLE1BQWhCLENBQUo7QUFDQUQsRUFBQUEsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQUYsQ0FBVSxJQUFWLEVBQWdCLE1BQWhCLENBQUo7QUFDQUQsRUFBQUEsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQUYsQ0FBVSxJQUFWLEVBQWdCLFFBQWhCLENBQUo7QUFFQSxTQUFPRCxDQUFQO0FBQ0QiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gY29udmVydENoYW5nZXNUb1hNTChjaGFuZ2VzKSB7XG4gIGxldCByZXQgPSBbXTtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBjaGFuZ2VzLmxlbmd0aDsgaSsrKSB7XG4gICAgbGV0IGNoYW5nZSA9IGNoYW5nZXNbaV07XG4gICAgaWYgKGNoYW5nZS5hZGRlZCkge1xuICAgICAgcmV0LnB1c2goJzxpbnM+Jyk7XG4gICAgfSBlbHNlIGlmIChjaGFuZ2UucmVtb3ZlZCkge1xuICAgICAgcmV0LnB1c2goJzxkZWw+Jyk7XG4gICAgfVxuXG4gICAgcmV0LnB1c2goZXNjYXBlSFRNTChjaGFuZ2UudmFsdWUpKTtcblxuICAgIGlmIChjaGFuZ2UuYWRkZWQpIHtcbiAgICAgIHJldC5wdXNoKCc8L2lucz4nKTtcbiAgICB9IGVsc2UgaWYgKGNoYW5nZS5yZW1vdmVkKSB7XG4gICAgICByZXQucHVzaCgnPC9kZWw+Jyk7XG4gICAgfVxuICB9XG4gIHJldHVybiByZXQuam9pbignJyk7XG59XG5cbmZ1bmN0aW9uIGVzY2FwZUhUTUwocykge1xuICBsZXQgbiA9IHM7XG4gIG4gPSBuLnJlcGxhY2UoLyYvZywgJyZhbXA7Jyk7XG4gIG4gPSBuLnJlcGxhY2UoLzwvZywgJyZsdDsnKTtcbiAgbiA9IG4ucmVwbGFjZSgvPi9nLCAnJmd0OycpO1xuICBuID0gbi5yZXBsYWNlKC9cIi9nLCAnJnF1b3Q7Jyk7XG5cbiAgcmV0dXJuIG47XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb252ZXJ0Q2hhbmdlc1RvWE1MIiwiY2hhbmdlcyIsInJldCIsImkiLCJsZW5ndGgiLCJjaGFuZ2UiLCJhZGRlZCIsInB1c2giLCJyZW1vdmVkIiwiZXNjYXBlSFRNTCIsInZhbHVlIiwiam9pbiIsInMiLCJuIiwicmVwbGFjZSJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9jb252ZXJ0L3htbC5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gY29udmVydENoYW5nZXNUb1hNTChjaGFuZ2VzKSB7XG4gIGxldCByZXQgPSBbXTtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBjaGFuZ2VzLmxlbmd0aDsgaSsrKSB7XG4gICAgbGV0IGNoYW5nZSA9IGNoYW5nZXNbaV07XG4gICAgaWYgKGNoYW5nZS5hZGRlZCkge1xuICAgICAgcmV0LnB1c2goJzxpbnM+Jyk7XG4gICAgfSBlbHNlIGlmIChjaGFuZ2UucmVtb3ZlZCkge1xuICAgICAgcmV0LnB1c2goJzxkZWw+Jyk7XG4gICAgfVxuXG4gICAgcmV0LnB1c2goZXNjYXBlSFRNTChjaGFuZ2UudmFsdWUpKTtcblxuICAgIGlmIChjaGFuZ2UuYWRkZWQpIHtcbiAgICAgIHJldC5wdXNoKCc8L2lucz4nKTtcbiAgICB9IGVsc2UgaWYgKGNoYW5nZS5yZW1vdmVkKSB7XG4gICAgICByZXQucHVzaCgnPC9kZWw+Jyk7XG4gICAgfVxuICB9XG4gIHJldHVybiByZXQuam9pbignJyk7XG59XG5cbmZ1bmN0aW9uIGVzY2FwZUhUTUwocykge1xuICBsZXQgbiA9IHM7XG4gIG4gPSBuLnJlcGxhY2UoLyYvZywgJyZhbXA7Jyk7XG4gIG4gPSBuLnJlcGxhY2UoLzwvZywgJyZsdDsnKTtcbiAgbiA9IG4ucmVwbGFjZSgvPi9nLCAnJmd0OycpO1xuICBuID0gbi5yZXBsYWNlKC9cIi9nLCAnJnF1b3Q7Jyk7XG5cbiAgcmV0dXJuIG47XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQU8sU0FBU0EsbUJBQW1CQSxDQUFDQyxPQUFPLEVBQUU7RUFDM0MsSUFBSUMsR0FBRyxHQUFHLEVBQUU7RUFDWixLQUFLLElBQUlDLENBQUMsR0FBRyxDQUFDLEVBQUVBLENBQUMsR0FBR0YsT0FBTyxDQUFDRyxNQUFNLEVBQUVELENBQUMsRUFBRSxFQUFFO0lBQ3ZDLElBQUlFLE1BQU0sR0FBR0osT0FBTyxDQUFDRSxDQUFDLENBQUM7SUFDdkIsSUFBSUUsTUFBTSxDQUFDQyxLQUFLLEVBQUU7TUFDaEJKLEdBQUcsQ0FBQ0ssSUFBSSxDQUFDLE9BQU8sQ0FBQztJQUNuQixDQUFDLE1BQU0sSUFBSUYsTUFBTSxDQUFDRyxPQUFPLEVBQUU7TUFDekJOLEdBQUcsQ0FBQ0ssSUFBSSxDQUFDLE9BQU8sQ0FBQztJQUNuQjtJQUVBTCxHQUFHLENBQUNLLElBQUksQ0FBQ0UsVUFBVSxDQUFDSixNQUFNLENBQUNLLEtBQUssQ0FBQyxDQUFDO0lBRWxDLElBQUlMLE1BQU0sQ0FBQ0MsS0FBSyxFQUFFO01BQ2hCSixHQUFHLENBQUNLLElBQUksQ0FBQyxRQUFRLENBQUM7SUFDcEIsQ0FBQyxNQUFNLElBQUlGLE1BQU0sQ0FBQ0csT0FBTyxFQUFFO01BQ3pCTixHQUFHLENBQUNLLElBQUksQ0FBQyxRQUFRLENBQUM7SUFDcEI7RUFDRjtFQUNBLE9BQU9MLEdBQUcsQ0FBQ1MsSUFBSSxDQUFDLEVBQUUsQ0FBQztBQUNyQjtBQUVBLFNBQVNGLFVBQVVBLENBQUNHLENBQUMsRUFBRTtFQUNyQixJQUFJQyxDQUFDLEdBQUdELENBQUM7RUFDVEMsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQU8sQ0FBQyxJQUFJLEVBQUUsT0FBTyxDQUFDO0VBQzVCRCxDQUFDLEdBQUdBLENBQUMsQ0FBQ0MsT0FBTyxDQUFDLElBQUksRUFBRSxNQUFNLENBQUM7RUFDM0JELENBQUMsR0FBR0EsQ0FBQyxDQUFDQyxPQUFPLENBQUMsSUFBSSxFQUFFLE1BQU0sQ0FBQztFQUMzQkQsQ0FBQyxHQUFHQSxDQUFDLENBQUNDLE9BQU8sQ0FBQyxJQUFJLEVBQUUsUUFBUSxDQUFDO0VBRTdCLE9BQU9ELENBQUM7QUFDViIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/array.js":
+/***/ "./node_modules/diff/lib/diff/array.js"
 /*!*********************************************!*\
   !*** ./node_modules/diff/lib/diff/array.js ***!
   \*********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13076,20 +12311,21 @@ function escapeHTML(s) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.diffArrays = diffArrays;
 exports.arrayDiff = void 0;
-
+exports.diffArrays = diffArrays;
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-var arrayDiff = new
+var arrayDiff =
+/*istanbul ignore start*/
+exports.arrayDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13098,32 +12334,25 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.arrayDiff = arrayDiff;
-
-/*istanbul ignore end*/
 arrayDiff.tokenize = function (value) {
   return value.slice();
 };
-
 arrayDiff.join = arrayDiff.removeEmpty = function (value) {
   return value;
 };
-
 function diffArrays(oldArr, newArr, callback) {
   return arrayDiff.diff(oldArr, newArr, callback);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2FycmF5LmpzIl0sIm5hbWVzIjpbImFycmF5RGlmZiIsIkRpZmYiLCJ0b2tlbml6ZSIsInZhbHVlIiwic2xpY2UiLCJqb2luIiwicmVtb3ZlRW1wdHkiLCJkaWZmQXJyYXlzIiwib2xkQXJyIiwibmV3QXJyIiwiY2FsbGJhY2siLCJkaWZmIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7QUFFTyxJQUFNQSxTQUFTLEdBQUc7QUFBSUM7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSixFQUFsQjs7Ozs7O0FBQ1BELFNBQVMsQ0FBQ0UsUUFBVixHQUFxQixVQUFTQyxLQUFULEVBQWdCO0FBQ25DLFNBQU9BLEtBQUssQ0FBQ0MsS0FBTixFQUFQO0FBQ0QsQ0FGRDs7QUFHQUosU0FBUyxDQUFDSyxJQUFWLEdBQWlCTCxTQUFTLENBQUNNLFdBQVYsR0FBd0IsVUFBU0gsS0FBVCxFQUFnQjtBQUN2RCxTQUFPQSxLQUFQO0FBQ0QsQ0FGRDs7QUFJTyxTQUFTSSxVQUFULENBQW9CQyxNQUFwQixFQUE0QkMsTUFBNUIsRUFBb0NDLFFBQXBDLEVBQThDO0FBQUUsU0FBT1YsU0FBUyxDQUFDVyxJQUFWLENBQWVILE1BQWYsRUFBdUJDLE1BQXZCLEVBQStCQyxRQUEvQixDQUFQO0FBQWtEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcblxuZXhwb3J0IGNvbnN0IGFycmF5RGlmZiA9IG5ldyBEaWZmKCk7XG5hcnJheURpZmYudG9rZW5pemUgPSBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gdmFsdWUuc2xpY2UoKTtcbn07XG5hcnJheURpZmYuam9pbiA9IGFycmF5RGlmZi5yZW1vdmVFbXB0eSA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gIHJldHVybiB2YWx1ZTtcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmQXJyYXlzKG9sZEFyciwgbmV3QXJyLCBjYWxsYmFjaykgeyByZXR1cm4gYXJyYXlEaWZmLmRpZmYob2xkQXJyLCBuZXdBcnIsIGNhbGxiYWNrKTsgfVxuIl19
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwib2JqIiwiX19lc01vZHVsZSIsImFycmF5RGlmZiIsImV4cG9ydHMiLCJEaWZmIiwidG9rZW5pemUiLCJ2YWx1ZSIsInNsaWNlIiwiam9pbiIsInJlbW92ZUVtcHR5IiwiZGlmZkFycmF5cyIsIm9sZEFyciIsIm5ld0FyciIsImNhbGxiYWNrIiwiZGlmZiJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2FycmF5LmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5cbmV4cG9ydCBjb25zdCBhcnJheURpZmYgPSBuZXcgRGlmZigpO1xuYXJyYXlEaWZmLnRva2VuaXplID0gZnVuY3Rpb24odmFsdWUpIHtcbiAgcmV0dXJuIHZhbHVlLnNsaWNlKCk7XG59O1xuYXJyYXlEaWZmLmpvaW4gPSBhcnJheURpZmYucmVtb3ZlRW1wdHkgPSBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gdmFsdWU7XG59O1xuXG5leHBvcnQgZnVuY3Rpb24gZGlmZkFycmF5cyhvbGRBcnIsIG5ld0FyciwgY2FsbGJhY2spIHsgcmV0dXJuIGFycmF5RGlmZi5kaWZmKG9sZEFyciwgbmV3QXJyLCBjYWxsYmFjayk7IH1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBQSxLQUFBLEdBQUFDLHNCQUFBLENBQUFDLE9BQUE7QUFBQTtBQUFBO0FBQTBCLG1DQUFBRCx1QkFBQUUsR0FBQSxXQUFBQSxHQUFBLElBQUFBLEdBQUEsQ0FBQUMsVUFBQSxHQUFBRCxHQUFBLGdCQUFBQSxHQUFBO0FBQUE7QUFFbkIsSUFBTUUsU0FBUztBQUFBO0FBQUFDLE9BQUEsQ0FBQUQsU0FBQTtBQUFBO0FBQUc7QUFBSUU7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSSxDQUFDLENBQUM7QUFDbkNGLFNBQVMsQ0FBQ0csUUFBUSxHQUFHLFVBQVNDLEtBQUssRUFBRTtFQUNuQyxPQUFPQSxLQUFLLENBQUNDLEtBQUssQ0FBQyxDQUFDO0FBQ3RCLENBQUM7QUFDREwsU0FBUyxDQUFDTSxJQUFJLEdBQUdOLFNBQVMsQ0FBQ08sV0FBVyxHQUFHLFVBQVNILEtBQUssRUFBRTtFQUN2RCxPQUFPQSxLQUFLO0FBQ2QsQ0FBQztBQUVNLFNBQVNJLFVBQVVBLENBQUNDLE1BQU0sRUFBRUMsTUFBTSxFQUFFQyxRQUFRLEVBQUU7RUFBRSxPQUFPWCxTQUFTLENBQUNZLElBQUksQ0FBQ0gsTUFBTSxFQUFFQyxNQUFNLEVBQUVDLFFBQVEsQ0FBQztBQUFFIiwiaWdub3JlTGlzdCI6W119
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/base.js":
+/***/ "./node_modules/diff/lib/diff/base.js"
 /*!********************************************!*\
   !*** ./node_modules/diff/lib/diff/base.js ***!
   \********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -13132,252 +12361,278 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports["default"] = Diff;
-
 /*istanbul ignore end*/
 function Diff() {}
-
 Diff.prototype = {
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
   diff: function diff(oldString, newString) {
     /*istanbul ignore start*/
+    var _options$timeout;
     var
     /*istanbul ignore end*/
     options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var callback = options.callback;
-
     if (typeof options === 'function') {
       callback = options;
       options = {};
     }
-
-    this.options = options;
     var self = this;
-
     function done(value) {
+      value = self.postProcess(value, options);
       if (callback) {
         setTimeout(function () {
-          callback(undefined, value);
+          callback(value);
         }, 0);
         return true;
       } else {
         return value;
       }
-    } // Allow subclasses to massage the input prior to running
+    }
 
-
-    oldString = this.castInput(oldString);
-    newString = this.castInput(newString);
-    oldString = this.removeEmpty(this.tokenize(oldString));
-    newString = this.removeEmpty(this.tokenize(newString));
+    // Allow subclasses to massage the input prior to running
+    oldString = this.castInput(oldString, options);
+    newString = this.castInput(newString, options);
+    oldString = this.removeEmpty(this.tokenize(oldString, options));
+    newString = this.removeEmpty(this.tokenize(newString, options));
     var newLen = newString.length,
-        oldLen = oldString.length;
+      oldLen = oldString.length;
     var editLength = 1;
     var maxEditLength = newLen + oldLen;
+    if (options.maxEditLength != null) {
+      maxEditLength = Math.min(maxEditLength, options.maxEditLength);
+    }
+    var maxExecutionTime =
+    /*istanbul ignore start*/
+    (_options$timeout =
+    /*istanbul ignore end*/
+    options.timeout) !== null && _options$timeout !== void 0 ? _options$timeout : Infinity;
+    var abortAfterTimestamp = Date.now() + maxExecutionTime;
     var bestPath = [{
-      newPos: -1,
-      components: []
-    }]; // Seed editLength = 0, i.e. the content starts with the same values
+      oldPos: -1,
+      lastComponent: undefined
+    }];
 
-    var oldPos = this.extractCommon(bestPath[0], newString, oldString, 0);
-
-    if (bestPath[0].newPos + 1 >= newLen && oldPos + 1 >= oldLen) {
+    // Seed editLength = 0, i.e. the content starts with the same values
+    var newPos = this.extractCommon(bestPath[0], newString, oldString, 0, options);
+    if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
       // Identity per the equality and tokenizer
-      return done([{
-        value: this.join(newString),
-        count: newString.length
-      }]);
-    } // Main worker method. checks all permutations of a given edit length for acceptance.
+      return done(buildValues(self, bestPath[0].lastComponent, newString, oldString, self.useLongestToken));
+    }
 
+    // Once we hit the right edge of the edit graph on some diagonal k, we can
+    // definitely reach the end of the edit graph in no more than k edits, so
+    // there's no point in considering any moves to diagonal k+1 any more (from
+    // which we're guaranteed to need at least k+1 more edits).
+    // Similarly, once we've reached the bottom of the edit graph, there's no
+    // point considering moves to lower diagonals.
+    // We record this fact by setting minDiagonalToConsider and
+    // maxDiagonalToConsider to some finite value once we've hit the edge of
+    // the edit graph.
+    // This optimization is not faithful to the original algorithm presented in
+    // Myers's paper, which instead pointlessly extends D-paths off the end of
+    // the edit graph - see page 7 of Myers's paper which notes this point
+    // explicitly and illustrates it with a diagram. This has major performance
+    // implications for some common scenarios. For instance, to compute a diff
+    // where the new text simply appends d characters on the end of the
+    // original text of length n, the true Myers algorithm will take O(n+d^2)
+    // time while this optimization needs only O(n+d) time.
+    var minDiagonalToConsider = -Infinity,
+      maxDiagonalToConsider = Infinity;
 
+    // Main worker method. checks all permutations of a given edit length for acceptance.
     function execEditLength() {
-      for (var diagonalPath = -1 * editLength; diagonalPath <= editLength; diagonalPath += 2) {
+      for (var diagonalPath = Math.max(minDiagonalToConsider, -editLength); diagonalPath <= Math.min(maxDiagonalToConsider, editLength); diagonalPath += 2) {
         var basePath =
         /*istanbul ignore start*/
         void 0
         /*istanbul ignore end*/
         ;
-
-        var addPath = bestPath[diagonalPath - 1],
-            removePath = bestPath[diagonalPath + 1],
-            _oldPos = (removePath ? removePath.newPos : 0) - diagonalPath;
-
-        if (addPath) {
+        var removePath = bestPath[diagonalPath - 1],
+          addPath = bestPath[diagonalPath + 1];
+        if (removePath) {
           // No one else is going to attempt to use this value, clear it
           bestPath[diagonalPath - 1] = undefined;
         }
-
-        var canAdd = addPath && addPath.newPos + 1 < newLen,
-            canRemove = removePath && 0 <= _oldPos && _oldPos < oldLen;
-
+        var canAdd = false;
+        if (addPath) {
+          // what newPos will be after we do an insertion:
+          var addPathNewPos = addPath.oldPos - diagonalPath;
+          canAdd = addPath && 0 <= addPathNewPos && addPathNewPos < newLen;
+        }
+        var canRemove = removePath && removePath.oldPos + 1 < oldLen;
         if (!canAdd && !canRemove) {
           // If this path is a terminal then prune
           bestPath[diagonalPath] = undefined;
           continue;
-        } // Select the diagonal that we want to branch from. We select the prior
-        // path whose position in the new string is the farthest from the origin
-        // and does not pass the bounds of the diff graph
-
-
-        if (!canAdd || canRemove && addPath.newPos < removePath.newPos) {
-          basePath = clonePath(removePath);
-          self.pushComponent(basePath.components, undefined, true);
-        } else {
-          basePath = addPath; // No need to clone, we've pulled it from the list
-
-          basePath.newPos++;
-          self.pushComponent(basePath.components, true, undefined);
         }
 
-        _oldPos = self.extractCommon(basePath, newString, oldString, diagonalPath); // If we have hit the end of both strings, then we are done
-
-        if (basePath.newPos + 1 >= newLen && _oldPos + 1 >= oldLen) {
-          return done(buildValues(self, basePath.components, newString, oldString, self.useLongestToken));
+        // Select the diagonal that we want to branch from. We select the prior
+        // path whose position in the old string is the farthest from the origin
+        // and does not pass the bounds of the diff graph
+        if (!canRemove || canAdd && removePath.oldPos < addPath.oldPos) {
+          basePath = self.addToPath(addPath, true, false, 0, options);
         } else {
-          // Otherwise track this path as a potential candidate and continue.
+          basePath = self.addToPath(removePath, false, true, 1, options);
+        }
+        newPos = self.extractCommon(basePath, newString, oldString, diagonalPath, options);
+        if (basePath.oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
+          // If we have hit the end of both strings, then we are done
+          return done(buildValues(self, basePath.lastComponent, newString, oldString, self.useLongestToken));
+        } else {
           bestPath[diagonalPath] = basePath;
+          if (basePath.oldPos + 1 >= oldLen) {
+            maxDiagonalToConsider = Math.min(maxDiagonalToConsider, diagonalPath - 1);
+          }
+          if (newPos + 1 >= newLen) {
+            minDiagonalToConsider = Math.max(minDiagonalToConsider, diagonalPath + 1);
+          }
         }
       }
-
       editLength++;
-    } // Performs the length of edit iteration. Is a bit fugly as this has to support the
+    }
+
+    // Performs the length of edit iteration. Is a bit fugly as this has to support the
     // sync and async mode which is never fun. Loops over execEditLength until a value
-    // is produced.
-
-
+    // is produced, or until the edit length exceeds options.maxEditLength (if given),
+    // in which case it will return undefined.
     if (callback) {
       (function exec() {
         setTimeout(function () {
-          // This should not happen, but we want to be safe.
-
-          /* istanbul ignore next */
-          if (editLength > maxEditLength) {
+          if (editLength > maxEditLength || Date.now() > abortAfterTimestamp) {
             return callback();
           }
-
           if (!execEditLength()) {
             exec();
           }
         }, 0);
       })();
     } else {
-      while (editLength <= maxEditLength) {
+      while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
         var ret = execEditLength();
-
         if (ret) {
           return ret;
         }
       }
     }
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
-  pushComponent: function pushComponent(components, added, removed) {
-    var last = components[components.length - 1];
-
-    if (last && last.added === added && last.removed === removed) {
-      // We need to clone here as the component clone operation is just
-      // as shallow array clone
-      components[components.length - 1] = {
-        count: last.count + 1,
-        added: added,
-        removed: removed
+  addToPath: function addToPath(path, added, removed, oldPosInc, options) {
+    var last = path.lastComponent;
+    if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
+      return {
+        oldPos: path.oldPos + oldPosInc,
+        lastComponent: {
+          count: last.count + 1,
+          added: added,
+          removed: removed,
+          previousComponent: last.previousComponent
+        }
       };
     } else {
-      components.push({
-        count: 1,
-        added: added,
-        removed: removed
-      });
+      return {
+        oldPos: path.oldPos + oldPosInc,
+        lastComponent: {
+          count: 1,
+          added: added,
+          removed: removed,
+          previousComponent: last
+        }
+      };
     }
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
-  extractCommon: function extractCommon(basePath, newString, oldString, diagonalPath) {
+  extractCommon: function extractCommon(basePath, newString, oldString, diagonalPath, options) {
     var newLen = newString.length,
-        oldLen = oldString.length,
-        newPos = basePath.newPos,
-        oldPos = newPos - diagonalPath,
-        commonCount = 0;
-
-    while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(newString[newPos + 1], oldString[oldPos + 1])) {
+      oldLen = oldString.length,
+      oldPos = basePath.oldPos,
+      newPos = oldPos - diagonalPath,
+      commonCount = 0;
+    while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldString[oldPos + 1], newString[newPos + 1], options)) {
       newPos++;
       oldPos++;
       commonCount++;
+      if (options.oneChangePerToken) {
+        basePath.lastComponent = {
+          count: 1,
+          previousComponent: basePath.lastComponent,
+          added: false,
+          removed: false
+        };
+      }
     }
-
-    if (commonCount) {
-      basePath.components.push({
-        count: commonCount
-      });
+    if (commonCount && !options.oneChangePerToken) {
+      basePath.lastComponent = {
+        count: commonCount,
+        previousComponent: basePath.lastComponent,
+        added: false,
+        removed: false
+      };
     }
-
-    basePath.newPos = newPos;
-    return oldPos;
+    basePath.oldPos = oldPos;
+    return newPos;
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
-  equals: function equals(left, right) {
-    if (this.options.comparator) {
-      return this.options.comparator(left, right);
+  equals: function equals(left, right, options) {
+    if (options.comparator) {
+      return options.comparator(left, right);
     } else {
-      return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
+      return left === right || options.ignoreCase && left.toLowerCase() === right.toLowerCase();
     }
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
   removeEmpty: function removeEmpty(array) {
     var ret = [];
-
     for (var i = 0; i < array.length; i++) {
       if (array[i]) {
         ret.push(array[i]);
       }
     }
-
     return ret;
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
   castInput: function castInput(value) {
     return value;
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
   tokenize: function tokenize(value) {
-    return value.split('');
+    return Array.from(value);
   },
-
   /*istanbul ignore start*/
-
   /*istanbul ignore end*/
   join: function join(chars) {
     return chars.join('');
+  },
+  /*istanbul ignore start*/
+  /*istanbul ignore end*/
+  postProcess: function postProcess(changeObjects) {
+    return changeObjects;
   }
 };
-
-function buildValues(diff, components, newString, oldString, useLongestToken) {
+function buildValues(diff, lastComponent, newString, oldString, useLongestToken) {
+  // First we convert our linked list of components in reverse order to an
+  // array in the right order:
+  var components = [];
+  var nextComponent;
+  while (lastComponent) {
+    components.push(lastComponent);
+    nextComponent = lastComponent.previousComponent;
+    delete lastComponent.previousComponent;
+    lastComponent = nextComponent;
+  }
+  components.reverse();
   var componentPos = 0,
-      componentLen = components.length,
-      newPos = 0,
-      oldPos = 0;
-
+    componentLen = components.length,
+    newPos = 0,
+    oldPos = 0;
   for (; componentPos < componentLen; componentPos++) {
     var component = components[componentPos];
-
     if (!component.removed) {
       if (!component.added && useLongestToken) {
         var value = newString.slice(newPos, newPos + component.count);
@@ -13389,55 +12644,29 @@ function buildValues(diff, components, newString, oldString, useLongestToken) {
       } else {
         component.value = diff.join(newString.slice(newPos, newPos + component.count));
       }
+      newPos += component.count;
 
-      newPos += component.count; // Common case
-
+      // Common case
       if (!component.added) {
         oldPos += component.count;
       }
     } else {
       component.value = diff.join(oldString.slice(oldPos, oldPos + component.count));
-      oldPos += component.count; // Reverse add and remove so removes are output first to match common convention
-      // The diffing algorithm is tied to add then remove output and this is the simplest
-      // route to get the desired output with minimal overhead.
-
-      if (componentPos && components[componentPos - 1].added) {
-        var tmp = components[componentPos - 1];
-        components[componentPos - 1] = components[componentPos];
-        components[componentPos] = tmp;
-      }
+      oldPos += component.count;
     }
-  } // Special case handle for when one terminal is ignored (i.e. whitespace).
-  // For this case we merge the terminal into the prior string and drop the change.
-  // This is only available for string mode.
-
-
-  var lastComponent = components[componentLen - 1];
-
-  if (componentLen > 1 && typeof lastComponent.value === 'string' && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
-    components[componentLen - 2].value += lastComponent.value;
-    components.pop();
   }
-
   return components;
 }
-
-function clonePath(path) {
-  return {
-    newPos: path.newPos,
-    components: path.components.slice(0)
-  };
-}
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2Jhc2UuanMiXSwibmFtZXMiOlsiRGlmZiIsInByb3RvdHlwZSIsImRpZmYiLCJvbGRTdHJpbmciLCJuZXdTdHJpbmciLCJvcHRpb25zIiwiY2FsbGJhY2siLCJzZWxmIiwiZG9uZSIsInZhbHVlIiwic2V0VGltZW91dCIsInVuZGVmaW5lZCIsImNhc3RJbnB1dCIsInJlbW92ZUVtcHR5IiwidG9rZW5pemUiLCJuZXdMZW4iLCJsZW5ndGgiLCJvbGRMZW4iLCJlZGl0TGVuZ3RoIiwibWF4RWRpdExlbmd0aCIsImJlc3RQYXRoIiwibmV3UG9zIiwiY29tcG9uZW50cyIsIm9sZFBvcyIsImV4dHJhY3RDb21tb24iLCJqb2luIiwiY291bnQiLCJleGVjRWRpdExlbmd0aCIsImRpYWdvbmFsUGF0aCIsImJhc2VQYXRoIiwiYWRkUGF0aCIsInJlbW92ZVBhdGgiLCJjYW5BZGQiLCJjYW5SZW1vdmUiLCJjbG9uZVBhdGgiLCJwdXNoQ29tcG9uZW50IiwiYnVpbGRWYWx1ZXMiLCJ1c2VMb25nZXN0VG9rZW4iLCJleGVjIiwicmV0IiwiYWRkZWQiLCJyZW1vdmVkIiwibGFzdCIsInB1c2giLCJjb21tb25Db3VudCIsImVxdWFscyIsImxlZnQiLCJyaWdodCIsImNvbXBhcmF0b3IiLCJpZ25vcmVDYXNlIiwidG9Mb3dlckNhc2UiLCJhcnJheSIsImkiLCJzcGxpdCIsImNoYXJzIiwiY29tcG9uZW50UG9zIiwiY29tcG9uZW50TGVuIiwiY29tcG9uZW50Iiwic2xpY2UiLCJtYXAiLCJvbGRWYWx1ZSIsInRtcCIsImxhc3RDb21wb25lbnQiLCJwb3AiLCJwYXRoIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBZSxTQUFTQSxJQUFULEdBQWdCLENBQUU7O0FBRWpDQSxJQUFJLENBQUNDLFNBQUwsR0FBaUI7QUFBQTs7QUFBQTtBQUNmQyxFQUFBQSxJQURlLGdCQUNWQyxTQURVLEVBQ0NDLFNBREQsRUFDMEI7QUFBQTtBQUFBO0FBQUE7QUFBZEMsSUFBQUEsT0FBYyx1RUFBSixFQUFJO0FBQ3ZDLFFBQUlDLFFBQVEsR0FBR0QsT0FBTyxDQUFDQyxRQUF2Qjs7QUFDQSxRQUFJLE9BQU9ELE9BQVAsS0FBbUIsVUFBdkIsRUFBbUM7QUFDakNDLE1BQUFBLFFBQVEsR0FBR0QsT0FBWDtBQUNBQSxNQUFBQSxPQUFPLEdBQUcsRUFBVjtBQUNEOztBQUNELFNBQUtBLE9BQUwsR0FBZUEsT0FBZjtBQUVBLFFBQUlFLElBQUksR0FBRyxJQUFYOztBQUVBLGFBQVNDLElBQVQsQ0FBY0MsS0FBZCxFQUFxQjtBQUNuQixVQUFJSCxRQUFKLEVBQWM7QUFDWkksUUFBQUEsVUFBVSxDQUFDLFlBQVc7QUFBRUosVUFBQUEsUUFBUSxDQUFDSyxTQUFELEVBQVlGLEtBQVosQ0FBUjtBQUE2QixTQUEzQyxFQUE2QyxDQUE3QyxDQUFWO0FBQ0EsZUFBTyxJQUFQO0FBQ0QsT0FIRCxNQUdPO0FBQ0wsZUFBT0EsS0FBUDtBQUNEO0FBQ0YsS0FqQnNDLENBbUJ2Qzs7O0FBQ0FOLElBQUFBLFNBQVMsR0FBRyxLQUFLUyxTQUFMLENBQWVULFNBQWYsQ0FBWjtBQUNBQyxJQUFBQSxTQUFTLEdBQUcsS0FBS1EsU0FBTCxDQUFlUixTQUFmLENBQVo7QUFFQUQsSUFBQUEsU0FBUyxHQUFHLEtBQUtVLFdBQUwsQ0FBaUIsS0FBS0MsUUFBTCxDQUFjWCxTQUFkLENBQWpCLENBQVo7QUFDQUMsSUFBQUEsU0FBUyxHQUFHLEtBQUtTLFdBQUwsQ0FBaUIsS0FBS0MsUUFBTCxDQUFjVixTQUFkLENBQWpCLENBQVo7QUFFQSxRQUFJVyxNQUFNLEdBQUdYLFNBQVMsQ0FBQ1ksTUFBdkI7QUFBQSxRQUErQkMsTUFBTSxHQUFHZCxTQUFTLENBQUNhLE1BQWxEO0FBQ0EsUUFBSUUsVUFBVSxHQUFHLENBQWpCO0FBQ0EsUUFBSUMsYUFBYSxHQUFHSixNQUFNLEdBQUdFLE1BQTdCO0FBQ0EsUUFBSUcsUUFBUSxHQUFHLENBQUM7QUFBRUMsTUFBQUEsTUFBTSxFQUFFLENBQUMsQ0FBWDtBQUFjQyxNQUFBQSxVQUFVLEVBQUU7QUFBMUIsS0FBRCxDQUFmLENBN0J1QyxDQStCdkM7O0FBQ0EsUUFBSUMsTUFBTSxHQUFHLEtBQUtDLGFBQUwsQ0FBbUJKLFFBQVEsQ0FBQyxDQUFELENBQTNCLEVBQWdDaEIsU0FBaEMsRUFBMkNELFNBQTNDLEVBQXNELENBQXRELENBQWI7O0FBQ0EsUUFBSWlCLFFBQVEsQ0FBQyxDQUFELENBQVIsQ0FBWUMsTUFBWixHQUFxQixDQUFyQixJQUEwQk4sTUFBMUIsSUFBb0NRLE1BQU0sR0FBRyxDQUFULElBQWNOLE1BQXRELEVBQThEO0FBQzVEO0FBQ0EsYUFBT1QsSUFBSSxDQUFDLENBQUM7QUFBQ0MsUUFBQUEsS0FBSyxFQUFFLEtBQUtnQixJQUFMLENBQVVyQixTQUFWLENBQVI7QUFBOEJzQixRQUFBQSxLQUFLLEVBQUV0QixTQUFTLENBQUNZO0FBQS9DLE9BQUQsQ0FBRCxDQUFYO0FBQ0QsS0FwQ3NDLENBc0N2Qzs7O0FBQ0EsYUFBU1csY0FBVCxHQUEwQjtBQUN4QixXQUFLLElBQUlDLFlBQVksR0FBRyxDQUFDLENBQUQsR0FBS1YsVUFBN0IsRUFBeUNVLFlBQVksSUFBSVYsVUFBekQsRUFBcUVVLFlBQVksSUFBSSxDQUFyRixFQUF3RjtBQUN0RixZQUFJQyxRQUFRO0FBQUE7QUFBQTtBQUFaO0FBQUE7O0FBQ0EsWUFBSUMsT0FBTyxHQUFHVixRQUFRLENBQUNRLFlBQVksR0FBRyxDQUFoQixDQUF0QjtBQUFBLFlBQ0lHLFVBQVUsR0FBR1gsUUFBUSxDQUFDUSxZQUFZLEdBQUcsQ0FBaEIsQ0FEekI7QUFBQSxZQUVJTCxPQUFNLEdBQUcsQ0FBQ1EsVUFBVSxHQUFHQSxVQUFVLENBQUNWLE1BQWQsR0FBdUIsQ0FBbEMsSUFBdUNPLFlBRnBEOztBQUdBLFlBQUlFLE9BQUosRUFBYTtBQUNYO0FBQ0FWLFVBQUFBLFFBQVEsQ0FBQ1EsWUFBWSxHQUFHLENBQWhCLENBQVIsR0FBNkJqQixTQUE3QjtBQUNEOztBQUVELFlBQUlxQixNQUFNLEdBQUdGLE9BQU8sSUFBSUEsT0FBTyxDQUFDVCxNQUFSLEdBQWlCLENBQWpCLEdBQXFCTixNQUE3QztBQUFBLFlBQ0lrQixTQUFTLEdBQUdGLFVBQVUsSUFBSSxLQUFLUixPQUFuQixJQUE2QkEsT0FBTSxHQUFHTixNQUR0RDs7QUFFQSxZQUFJLENBQUNlLE1BQUQsSUFBVyxDQUFDQyxTQUFoQixFQUEyQjtBQUN6QjtBQUNBYixVQUFBQSxRQUFRLENBQUNRLFlBQUQsQ0FBUixHQUF5QmpCLFNBQXpCO0FBQ0E7QUFDRCxTQWhCcUYsQ0FrQnRGO0FBQ0E7QUFDQTs7O0FBQ0EsWUFBSSxDQUFDcUIsTUFBRCxJQUFZQyxTQUFTLElBQUlILE9BQU8sQ0FBQ1QsTUFBUixHQUFpQlUsVUFBVSxDQUFDVixNQUF6RCxFQUFrRTtBQUNoRVEsVUFBQUEsUUFBUSxHQUFHSyxTQUFTLENBQUNILFVBQUQsQ0FBcEI7QUFDQXhCLFVBQUFBLElBQUksQ0FBQzRCLGFBQUwsQ0FBbUJOLFFBQVEsQ0FBQ1AsVUFBNUIsRUFBd0NYLFNBQXhDLEVBQW1ELElBQW5EO0FBQ0QsU0FIRCxNQUdPO0FBQ0xrQixVQUFBQSxRQUFRLEdBQUdDLE9BQVgsQ0FESyxDQUNlOztBQUNwQkQsVUFBQUEsUUFBUSxDQUFDUixNQUFUO0FBQ0FkLFVBQUFBLElBQUksQ0FBQzRCLGFBQUwsQ0FBbUJOLFFBQVEsQ0FBQ1AsVUFBNUIsRUFBd0MsSUFBeEMsRUFBOENYLFNBQTlDO0FBQ0Q7O0FBRURZLFFBQUFBLE9BQU0sR0FBR2hCLElBQUksQ0FBQ2lCLGFBQUwsQ0FBbUJLLFFBQW5CLEVBQTZCekIsU0FBN0IsRUFBd0NELFNBQXhDLEVBQW1EeUIsWUFBbkQsQ0FBVCxDQTlCc0YsQ0FnQ3RGOztBQUNBLFlBQUlDLFFBQVEsQ0FBQ1IsTUFBVCxHQUFrQixDQUFsQixJQUF1Qk4sTUFBdkIsSUFBaUNRLE9BQU0sR0FBRyxDQUFULElBQWNOLE1BQW5ELEVBQTJEO0FBQ3pELGlCQUFPVCxJQUFJLENBQUM0QixXQUFXLENBQUM3QixJQUFELEVBQU9zQixRQUFRLENBQUNQLFVBQWhCLEVBQTRCbEIsU0FBNUIsRUFBdUNELFNBQXZDLEVBQWtESSxJQUFJLENBQUM4QixlQUF2RCxDQUFaLENBQVg7QUFDRCxTQUZELE1BRU87QUFDTDtBQUNBakIsVUFBQUEsUUFBUSxDQUFDUSxZQUFELENBQVIsR0FBeUJDLFFBQXpCO0FBQ0Q7QUFDRjs7QUFFRFgsTUFBQUEsVUFBVTtBQUNYLEtBbEZzQyxDQW9GdkM7QUFDQTtBQUNBOzs7QUFDQSxRQUFJWixRQUFKLEVBQWM7QUFDWCxnQkFBU2dDLElBQVQsR0FBZ0I7QUFDZjVCLFFBQUFBLFVBQVUsQ0FBQyxZQUFXO0FBQ3BCOztBQUNBO0FBQ0EsY0FBSVEsVUFBVSxHQUFHQyxhQUFqQixFQUFnQztBQUM5QixtQkFBT2IsUUFBUSxFQUFmO0FBQ0Q7O0FBRUQsY0FBSSxDQUFDcUIsY0FBYyxFQUFuQixFQUF1QjtBQUNyQlcsWUFBQUEsSUFBSTtBQUNMO0FBQ0YsU0FWUyxFQVVQLENBVk8sQ0FBVjtBQVdELE9BWkEsR0FBRDtBQWFELEtBZEQsTUFjTztBQUNMLGFBQU9wQixVQUFVLElBQUlDLGFBQXJCLEVBQW9DO0FBQ2xDLFlBQUlvQixHQUFHLEdBQUdaLGNBQWMsRUFBeEI7O0FBQ0EsWUFBSVksR0FBSixFQUFTO0FBQ1AsaUJBQU9BLEdBQVA7QUFDRDtBQUNGO0FBQ0Y7QUFDRixHQTlHYzs7QUFBQTs7QUFBQTtBQWdIZkosRUFBQUEsYUFoSGUseUJBZ0hEYixVQWhIQyxFQWdIV2tCLEtBaEhYLEVBZ0hrQkMsT0FoSGxCLEVBZ0gyQjtBQUN4QyxRQUFJQyxJQUFJLEdBQUdwQixVQUFVLENBQUNBLFVBQVUsQ0FBQ04sTUFBWCxHQUFvQixDQUFyQixDQUFyQjs7QUFDQSxRQUFJMEIsSUFBSSxJQUFJQSxJQUFJLENBQUNGLEtBQUwsS0FBZUEsS0FBdkIsSUFBZ0NFLElBQUksQ0FBQ0QsT0FBTCxLQUFpQkEsT0FBckQsRUFBOEQ7QUFDNUQ7QUFDQTtBQUNBbkIsTUFBQUEsVUFBVSxDQUFDQSxVQUFVLENBQUNOLE1BQVgsR0FBb0IsQ0FBckIsQ0FBVixHQUFvQztBQUFDVSxRQUFBQSxLQUFLLEVBQUVnQixJQUFJLENBQUNoQixLQUFMLEdBQWEsQ0FBckI7QUFBd0JjLFFBQUFBLEtBQUssRUFBRUEsS0FBL0I7QUFBc0NDLFFBQUFBLE9BQU8sRUFBRUE7QUFBL0MsT0FBcEM7QUFDRCxLQUpELE1BSU87QUFDTG5CLE1BQUFBLFVBQVUsQ0FBQ3FCLElBQVgsQ0FBZ0I7QUFBQ2pCLFFBQUFBLEtBQUssRUFBRSxDQUFSO0FBQVdjLFFBQUFBLEtBQUssRUFBRUEsS0FBbEI7QUFBeUJDLFFBQUFBLE9BQU8sRUFBRUE7QUFBbEMsT0FBaEI7QUFDRDtBQUNGLEdBekhjOztBQUFBOztBQUFBO0FBMEhmakIsRUFBQUEsYUExSGUseUJBMEhESyxRQTFIQyxFQTBIU3pCLFNBMUhULEVBMEhvQkQsU0ExSHBCLEVBMEgrQnlCLFlBMUgvQixFQTBINkM7QUFDMUQsUUFBSWIsTUFBTSxHQUFHWCxTQUFTLENBQUNZLE1BQXZCO0FBQUEsUUFDSUMsTUFBTSxHQUFHZCxTQUFTLENBQUNhLE1BRHZCO0FBQUEsUUFFSUssTUFBTSxHQUFHUSxRQUFRLENBQUNSLE1BRnRCO0FBQUEsUUFHSUUsTUFBTSxHQUFHRixNQUFNLEdBQUdPLFlBSHRCO0FBQUEsUUFLSWdCLFdBQVcsR0FBRyxDQUxsQjs7QUFNQSxXQUFPdkIsTUFBTSxHQUFHLENBQVQsR0FBYU4sTUFBYixJQUF1QlEsTUFBTSxHQUFHLENBQVQsR0FBYU4sTUFBcEMsSUFBOEMsS0FBSzRCLE1BQUwsQ0FBWXpDLFNBQVMsQ0FBQ2lCLE1BQU0sR0FBRyxDQUFWLENBQXJCLEVBQW1DbEIsU0FBUyxDQUFDb0IsTUFBTSxHQUFHLENBQVYsQ0FBNUMsQ0FBckQsRUFBZ0g7QUFDOUdGLE1BQUFBLE1BQU07QUFDTkUsTUFBQUEsTUFBTTtBQUNOcUIsTUFBQUEsV0FBVztBQUNaOztBQUVELFFBQUlBLFdBQUosRUFBaUI7QUFDZmYsTUFBQUEsUUFBUSxDQUFDUCxVQUFULENBQW9CcUIsSUFBcEIsQ0FBeUI7QUFBQ2pCLFFBQUFBLEtBQUssRUFBRWtCO0FBQVIsT0FBekI7QUFDRDs7QUFFRGYsSUFBQUEsUUFBUSxDQUFDUixNQUFULEdBQWtCQSxNQUFsQjtBQUNBLFdBQU9FLE1BQVA7QUFDRCxHQTdJYzs7QUFBQTs7QUFBQTtBQStJZnNCLEVBQUFBLE1BL0llLGtCQStJUkMsSUEvSVEsRUErSUZDLEtBL0lFLEVBK0lLO0FBQ2xCLFFBQUksS0FBSzFDLE9BQUwsQ0FBYTJDLFVBQWpCLEVBQTZCO0FBQzNCLGFBQU8sS0FBSzNDLE9BQUwsQ0FBYTJDLFVBQWIsQ0FBd0JGLElBQXhCLEVBQThCQyxLQUE5QixDQUFQO0FBQ0QsS0FGRCxNQUVPO0FBQ0wsYUFBT0QsSUFBSSxLQUFLQyxLQUFULElBQ0QsS0FBSzFDLE9BQUwsQ0FBYTRDLFVBQWIsSUFBMkJILElBQUksQ0FBQ0ksV0FBTCxPQUF1QkgsS0FBSyxDQUFDRyxXQUFOLEVBRHhEO0FBRUQ7QUFDRixHQXRKYzs7QUFBQTs7QUFBQTtBQXVKZnJDLEVBQUFBLFdBdkplLHVCQXVKSHNDLEtBdkpHLEVBdUpJO0FBQ2pCLFFBQUlaLEdBQUcsR0FBRyxFQUFWOztBQUNBLFNBQUssSUFBSWEsQ0FBQyxHQUFHLENBQWIsRUFBZ0JBLENBQUMsR0FBR0QsS0FBSyxDQUFDbkMsTUFBMUIsRUFBa0NvQyxDQUFDLEVBQW5DLEVBQXVDO0FBQ3JDLFVBQUlELEtBQUssQ0FBQ0MsQ0FBRCxDQUFULEVBQWM7QUFDWmIsUUFBQUEsR0FBRyxDQUFDSSxJQUFKLENBQVNRLEtBQUssQ0FBQ0MsQ0FBRCxDQUFkO0FBQ0Q7QUFDRjs7QUFDRCxXQUFPYixHQUFQO0FBQ0QsR0EvSmM7O0FBQUE7O0FBQUE7QUFnS2YzQixFQUFBQSxTQWhLZSxxQkFnS0xILEtBaEtLLEVBZ0tFO0FBQ2YsV0FBT0EsS0FBUDtBQUNELEdBbEtjOztBQUFBOztBQUFBO0FBbUtmSyxFQUFBQSxRQW5LZSxvQkFtS05MLEtBbktNLEVBbUtDO0FBQ2QsV0FBT0EsS0FBSyxDQUFDNEMsS0FBTixDQUFZLEVBQVosQ0FBUDtBQUNELEdBcktjOztBQUFBOztBQUFBO0FBc0tmNUIsRUFBQUEsSUF0S2UsZ0JBc0tWNkIsS0F0S1UsRUFzS0g7QUFDVixXQUFPQSxLQUFLLENBQUM3QixJQUFOLENBQVcsRUFBWCxDQUFQO0FBQ0Q7QUF4S2MsQ0FBakI7O0FBMktBLFNBQVNXLFdBQVQsQ0FBcUJsQyxJQUFyQixFQUEyQm9CLFVBQTNCLEVBQXVDbEIsU0FBdkMsRUFBa0RELFNBQWxELEVBQTZEa0MsZUFBN0QsRUFBOEU7QUFDNUUsTUFBSWtCLFlBQVksR0FBRyxDQUFuQjtBQUFBLE1BQ0lDLFlBQVksR0FBR2xDLFVBQVUsQ0FBQ04sTUFEOUI7QUFBQSxNQUVJSyxNQUFNLEdBQUcsQ0FGYjtBQUFBLE1BR0lFLE1BQU0sR0FBRyxDQUhiOztBQUtBLFNBQU9nQyxZQUFZLEdBQUdDLFlBQXRCLEVBQW9DRCxZQUFZLEVBQWhELEVBQW9EO0FBQ2xELFFBQUlFLFNBQVMsR0FBR25DLFVBQVUsQ0FBQ2lDLFlBQUQsQ0FBMUI7O0FBQ0EsUUFBSSxDQUFDRSxTQUFTLENBQUNoQixPQUFmLEVBQXdCO0FBQ3RCLFVBQUksQ0FBQ2dCLFNBQVMsQ0FBQ2pCLEtBQVgsSUFBb0JILGVBQXhCLEVBQXlDO0FBQ3ZDLFlBQUk1QixLQUFLLEdBQUdMLFNBQVMsQ0FBQ3NELEtBQVYsQ0FBZ0JyQyxNQUFoQixFQUF3QkEsTUFBTSxHQUFHb0MsU0FBUyxDQUFDL0IsS0FBM0MsQ0FBWjtBQUNBakIsUUFBQUEsS0FBSyxHQUFHQSxLQUFLLENBQUNrRCxHQUFOLENBQVUsVUFBU2xELEtBQVQsRUFBZ0IyQyxDQUFoQixFQUFtQjtBQUNuQyxjQUFJUSxRQUFRLEdBQUd6RCxTQUFTLENBQUNvQixNQUFNLEdBQUc2QixDQUFWLENBQXhCO0FBQ0EsaUJBQU9RLFFBQVEsQ0FBQzVDLE1BQVQsR0FBa0JQLEtBQUssQ0FBQ08sTUFBeEIsR0FBaUM0QyxRQUFqQyxHQUE0Q25ELEtBQW5EO0FBQ0QsU0FITyxDQUFSO0FBS0FnRCxRQUFBQSxTQUFTLENBQUNoRCxLQUFWLEdBQWtCUCxJQUFJLENBQUN1QixJQUFMLENBQVVoQixLQUFWLENBQWxCO0FBQ0QsT0FSRCxNQVFPO0FBQ0xnRCxRQUFBQSxTQUFTLENBQUNoRCxLQUFWLEdBQWtCUCxJQUFJLENBQUN1QixJQUFMLENBQVVyQixTQUFTLENBQUNzRCxLQUFWLENBQWdCckMsTUFBaEIsRUFBd0JBLE1BQU0sR0FBR29DLFNBQVMsQ0FBQy9CLEtBQTNDLENBQVYsQ0FBbEI7QUFDRDs7QUFDREwsTUFBQUEsTUFBTSxJQUFJb0MsU0FBUyxDQUFDL0IsS0FBcEIsQ0Fac0IsQ0FjdEI7O0FBQ0EsVUFBSSxDQUFDK0IsU0FBUyxDQUFDakIsS0FBZixFQUFzQjtBQUNwQmpCLFFBQUFBLE1BQU0sSUFBSWtDLFNBQVMsQ0FBQy9CLEtBQXBCO0FBQ0Q7QUFDRixLQWxCRCxNQWtCTztBQUNMK0IsTUFBQUEsU0FBUyxDQUFDaEQsS0FBVixHQUFrQlAsSUFBSSxDQUFDdUIsSUFBTCxDQUFVdEIsU0FBUyxDQUFDdUQsS0FBVixDQUFnQm5DLE1BQWhCLEVBQXdCQSxNQUFNLEdBQUdrQyxTQUFTLENBQUMvQixLQUEzQyxDQUFWLENBQWxCO0FBQ0FILE1BQUFBLE1BQU0sSUFBSWtDLFNBQVMsQ0FBQy9CLEtBQXBCLENBRkssQ0FJTDtBQUNBO0FBQ0E7O0FBQ0EsVUFBSTZCLFlBQVksSUFBSWpDLFVBQVUsQ0FBQ2lDLFlBQVksR0FBRyxDQUFoQixDQUFWLENBQTZCZixLQUFqRCxFQUF3RDtBQUN0RCxZQUFJcUIsR0FBRyxHQUFHdkMsVUFBVSxDQUFDaUMsWUFBWSxHQUFHLENBQWhCLENBQXBCO0FBQ0FqQyxRQUFBQSxVQUFVLENBQUNpQyxZQUFZLEdBQUcsQ0FBaEIsQ0FBVixHQUErQmpDLFVBQVUsQ0FBQ2lDLFlBQUQsQ0FBekM7QUFDQWpDLFFBQUFBLFVBQVUsQ0FBQ2lDLFlBQUQsQ0FBVixHQUEyQk0sR0FBM0I7QUFDRDtBQUNGO0FBQ0YsR0F2QzJFLENBeUM1RTtBQUNBO0FBQ0E7OztBQUNBLE1BQUlDLGFBQWEsR0FBR3hDLFVBQVUsQ0FBQ2tDLFlBQVksR0FBRyxDQUFoQixDQUE5Qjs7QUFDQSxNQUFJQSxZQUFZLEdBQUcsQ0FBZixJQUNHLE9BQU9NLGFBQWEsQ0FBQ3JELEtBQXJCLEtBQStCLFFBRGxDLEtBRUlxRCxhQUFhLENBQUN0QixLQUFkLElBQXVCc0IsYUFBYSxDQUFDckIsT0FGekMsS0FHR3ZDLElBQUksQ0FBQzJDLE1BQUwsQ0FBWSxFQUFaLEVBQWdCaUIsYUFBYSxDQUFDckQsS0FBOUIsQ0FIUCxFQUc2QztBQUMzQ2EsSUFBQUEsVUFBVSxDQUFDa0MsWUFBWSxHQUFHLENBQWhCLENBQVYsQ0FBNkIvQyxLQUE3QixJQUFzQ3FELGFBQWEsQ0FBQ3JELEtBQXBEO0FBQ0FhLElBQUFBLFVBQVUsQ0FBQ3lDLEdBQVg7QUFDRDs7QUFFRCxTQUFPekMsVUFBUDtBQUNEOztBQUVELFNBQVNZLFNBQVQsQ0FBbUI4QixJQUFuQixFQUF5QjtBQUN2QixTQUFPO0FBQUUzQyxJQUFBQSxNQUFNLEVBQUUyQyxJQUFJLENBQUMzQyxNQUFmO0FBQXVCQyxJQUFBQSxVQUFVLEVBQUUwQyxJQUFJLENBQUMxQyxVQUFMLENBQWdCb0MsS0FBaEIsQ0FBc0IsQ0FBdEI7QUFBbkMsR0FBUDtBQUNEIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gRGlmZigpIHt9XG5cbkRpZmYucHJvdG90eXBlID0ge1xuICBkaWZmKG9sZFN0cmluZywgbmV3U3RyaW5nLCBvcHRpb25zID0ge30pIHtcbiAgICBsZXQgY2FsbGJhY2sgPSBvcHRpb25zLmNhbGxiYWNrO1xuICAgIGlmICh0eXBlb2Ygb3B0aW9ucyA9PT0gJ2Z1bmN0aW9uJykge1xuICAgICAgY2FsbGJhY2sgPSBvcHRpb25zO1xuICAgICAgb3B0aW9ucyA9IHt9O1xuICAgIH1cbiAgICB0aGlzLm9wdGlvbnMgPSBvcHRpb25zO1xuXG4gICAgbGV0IHNlbGYgPSB0aGlzO1xuXG4gICAgZnVuY3Rpb24gZG9uZSh2YWx1ZSkge1xuICAgICAgaWYgKGNhbGxiYWNrKSB7XG4gICAgICAgIHNldFRpbWVvdXQoZnVuY3Rpb24oKSB7IGNhbGxiYWNrKHVuZGVmaW5lZCwgdmFsdWUpOyB9LCAwKTtcbiAgICAgICAgcmV0dXJuIHRydWU7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICByZXR1cm4gdmFsdWU7XG4gICAgICB9XG4gICAgfVxuXG4gICAgLy8gQWxsb3cgc3ViY2xhc3NlcyB0byBtYXNzYWdlIHRoZSBpbnB1dCBwcmlvciB0byBydW5uaW5nXG4gICAgb2xkU3RyaW5nID0gdGhpcy5jYXN0SW5wdXQob2xkU3RyaW5nKTtcbiAgICBuZXdTdHJpbmcgPSB0aGlzLmNhc3RJbnB1dChuZXdTdHJpbmcpO1xuXG4gICAgb2xkU3RyaW5nID0gdGhpcy5yZW1vdmVFbXB0eSh0aGlzLnRva2VuaXplKG9sZFN0cmluZykpO1xuICAgIG5ld1N0cmluZyA9IHRoaXMucmVtb3ZlRW1wdHkodGhpcy50b2tlbml6ZShuZXdTdHJpbmcpKTtcblxuICAgIGxldCBuZXdMZW4gPSBuZXdTdHJpbmcubGVuZ3RoLCBvbGRMZW4gPSBvbGRTdHJpbmcubGVuZ3RoO1xuICAgIGxldCBlZGl0TGVuZ3RoID0gMTtcbiAgICBsZXQgbWF4RWRpdExlbmd0aCA9IG5ld0xlbiArIG9sZExlbjtcbiAgICBsZXQgYmVzdFBhdGggPSBbeyBuZXdQb3M6IC0xLCBjb21wb25lbnRzOiBbXSB9XTtcblxuICAgIC8vIFNlZWQgZWRpdExlbmd0aCA9IDAsIGkuZS4gdGhlIGNvbnRlbnQgc3RhcnRzIHdpdGggdGhlIHNhbWUgdmFsdWVzXG4gICAgbGV0IG9sZFBvcyA9IHRoaXMuZXh0cmFjdENvbW1vbihiZXN0UGF0aFswXSwgbmV3U3RyaW5nLCBvbGRTdHJpbmcsIDApO1xuICAgIGlmIChiZXN0UGF0aFswXS5uZXdQb3MgKyAxID49IG5ld0xlbiAmJiBvbGRQb3MgKyAxID49IG9sZExlbikge1xuICAgICAgLy8gSWRlbnRpdHkgcGVyIHRoZSBlcXVhbGl0eSBhbmQgdG9rZW5pemVyXG4gICAgICByZXR1cm4gZG9uZShbe3ZhbHVlOiB0aGlzLmpvaW4obmV3U3RyaW5nKSwgY291bnQ6IG5ld1N0cmluZy5sZW5ndGh9XSk7XG4gICAgfVxuXG4gICAgLy8gTWFpbiB3b3JrZXIgbWV0aG9kLiBjaGVja3MgYWxsIHBlcm11dGF0aW9ucyBvZiBhIGdpdmVuIGVkaXQgbGVuZ3RoIGZvciBhY2NlcHRhbmNlLlxuICAgIGZ1bmN0aW9uIGV4ZWNFZGl0TGVuZ3RoKCkge1xuICAgICAgZm9yIChsZXQgZGlhZ29uYWxQYXRoID0gLTEgKiBlZGl0TGVuZ3RoOyBkaWFnb25hbFBhdGggPD0gZWRpdExlbmd0aDsgZGlhZ29uYWxQYXRoICs9IDIpIHtcbiAgICAgICAgbGV0IGJhc2VQYXRoO1xuICAgICAgICBsZXQgYWRkUGF0aCA9IGJlc3RQYXRoW2RpYWdvbmFsUGF0aCAtIDFdLFxuICAgICAgICAgICAgcmVtb3ZlUGF0aCA9IGJlc3RQYXRoW2RpYWdvbmFsUGF0aCArIDFdLFxuICAgICAgICAgICAgb2xkUG9zID0gKHJlbW92ZVBhdGggPyByZW1vdmVQYXRoLm5ld1BvcyA6IDApIC0gZGlhZ29uYWxQYXRoO1xuICAgICAgICBpZiAoYWRkUGF0aCkge1xuICAgICAgICAgIC8vIE5vIG9uZSBlbHNlIGlzIGdvaW5nIHRvIGF0dGVtcHQgdG8gdXNlIHRoaXMgdmFsdWUsIGNsZWFyIGl0XG4gICAgICAgICAgYmVzdFBhdGhbZGlhZ29uYWxQYXRoIC0gMV0gPSB1bmRlZmluZWQ7XG4gICAgICAgIH1cblxuICAgICAgICBsZXQgY2FuQWRkID0gYWRkUGF0aCAmJiBhZGRQYXRoLm5ld1BvcyArIDEgPCBuZXdMZW4sXG4gICAgICAgICAgICBjYW5SZW1vdmUgPSByZW1vdmVQYXRoICYmIDAgPD0gb2xkUG9zICYmIG9sZFBvcyA8IG9sZExlbjtcbiAgICAgICAgaWYgKCFjYW5BZGQgJiYgIWNhblJlbW92ZSkge1xuICAgICAgICAgIC8vIElmIHRoaXMgcGF0aCBpcyBhIHRlcm1pbmFsIHRoZW4gcHJ1bmVcbiAgICAgICAgICBiZXN0UGF0aFtkaWFnb25hbFBhdGhdID0gdW5kZWZpbmVkO1xuICAgICAgICAgIGNvbnRpbnVlO1xuICAgICAgICB9XG5cbiAgICAgICAgLy8gU2VsZWN0IHRoZSBkaWFnb25hbCB0aGF0IHdlIHdhbnQgdG8gYnJhbmNoIGZyb20uIFdlIHNlbGVjdCB0aGUgcHJpb3JcbiAgICAgICAgLy8gcGF0aCB3aG9zZSBwb3NpdGlvbiBpbiB0aGUgbmV3IHN0cmluZyBpcyB0aGUgZmFydGhlc3QgZnJvbSB0aGUgb3JpZ2luXG4gICAgICAgIC8vIGFuZCBkb2VzIG5vdCBwYXNzIHRoZSBib3VuZHMgb2YgdGhlIGRpZmYgZ3JhcGhcbiAgICAgICAgaWYgKCFjYW5BZGQgfHwgKGNhblJlbW92ZSAmJiBhZGRQYXRoLm5ld1BvcyA8IHJlbW92ZVBhdGgubmV3UG9zKSkge1xuICAgICAgICAgIGJhc2VQYXRoID0gY2xvbmVQYXRoKHJlbW92ZVBhdGgpO1xuICAgICAgICAgIHNlbGYucHVzaENvbXBvbmVudChiYXNlUGF0aC5jb21wb25lbnRzLCB1bmRlZmluZWQsIHRydWUpO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIGJhc2VQYXRoID0gYWRkUGF0aDsgLy8gTm8gbmVlZCB0byBjbG9uZSwgd2UndmUgcHVsbGVkIGl0IGZyb20gdGhlIGxpc3RcbiAgICAgICAgICBiYXNlUGF0aC5uZXdQb3MrKztcbiAgICAgICAgICBzZWxmLnB1c2hDb21wb25lbnQoYmFzZVBhdGguY29tcG9uZW50cywgdHJ1ZSwgdW5kZWZpbmVkKTtcbiAgICAgICAgfVxuXG4gICAgICAgIG9sZFBvcyA9IHNlbGYuZXh0cmFjdENvbW1vbihiYXNlUGF0aCwgbmV3U3RyaW5nLCBvbGRTdHJpbmcsIGRpYWdvbmFsUGF0aCk7XG5cbiAgICAgICAgLy8gSWYgd2UgaGF2ZSBoaXQgdGhlIGVuZCBvZiBib3RoIHN0cmluZ3MsIHRoZW4gd2UgYXJlIGRvbmVcbiAgICAgICAgaWYgKGJhc2VQYXRoLm5ld1BvcyArIDEgPj0gbmV3TGVuICYmIG9sZFBvcyArIDEgPj0gb2xkTGVuKSB7XG4gICAgICAgICAgcmV0dXJuIGRvbmUoYnVpbGRWYWx1ZXMoc2VsZiwgYmFzZVBhdGguY29tcG9uZW50cywgbmV3U3RyaW5nLCBvbGRTdHJpbmcsIHNlbGYudXNlTG9uZ2VzdFRva2VuKSk7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgLy8gT3RoZXJ3aXNlIHRyYWNrIHRoaXMgcGF0aCBhcyBhIHBvdGVudGlhbCBjYW5kaWRhdGUgYW5kIGNvbnRpbnVlLlxuICAgICAgICAgIGJlc3RQYXRoW2RpYWdvbmFsUGF0aF0gPSBiYXNlUGF0aDtcbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICBlZGl0TGVuZ3RoKys7XG4gICAgfVxuXG4gICAgLy8gUGVyZm9ybXMgdGhlIGxlbmd0aCBvZiBlZGl0IGl0ZXJhdGlvbi4gSXMgYSBiaXQgZnVnbHkgYXMgdGhpcyBoYXMgdG8gc3VwcG9ydCB0aGVcbiAgICAvLyBzeW5jIGFuZCBhc3luYyBtb2RlIHdoaWNoIGlzIG5ldmVyIGZ1bi4gTG9vcHMgb3ZlciBleGVjRWRpdExlbmd0aCB1bnRpbCBhIHZhbHVlXG4gICAgLy8gaXMgcHJvZHVjZWQuXG4gICAgaWYgKGNhbGxiYWNrKSB7XG4gICAgICAoZnVuY3Rpb24gZXhlYygpIHtcbiAgICAgICAgc2V0VGltZW91dChmdW5jdGlvbigpIHtcbiAgICAgICAgICAvLyBUaGlzIHNob3VsZCBub3QgaGFwcGVuLCBidXQgd2Ugd2FudCB0byBiZSBzYWZlLlxuICAgICAgICAgIC8qIGlzdGFuYnVsIGlnbm9yZSBuZXh0ICovXG4gICAgICAgICAgaWYgKGVkaXRMZW5ndGggPiBtYXhFZGl0TGVuZ3RoKSB7XG4gICAgICAgICAgICByZXR1cm4gY2FsbGJhY2soKTtcbiAgICAgICAgICB9XG5cbiAgICAgICAgICBpZiAoIWV4ZWNFZGl0TGVuZ3RoKCkpIHtcbiAgICAgICAgICAgIGV4ZWMoKTtcbiAgICAgICAgICB9XG4gICAgICAgIH0sIDApO1xuICAgICAgfSgpKTtcbiAgICB9IGVsc2Uge1xuICAgICAgd2hpbGUgKGVkaXRMZW5ndGggPD0gbWF4RWRpdExlbmd0aCkge1xuICAgICAgICBsZXQgcmV0ID0gZXhlY0VkaXRMZW5ndGgoKTtcbiAgICAgICAgaWYgKHJldCkge1xuICAgICAgICAgIHJldHVybiByZXQ7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICB9XG4gIH0sXG5cbiAgcHVzaENvbXBvbmVudChjb21wb25lbnRzLCBhZGRlZCwgcmVtb3ZlZCkge1xuICAgIGxldCBsYXN0ID0gY29tcG9uZW50c1tjb21wb25lbnRzLmxlbmd0aCAtIDFdO1xuICAgIGlmIChsYXN0ICYmIGxhc3QuYWRkZWQgPT09IGFkZGVkICYmIGxhc3QucmVtb3ZlZCA9PT0gcmVtb3ZlZCkge1xuICAgICAgLy8gV2UgbmVlZCB0byBjbG9uZSBoZXJlIGFzIHRoZSBjb21wb25lbnQgY2xvbmUgb3BlcmF0aW9uIGlzIGp1c3RcbiAgICAgIC8vIGFzIHNoYWxsb3cgYXJyYXkgY2xvbmVcbiAgICAgIGNvbXBvbmVudHNbY29tcG9uZW50cy5sZW5ndGggLSAxXSA9IHtjb3VudDogbGFzdC5jb3VudCArIDEsIGFkZGVkOiBhZGRlZCwgcmVtb3ZlZDogcmVtb3ZlZCB9O1xuICAgIH0gZWxzZSB7XG4gICAgICBjb21wb25lbnRzLnB1c2goe2NvdW50OiAxLCBhZGRlZDogYWRkZWQsIHJlbW92ZWQ6IHJlbW92ZWQgfSk7XG4gICAgfVxuICB9LFxuICBleHRyYWN0Q29tbW9uKGJhc2VQYXRoLCBuZXdTdHJpbmcsIG9sZFN0cmluZywgZGlhZ29uYWxQYXRoKSB7XG4gICAgbGV0IG5ld0xlbiA9IG5ld1N0cmluZy5sZW5ndGgsXG4gICAgICAgIG9sZExlbiA9IG9sZFN0cmluZy5sZW5ndGgsXG4gICAgICAgIG5ld1BvcyA9IGJhc2VQYXRoLm5ld1BvcyxcbiAgICAgICAgb2xkUG9zID0gbmV3UG9zIC0gZGlhZ29uYWxQYXRoLFxuXG4gICAgICAgIGNvbW1vbkNvdW50ID0gMDtcbiAgICB3aGlsZSAobmV3UG9zICsgMSA8IG5ld0xlbiAmJiBvbGRQb3MgKyAxIDwgb2xkTGVuICYmIHRoaXMuZXF1YWxzKG5ld1N0cmluZ1tuZXdQb3MgKyAxXSwgb2xkU3RyaW5nW29sZFBvcyArIDFdKSkge1xuICAgICAgbmV3UG9zKys7XG4gICAgICBvbGRQb3MrKztcbiAgICAgIGNvbW1vbkNvdW50Kys7XG4gICAgfVxuXG4gICAgaWYgKGNvbW1vbkNvdW50KSB7XG4gICAgICBiYXNlUGF0aC5jb21wb25lbnRzLnB1c2goe2NvdW50OiBjb21tb25Db3VudH0pO1xuICAgIH1cblxuICAgIGJhc2VQYXRoLm5ld1BvcyA9IG5ld1BvcztcbiAgICByZXR1cm4gb2xkUG9zO1xuICB9LFxuXG4gIGVxdWFscyhsZWZ0LCByaWdodCkge1xuICAgIGlmICh0aGlzLm9wdGlvbnMuY29tcGFyYXRvcikge1xuICAgICAgcmV0dXJuIHRoaXMub3B0aW9ucy5jb21wYXJhdG9yKGxlZnQsIHJpZ2h0KTtcbiAgICB9IGVsc2Uge1xuICAgICAgcmV0dXJuIGxlZnQgPT09IHJpZ2h0XG4gICAgICAgIHx8ICh0aGlzLm9wdGlvbnMuaWdub3JlQ2FzZSAmJiBsZWZ0LnRvTG93ZXJDYXNlKCkgPT09IHJpZ2h0LnRvTG93ZXJDYXNlKCkpO1xuICAgIH1cbiAgfSxcbiAgcmVtb3ZlRW1wdHkoYXJyYXkpIHtcbiAgICBsZXQgcmV0ID0gW107XG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCBhcnJheS5sZW5ndGg7IGkrKykge1xuICAgICAgaWYgKGFycmF5W2ldKSB7XG4gICAgICAgIHJldC5wdXNoKGFycmF5W2ldKTtcbiAgICAgIH1cbiAgICB9XG4gICAgcmV0dXJuIHJldDtcbiAgfSxcbiAgY2FzdElucHV0KHZhbHVlKSB7XG4gICAgcmV0dXJuIHZhbHVlO1xuICB9LFxuICB0b2tlbml6ZSh2YWx1ZSkge1xuICAgIHJldHVybiB2YWx1ZS5zcGxpdCgnJyk7XG4gIH0sXG4gIGpvaW4oY2hhcnMpIHtcbiAgICByZXR1cm4gY2hhcnMuam9pbignJyk7XG4gIH1cbn07XG5cbmZ1bmN0aW9uIGJ1aWxkVmFsdWVzKGRpZmYsIGNvbXBvbmVudHMsIG5ld1N0cmluZywgb2xkU3RyaW5nLCB1c2VMb25nZXN0VG9rZW4pIHtcbiAgbGV0IGNvbXBvbmVudFBvcyA9IDAsXG4gICAgICBjb21wb25lbnRMZW4gPSBjb21wb25lbnRzLmxlbmd0aCxcbiAgICAgIG5ld1BvcyA9IDAsXG4gICAgICBvbGRQb3MgPSAwO1xuXG4gIGZvciAoOyBjb21wb25lbnRQb3MgPCBjb21wb25lbnRMZW47IGNvbXBvbmVudFBvcysrKSB7XG4gICAgbGV0IGNvbXBvbmVudCA9IGNvbXBvbmVudHNbY29tcG9uZW50UG9zXTtcbiAgICBpZiAoIWNvbXBvbmVudC5yZW1vdmVkKSB7XG4gICAgICBpZiAoIWNvbXBvbmVudC5hZGRlZCAmJiB1c2VMb25nZXN0VG9rZW4pIHtcbiAgICAgICAgbGV0IHZhbHVlID0gbmV3U3RyaW5nLnNsaWNlKG5ld1BvcywgbmV3UG9zICsgY29tcG9uZW50LmNvdW50KTtcbiAgICAgICAgdmFsdWUgPSB2YWx1ZS5tYXAoZnVuY3Rpb24odmFsdWUsIGkpIHtcbiAgICAgICAgICBsZXQgb2xkVmFsdWUgPSBvbGRTdHJpbmdbb2xkUG9zICsgaV07XG4gICAgICAgICAgcmV0dXJuIG9sZFZhbHVlLmxlbmd0aCA+IHZhbHVlLmxlbmd0aCA/IG9sZFZhbHVlIDogdmFsdWU7XG4gICAgICAgIH0pO1xuXG4gICAgICAgIGNvbXBvbmVudC52YWx1ZSA9IGRpZmYuam9pbih2YWx1ZSk7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBjb21wb25lbnQudmFsdWUgPSBkaWZmLmpvaW4obmV3U3RyaW5nLnNsaWNlKG5ld1BvcywgbmV3UG9zICsgY29tcG9uZW50LmNvdW50KSk7XG4gICAgICB9XG4gICAgICBuZXdQb3MgKz0gY29tcG9uZW50LmNvdW50O1xuXG4gICAgICAvLyBDb21tb24gY2FzZVxuICAgICAgaWYgKCFjb21wb25lbnQuYWRkZWQpIHtcbiAgICAgICAgb2xkUG9zICs9IGNvbXBvbmVudC5jb3VudDtcbiAgICAgIH1cbiAgICB9IGVsc2Uge1xuICAgICAgY29tcG9uZW50LnZhbHVlID0gZGlmZi5qb2luKG9sZFN0cmluZy5zbGljZShvbGRQb3MsIG9sZFBvcyArIGNvbXBvbmVudC5jb3VudCkpO1xuICAgICAgb2xkUG9zICs9IGNvbXBvbmVudC5jb3VudDtcblxuICAgICAgLy8gUmV2ZXJzZSBhZGQgYW5kIHJlbW92ZSBzbyByZW1vdmVzIGFyZSBvdXRwdXQgZmlyc3QgdG8gbWF0Y2ggY29tbW9uIGNvbnZlbnRpb25cbiAgICAgIC8vIFRoZSBkaWZmaW5nIGFsZ29yaXRobSBpcyB0aWVkIHRvIGFkZCB0aGVuIHJlbW92ZSBvdXRwdXQgYW5kIHRoaXMgaXMgdGhlIHNpbXBsZXN0XG4gICAgICAvLyByb3V0ZSB0byBnZXQgdGhlIGRlc2lyZWQgb3V0cHV0IHdpdGggbWluaW1hbCBvdmVyaGVhZC5cbiAgICAgIGlmIChjb21wb25lbnRQb3MgJiYgY29tcG9uZW50c1tjb21wb25lbnRQb3MgLSAxXS5hZGRlZCkge1xuICAgICAgICBsZXQgdG1wID0gY29tcG9uZW50c1tjb21wb25lbnRQb3MgLSAxXTtcbiAgICAgICAgY29tcG9uZW50c1tjb21wb25lbnRQb3MgLSAxXSA9IGNvbXBvbmVudHNbY29tcG9uZW50UG9zXTtcbiAgICAgICAgY29tcG9uZW50c1tjb21wb25lbnRQb3NdID0gdG1wO1xuICAgICAgfVxuICAgIH1cbiAgfVxuXG4gIC8vIFNwZWNpYWwgY2FzZSBoYW5kbGUgZm9yIHdoZW4gb25lIHRlcm1pbmFsIGlzIGlnbm9yZWQgKGkuZS4gd2hpdGVzcGFjZSkuXG4gIC8vIEZvciB0aGlzIGNhc2Ugd2UgbWVyZ2UgdGhlIHRlcm1pbmFsIGludG8gdGhlIHByaW9yIHN0cmluZyBhbmQgZHJvcCB0aGUgY2hhbmdlLlxuICAvLyBUaGlzIGlzIG9ubHkgYXZhaWxhYmxlIGZvciBzdHJpbmcgbW9kZS5cbiAgbGV0IGxhc3RDb21wb25lbnQgPSBjb21wb25lbnRzW2NvbXBvbmVudExlbiAtIDFdO1xuICBpZiAoY29tcG9uZW50TGVuID4gMVxuICAgICAgJiYgdHlwZW9mIGxhc3RDb21wb25lbnQudmFsdWUgPT09ICdzdHJpbmcnXG4gICAgICAmJiAobGFzdENvbXBvbmVudC5hZGRlZCB8fCBsYXN0Q29tcG9uZW50LnJlbW92ZWQpXG4gICAgICAmJiBkaWZmLmVxdWFscygnJywgbGFzdENvbXBvbmVudC52YWx1ZSkpIHtcbiAgICBjb21wb25lbnRzW2NvbXBvbmVudExlbiAtIDJdLnZhbHVlICs9IGxhc3RDb21wb25lbnQudmFsdWU7XG4gICAgY29tcG9uZW50cy5wb3AoKTtcbiAgfVxuXG4gIHJldHVybiBjb21wb25lbnRzO1xufVxuXG5mdW5jdGlvbiBjbG9uZVBhdGgocGF0aCkge1xuICByZXR1cm4geyBuZXdQb3M6IHBhdGgubmV3UG9zLCBjb21wb25lbnRzOiBwYXRoLmNvbXBvbmVudHMuc2xpY2UoMCkgfTtcbn1cbiJdfQ==
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJEaWZmIiwicHJvdG90eXBlIiwiZGlmZiIsIm9sZFN0cmluZyIsIm5ld1N0cmluZyIsIl9vcHRpb25zJHRpbWVvdXQiLCJvcHRpb25zIiwiYXJndW1lbnRzIiwibGVuZ3RoIiwidW5kZWZpbmVkIiwiY2FsbGJhY2siLCJzZWxmIiwiZG9uZSIsInZhbHVlIiwicG9zdFByb2Nlc3MiLCJzZXRUaW1lb3V0IiwiY2FzdElucHV0IiwicmVtb3ZlRW1wdHkiLCJ0b2tlbml6ZSIsIm5ld0xlbiIsIm9sZExlbiIsImVkaXRMZW5ndGgiLCJtYXhFZGl0TGVuZ3RoIiwiTWF0aCIsIm1pbiIsIm1heEV4ZWN1dGlvblRpbWUiLCJ0aW1lb3V0IiwiSW5maW5pdHkiLCJhYm9ydEFmdGVyVGltZXN0YW1wIiwiRGF0ZSIsIm5vdyIsImJlc3RQYXRoIiwib2xkUG9zIiwibGFzdENvbXBvbmVudCIsIm5ld1BvcyIsImV4dHJhY3RDb21tb24iLCJidWlsZFZhbHVlcyIsInVzZUxvbmdlc3RUb2tlbiIsIm1pbkRpYWdvbmFsVG9Db25zaWRlciIsIm1heERpYWdvbmFsVG9Db25zaWRlciIsImV4ZWNFZGl0TGVuZ3RoIiwiZGlhZ29uYWxQYXRoIiwibWF4IiwiYmFzZVBhdGgiLCJyZW1vdmVQYXRoIiwiYWRkUGF0aCIsImNhbkFkZCIsImFkZFBhdGhOZXdQb3MiLCJjYW5SZW1vdmUiLCJhZGRUb1BhdGgiLCJleGVjIiwicmV0IiwicGF0aCIsImFkZGVkIiwicmVtb3ZlZCIsIm9sZFBvc0luYyIsImxhc3QiLCJvbmVDaGFuZ2VQZXJUb2tlbiIsImNvdW50IiwicHJldmlvdXNDb21wb25lbnQiLCJjb21tb25Db3VudCIsImVxdWFscyIsImxlZnQiLCJyaWdodCIsImNvbXBhcmF0b3IiLCJpZ25vcmVDYXNlIiwidG9Mb3dlckNhc2UiLCJhcnJheSIsImkiLCJwdXNoIiwiQXJyYXkiLCJmcm9tIiwiam9pbiIsImNoYXJzIiwiY2hhbmdlT2JqZWN0cyIsImNvbXBvbmVudHMiLCJuZXh0Q29tcG9uZW50IiwicmV2ZXJzZSIsImNvbXBvbmVudFBvcyIsImNvbXBvbmVudExlbiIsImNvbXBvbmVudCIsInNsaWNlIiwibWFwIiwib2xkVmFsdWUiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvZGlmZi9iYXNlLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIERpZmYoKSB7fVxuXG5EaWZmLnByb3RvdHlwZSA9IHtcbiAgZGlmZihvbGRTdHJpbmcsIG5ld1N0cmluZywgb3B0aW9ucyA9IHt9KSB7XG4gICAgbGV0IGNhbGxiYWNrID0gb3B0aW9ucy5jYWxsYmFjaztcbiAgICBpZiAodHlwZW9mIG9wdGlvbnMgPT09ICdmdW5jdGlvbicpIHtcbiAgICAgIGNhbGxiYWNrID0gb3B0aW9ucztcbiAgICAgIG9wdGlvbnMgPSB7fTtcbiAgICB9XG5cbiAgICBsZXQgc2VsZiA9IHRoaXM7XG5cbiAgICBmdW5jdGlvbiBkb25lKHZhbHVlKSB7XG4gICAgICB2YWx1ZSA9IHNlbGYucG9zdFByb2Nlc3ModmFsdWUsIG9wdGlvbnMpO1xuICAgICAgaWYgKGNhbGxiYWNrKSB7XG4gICAgICAgIHNldFRpbWVvdXQoZnVuY3Rpb24oKSB7IGNhbGxiYWNrKHZhbHVlKTsgfSwgMCk7XG4gICAgICAgIHJldHVybiB0cnVlO1xuICAgICAgfSBlbHNlIHtcbiAgICAgICAgcmV0dXJuIHZhbHVlO1xuICAgICAgfVxuICAgIH1cblxuICAgIC8vIEFsbG93IHN1YmNsYXNzZXMgdG8gbWFzc2FnZSB0aGUgaW5wdXQgcHJpb3IgdG8gcnVubmluZ1xuICAgIG9sZFN0cmluZyA9IHRoaXMuY2FzdElucHV0KG9sZFN0cmluZywgb3B0aW9ucyk7XG4gICAgbmV3U3RyaW5nID0gdGhpcy5jYXN0SW5wdXQobmV3U3RyaW5nLCBvcHRpb25zKTtcblxuICAgIG9sZFN0cmluZyA9IHRoaXMucmVtb3ZlRW1wdHkodGhpcy50b2tlbml6ZShvbGRTdHJpbmcsIG9wdGlvbnMpKTtcbiAgICBuZXdTdHJpbmcgPSB0aGlzLnJlbW92ZUVtcHR5KHRoaXMudG9rZW5pemUobmV3U3RyaW5nLCBvcHRpb25zKSk7XG5cbiAgICBsZXQgbmV3TGVuID0gbmV3U3RyaW5nLmxlbmd0aCwgb2xkTGVuID0gb2xkU3RyaW5nLmxlbmd0aDtcbiAgICBsZXQgZWRpdExlbmd0aCA9IDE7XG4gICAgbGV0IG1heEVkaXRMZW5ndGggPSBuZXdMZW4gKyBvbGRMZW47XG4gICAgaWYob3B0aW9ucy5tYXhFZGl0TGVuZ3RoICE9IG51bGwpIHtcbiAgICAgIG1heEVkaXRMZW5ndGggPSBNYXRoLm1pbihtYXhFZGl0TGVuZ3RoLCBvcHRpb25zLm1heEVkaXRMZW5ndGgpO1xuICAgIH1cbiAgICBjb25zdCBtYXhFeGVjdXRpb25UaW1lID0gb3B0aW9ucy50aW1lb3V0ID8/IEluZmluaXR5O1xuICAgIGNvbnN0IGFib3J0QWZ0ZXJUaW1lc3RhbXAgPSBEYXRlLm5vdygpICsgbWF4RXhlY3V0aW9uVGltZTtcblxuICAgIGxldCBiZXN0UGF0aCA9IFt7IG9sZFBvczogLTEsIGxhc3RDb21wb25lbnQ6IHVuZGVmaW5lZCB9XTtcblxuICAgIC8vIFNlZWQgZWRpdExlbmd0aCA9IDAsIGkuZS4gdGhlIGNvbnRlbnQgc3RhcnRzIHdpdGggdGhlIHNhbWUgdmFsdWVzXG4gICAgbGV0IG5ld1BvcyA9IHRoaXMuZXh0cmFjdENvbW1vbihiZXN0UGF0aFswXSwgbmV3U3RyaW5nLCBvbGRTdHJpbmcsIDAsIG9wdGlvbnMpO1xuICAgIGlmIChiZXN0UGF0aFswXS5vbGRQb3MgKyAxID49IG9sZExlbiAmJiBuZXdQb3MgKyAxID49IG5ld0xlbikge1xuICAgICAgLy8gSWRlbnRpdHkgcGVyIHRoZSBlcXVhbGl0eSBhbmQgdG9rZW5pemVyXG4gICAgICByZXR1cm4gZG9uZShidWlsZFZhbHVlcyhzZWxmLCBiZXN0UGF0aFswXS5sYXN0Q29tcG9uZW50LCBuZXdTdHJpbmcsIG9sZFN0cmluZywgc2VsZi51c2VMb25nZXN0VG9rZW4pKTtcbiAgICB9XG5cbiAgICAvLyBPbmNlIHdlIGhpdCB0aGUgcmlnaHQgZWRnZSBvZiB0aGUgZWRpdCBncmFwaCBvbiBzb21lIGRpYWdvbmFsIGssIHdlIGNhblxuICAgIC8vIGRlZmluaXRlbHkgcmVhY2ggdGhlIGVuZCBvZiB0aGUgZWRpdCBncmFwaCBpbiBubyBtb3JlIHRoYW4gayBlZGl0cywgc29cbiAgICAvLyB0aGVyZSdzIG5vIHBvaW50IGluIGNvbnNpZGVyaW5nIGFueSBtb3ZlcyB0byBkaWFnb25hbCBrKzEgYW55IG1vcmUgKGZyb21cbiAgICAvLyB3aGljaCB3ZSdyZSBndWFyYW50ZWVkIHRvIG5lZWQgYXQgbGVhc3QgaysxIG1vcmUgZWRpdHMpLlxuICAgIC8vIFNpbWlsYXJseSwgb25jZSB3ZSd2ZSByZWFjaGVkIHRoZSBib3R0b20gb2YgdGhlIGVkaXQgZ3JhcGgsIHRoZXJlJ3Mgbm9cbiAgICAvLyBwb2ludCBjb25zaWRlcmluZyBtb3ZlcyB0byBsb3dlciBkaWFnb25hbHMuXG4gICAgLy8gV2UgcmVjb3JkIHRoaXMgZmFjdCBieSBzZXR0aW5nIG1pbkRpYWdvbmFsVG9Db25zaWRlciBhbmRcbiAgICAvLyBtYXhEaWFnb25hbFRvQ29uc2lkZXIgdG8gc29tZSBmaW5pdGUgdmFsdWUgb25jZSB3ZSd2ZSBoaXQgdGhlIGVkZ2Ugb2ZcbiAgICAvLyB0aGUgZWRpdCBncmFwaC5cbiAgICAvLyBUaGlzIG9wdGltaXphdGlvbiBpcyBub3QgZmFpdGhmdWwgdG8gdGhlIG9yaWdpbmFsIGFsZ29yaXRobSBwcmVzZW50ZWQgaW5cbiAgICAvLyBNeWVycydzIHBhcGVyLCB3aGljaCBpbnN0ZWFkIHBvaW50bGVzc2x5IGV4dGVuZHMgRC1wYXRocyBvZmYgdGhlIGVuZCBvZlxuICAgIC8vIHRoZSBlZGl0IGdyYXBoIC0gc2VlIHBhZ2UgNyBvZiBNeWVycydzIHBhcGVyIHdoaWNoIG5vdGVzIHRoaXMgcG9pbnRcbiAgICAvLyBleHBsaWNpdGx5IGFuZCBpbGx1c3RyYXRlcyBpdCB3aXRoIGEgZGlhZ3JhbS4gVGhpcyBoYXMgbWFqb3IgcGVyZm9ybWFuY2VcbiAgICAvLyBpbXBsaWNhdGlvbnMgZm9yIHNvbWUgY29tbW9uIHNjZW5hcmlvcy4gRm9yIGluc3RhbmNlLCB0byBjb21wdXRlIGEgZGlmZlxuICAgIC8vIHdoZXJlIHRoZSBuZXcgdGV4dCBzaW1wbHkgYXBwZW5kcyBkIGNoYXJhY3RlcnMgb24gdGhlIGVuZCBvZiB0aGVcbiAgICAvLyBvcmlnaW5hbCB0ZXh0IG9mIGxlbmd0aCBuLCB0aGUgdHJ1ZSBNeWVycyBhbGdvcml0aG0gd2lsbCB0YWtlIE8obitkXjIpXG4gICAgLy8gdGltZSB3aGlsZSB0aGlzIG9wdGltaXphdGlvbiBuZWVkcyBvbmx5IE8obitkKSB0aW1lLlxuICAgIGxldCBtaW5EaWFnb25hbFRvQ29uc2lkZXIgPSAtSW5maW5pdHksIG1heERpYWdvbmFsVG9Db25zaWRlciA9IEluZmluaXR5O1xuXG4gICAgLy8gTWFpbiB3b3JrZXIgbWV0aG9kLiBjaGVja3MgYWxsIHBlcm11dGF0aW9ucyBvZiBhIGdpdmVuIGVkaXQgbGVuZ3RoIGZvciBhY2NlcHRhbmNlLlxuICAgIGZ1bmN0aW9uIGV4ZWNFZGl0TGVuZ3RoKCkge1xuICAgICAgZm9yIChcbiAgICAgICAgbGV0IGRpYWdvbmFsUGF0aCA9IE1hdGgubWF4KG1pbkRpYWdvbmFsVG9Db25zaWRlciwgLWVkaXRMZW5ndGgpO1xuICAgICAgICBkaWFnb25hbFBhdGggPD0gTWF0aC5taW4obWF4RGlhZ29uYWxUb0NvbnNpZGVyLCBlZGl0TGVuZ3RoKTtcbiAgICAgICAgZGlhZ29uYWxQYXRoICs9IDJcbiAgICAgICkge1xuICAgICAgICBsZXQgYmFzZVBhdGg7XG4gICAgICAgIGxldCByZW1vdmVQYXRoID0gYmVzdFBhdGhbZGlhZ29uYWxQYXRoIC0gMV0sXG4gICAgICAgICAgICBhZGRQYXRoID0gYmVzdFBhdGhbZGlhZ29uYWxQYXRoICsgMV07XG4gICAgICAgIGlmIChyZW1vdmVQYXRoKSB7XG4gICAgICAgICAgLy8gTm8gb25lIGVsc2UgaXMgZ29pbmcgdG8gYXR0ZW1wdCB0byB1c2UgdGhpcyB2YWx1ZSwgY2xlYXIgaXRcbiAgICAgICAgICBiZXN0UGF0aFtkaWFnb25hbFBhdGggLSAxXSA9IHVuZGVmaW5lZDtcbiAgICAgICAgfVxuXG4gICAgICAgIGxldCBjYW5BZGQgPSBmYWxzZTtcbiAgICAgICAgaWYgKGFkZFBhdGgpIHtcbiAgICAgICAgICAvLyB3aGF0IG5ld1BvcyB3aWxsIGJlIGFmdGVyIHdlIGRvIGFuIGluc2VydGlvbjpcbiAgICAgICAgICBjb25zdCBhZGRQYXRoTmV3UG9zID0gYWRkUGF0aC5vbGRQb3MgLSBkaWFnb25hbFBhdGg7XG4gICAgICAgICAgY2FuQWRkID0gYWRkUGF0aCAmJiAwIDw9IGFkZFBhdGhOZXdQb3MgJiYgYWRkUGF0aE5ld1BvcyA8IG5ld0xlbjtcbiAgICAgICAgfVxuXG4gICAgICAgIGxldCBjYW5SZW1vdmUgPSByZW1vdmVQYXRoICYmIHJlbW92ZVBhdGgub2xkUG9zICsgMSA8IG9sZExlbjtcbiAgICAgICAgaWYgKCFjYW5BZGQgJiYgIWNhblJlbW92ZSkge1xuICAgICAgICAgIC8vIElmIHRoaXMgcGF0aCBpcyBhIHRlcm1pbmFsIHRoZW4gcHJ1bmVcbiAgICAgICAgICBiZXN0UGF0aFtkaWFnb25hbFBhdGhdID0gdW5kZWZpbmVkO1xuICAgICAgICAgIGNvbnRpbnVlO1xuICAgICAgICB9XG5cbiAgICAgICAgLy8gU2VsZWN0IHRoZSBkaWFnb25hbCB0aGF0IHdlIHdhbnQgdG8gYnJhbmNoIGZyb20uIFdlIHNlbGVjdCB0aGUgcHJpb3JcbiAgICAgICAgLy8gcGF0aCB3aG9zZSBwb3NpdGlvbiBpbiB0aGUgb2xkIHN0cmluZyBpcyB0aGUgZmFydGhlc3QgZnJvbSB0aGUgb3JpZ2luXG4gICAgICAgIC8vIGFuZCBkb2VzIG5vdCBwYXNzIHRoZSBib3VuZHMgb2YgdGhlIGRpZmYgZ3JhcGhcbiAgICAgICAgaWYgKCFjYW5SZW1vdmUgfHwgKGNhbkFkZCAmJiByZW1vdmVQYXRoLm9sZFBvcyA8IGFkZFBhdGgub2xkUG9zKSkge1xuICAgICAgICAgIGJhc2VQYXRoID0gc2VsZi5hZGRUb1BhdGgoYWRkUGF0aCwgdHJ1ZSwgZmFsc2UsIDAsIG9wdGlvbnMpO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIGJhc2VQYXRoID0gc2VsZi5hZGRUb1BhdGgocmVtb3ZlUGF0aCwgZmFsc2UsIHRydWUsIDEsIG9wdGlvbnMpO1xuICAgICAgICB9XG5cbiAgICAgICAgbmV3UG9zID0gc2VsZi5leHRyYWN0Q29tbW9uKGJhc2VQYXRoLCBuZXdTdHJpbmcsIG9sZFN0cmluZywgZGlhZ29uYWxQYXRoLCBvcHRpb25zKTtcblxuICAgICAgICBpZiAoYmFzZVBhdGgub2xkUG9zICsgMSA+PSBvbGRMZW4gJiYgbmV3UG9zICsgMSA+PSBuZXdMZW4pIHtcbiAgICAgICAgICAvLyBJZiB3ZSBoYXZlIGhpdCB0aGUgZW5kIG9mIGJvdGggc3RyaW5ncywgdGhlbiB3ZSBhcmUgZG9uZVxuICAgICAgICAgIHJldHVybiBkb25lKGJ1aWxkVmFsdWVzKHNlbGYsIGJhc2VQYXRoLmxhc3RDb21wb25lbnQsIG5ld1N0cmluZywgb2xkU3RyaW5nLCBzZWxmLnVzZUxvbmdlc3RUb2tlbikpO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIGJlc3RQYXRoW2RpYWdvbmFsUGF0aF0gPSBiYXNlUGF0aDtcbiAgICAgICAgICBpZiAoYmFzZVBhdGgub2xkUG9zICsgMSA+PSBvbGRMZW4pIHtcbiAgICAgICAgICAgIG1heERpYWdvbmFsVG9Db25zaWRlciA9IE1hdGgubWluKG1heERpYWdvbmFsVG9Db25zaWRlciwgZGlhZ29uYWxQYXRoIC0gMSk7XG4gICAgICAgICAgfVxuICAgICAgICAgIGlmIChuZXdQb3MgKyAxID49IG5ld0xlbikge1xuICAgICAgICAgICAgbWluRGlhZ29uYWxUb0NvbnNpZGVyID0gTWF0aC5tYXgobWluRGlhZ29uYWxUb0NvbnNpZGVyLCBkaWFnb25hbFBhdGggKyAxKTtcbiAgICAgICAgICB9XG4gICAgICAgIH1cbiAgICAgIH1cblxuICAgICAgZWRpdExlbmd0aCsrO1xuICAgIH1cblxuICAgIC8vIFBlcmZvcm1zIHRoZSBsZW5ndGggb2YgZWRpdCBpdGVyYXRpb24uIElzIGEgYml0IGZ1Z2x5IGFzIHRoaXMgaGFzIHRvIHN1cHBvcnQgdGhlXG4gICAgLy8gc3luYyBhbmQgYXN5bmMgbW9kZSB3aGljaCBpcyBuZXZlciBmdW4uIExvb3BzIG92ZXIgZXhlY0VkaXRMZW5ndGggdW50aWwgYSB2YWx1ZVxuICAgIC8vIGlzIHByb2R1Y2VkLCBvciB1bnRpbCB0aGUgZWRpdCBsZW5ndGggZXhjZWVkcyBvcHRpb25zLm1heEVkaXRMZW5ndGggKGlmIGdpdmVuKSxcbiAgICAvLyBpbiB3aGljaCBjYXNlIGl0IHdpbGwgcmV0dXJuIHVuZGVmaW5lZC5cbiAgICBpZiAoY2FsbGJhY2spIHtcbiAgICAgIChmdW5jdGlvbiBleGVjKCkge1xuICAgICAgICBzZXRUaW1lb3V0KGZ1bmN0aW9uKCkge1xuICAgICAgICAgIGlmIChlZGl0TGVuZ3RoID4gbWF4RWRpdExlbmd0aCB8fCBEYXRlLm5vdygpID4gYWJvcnRBZnRlclRpbWVzdGFtcCkge1xuICAgICAgICAgICAgcmV0dXJuIGNhbGxiYWNrKCk7XG4gICAgICAgICAgfVxuXG4gICAgICAgICAgaWYgKCFleGVjRWRpdExlbmd0aCgpKSB7XG4gICAgICAgICAgICBleGVjKCk7XG4gICAgICAgICAgfVxuICAgICAgICB9LCAwKTtcbiAgICAgIH0oKSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHdoaWxlIChlZGl0TGVuZ3RoIDw9IG1heEVkaXRMZW5ndGggJiYgRGF0ZS5ub3coKSA8PSBhYm9ydEFmdGVyVGltZXN0YW1wKSB7XG4gICAgICAgIGxldCByZXQgPSBleGVjRWRpdExlbmd0aCgpO1xuICAgICAgICBpZiAocmV0KSB7XG4gICAgICAgICAgcmV0dXJuIHJldDtcbiAgICAgICAgfVxuICAgICAgfVxuICAgIH1cbiAgfSxcblxuICBhZGRUb1BhdGgocGF0aCwgYWRkZWQsIHJlbW92ZWQsIG9sZFBvc0luYywgb3B0aW9ucykge1xuICAgIGxldCBsYXN0ID0gcGF0aC5sYXN0Q29tcG9uZW50O1xuICAgIGlmIChsYXN0ICYmICFvcHRpb25zLm9uZUNoYW5nZVBlclRva2VuICYmIGxhc3QuYWRkZWQgPT09IGFkZGVkICYmIGxhc3QucmVtb3ZlZCA9PT0gcmVtb3ZlZCkge1xuICAgICAgcmV0dXJuIHtcbiAgICAgICAgb2xkUG9zOiBwYXRoLm9sZFBvcyArIG9sZFBvc0luYyxcbiAgICAgICAgbGFzdENvbXBvbmVudDoge2NvdW50OiBsYXN0LmNvdW50ICsgMSwgYWRkZWQ6IGFkZGVkLCByZW1vdmVkOiByZW1vdmVkLCBwcmV2aW91c0NvbXBvbmVudDogbGFzdC5wcmV2aW91c0NvbXBvbmVudCB9XG4gICAgICB9O1xuICAgIH0gZWxzZSB7XG4gICAgICByZXR1cm4ge1xuICAgICAgICBvbGRQb3M6IHBhdGgub2xkUG9zICsgb2xkUG9zSW5jLFxuICAgICAgICBsYXN0Q29tcG9uZW50OiB7Y291bnQ6IDEsIGFkZGVkOiBhZGRlZCwgcmVtb3ZlZDogcmVtb3ZlZCwgcHJldmlvdXNDb21wb25lbnQ6IGxhc3QgfVxuICAgICAgfTtcbiAgICB9XG4gIH0sXG4gIGV4dHJhY3RDb21tb24oYmFzZVBhdGgsIG5ld1N0cmluZywgb2xkU3RyaW5nLCBkaWFnb25hbFBhdGgsIG9wdGlvbnMpIHtcbiAgICBsZXQgbmV3TGVuID0gbmV3U3RyaW5nLmxlbmd0aCxcbiAgICAgICAgb2xkTGVuID0gb2xkU3RyaW5nLmxlbmd0aCxcbiAgICAgICAgb2xkUG9zID0gYmFzZVBhdGgub2xkUG9zLFxuICAgICAgICBuZXdQb3MgPSBvbGRQb3MgLSBkaWFnb25hbFBhdGgsXG5cbiAgICAgICAgY29tbW9uQ291bnQgPSAwO1xuICAgIHdoaWxlIChuZXdQb3MgKyAxIDwgbmV3TGVuICYmIG9sZFBvcyArIDEgPCBvbGRMZW4gJiYgdGhpcy5lcXVhbHMob2xkU3RyaW5nW29sZFBvcyArIDFdLCBuZXdTdHJpbmdbbmV3UG9zICsgMV0sIG9wdGlvbnMpKSB7XG4gICAgICBuZXdQb3MrKztcbiAgICAgIG9sZFBvcysrO1xuICAgICAgY29tbW9uQ291bnQrKztcbiAgICAgIGlmIChvcHRpb25zLm9uZUNoYW5nZVBlclRva2VuKSB7XG4gICAgICAgIGJhc2VQYXRoLmxhc3RDb21wb25lbnQgPSB7Y291bnQ6IDEsIHByZXZpb3VzQ29tcG9uZW50OiBiYXNlUGF0aC5sYXN0Q29tcG9uZW50LCBhZGRlZDogZmFsc2UsIHJlbW92ZWQ6IGZhbHNlfTtcbiAgICAgIH1cbiAgICB9XG5cbiAgICBpZiAoY29tbW9uQ291bnQgJiYgIW9wdGlvbnMub25lQ2hhbmdlUGVyVG9rZW4pIHtcbiAgICAgIGJhc2VQYXRoLmxhc3RDb21wb25lbnQgPSB7Y291bnQ6IGNvbW1vbkNvdW50LCBwcmV2aW91c0NvbXBvbmVudDogYmFzZVBhdGgubGFzdENvbXBvbmVudCwgYWRkZWQ6IGZhbHNlLCByZW1vdmVkOiBmYWxzZX07XG4gICAgfVxuXG4gICAgYmFzZVBhdGgub2xkUG9zID0gb2xkUG9zO1xuICAgIHJldHVybiBuZXdQb3M7XG4gIH0sXG5cbiAgZXF1YWxzKGxlZnQsIHJpZ2h0LCBvcHRpb25zKSB7XG4gICAgaWYgKG9wdGlvbnMuY29tcGFyYXRvcikge1xuICAgICAgcmV0dXJuIG9wdGlvbnMuY29tcGFyYXRvcihsZWZ0LCByaWdodCk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHJldHVybiBsZWZ0ID09PSByaWdodFxuICAgICAgICB8fCAob3B0aW9ucy5pZ25vcmVDYXNlICYmIGxlZnQudG9Mb3dlckNhc2UoKSA9PT0gcmlnaHQudG9Mb3dlckNhc2UoKSk7XG4gICAgfVxuICB9LFxuICByZW1vdmVFbXB0eShhcnJheSkge1xuICAgIGxldCByZXQgPSBbXTtcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IGFycmF5Lmxlbmd0aDsgaSsrKSB7XG4gICAgICBpZiAoYXJyYXlbaV0pIHtcbiAgICAgICAgcmV0LnB1c2goYXJyYXlbaV0pO1xuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gcmV0O1xuICB9LFxuICBjYXN0SW5wdXQodmFsdWUpIHtcbiAgICByZXR1cm4gdmFsdWU7XG4gIH0sXG4gIHRva2VuaXplKHZhbHVlKSB7XG4gICAgcmV0dXJuIEFycmF5LmZyb20odmFsdWUpO1xuICB9LFxuICBqb2luKGNoYXJzKSB7XG4gICAgcmV0dXJuIGNoYXJzLmpvaW4oJycpO1xuICB9LFxuICBwb3N0UHJvY2VzcyhjaGFuZ2VPYmplY3RzKSB7XG4gICAgcmV0dXJuIGNoYW5nZU9iamVjdHM7XG4gIH1cbn07XG5cbmZ1bmN0aW9uIGJ1aWxkVmFsdWVzKGRpZmYsIGxhc3RDb21wb25lbnQsIG5ld1N0cmluZywgb2xkU3RyaW5nLCB1c2VMb25nZXN0VG9rZW4pIHtcbiAgLy8gRmlyc3Qgd2UgY29udmVydCBvdXIgbGlua2VkIGxpc3Qgb2YgY29tcG9uZW50cyBpbiByZXZlcnNlIG9yZGVyIHRvIGFuXG4gIC8vIGFycmF5IGluIHRoZSByaWdodCBvcmRlcjpcbiAgY29uc3QgY29tcG9uZW50cyA9IFtdO1xuICBsZXQgbmV4dENvbXBvbmVudDtcbiAgd2hpbGUgKGxhc3RDb21wb25lbnQpIHtcbiAgICBjb21wb25lbnRzLnB1c2gobGFzdENvbXBvbmVudCk7XG4gICAgbmV4dENvbXBvbmVudCA9IGxhc3RDb21wb25lbnQucHJldmlvdXNDb21wb25lbnQ7XG4gICAgZGVsZXRlIGxhc3RDb21wb25lbnQucHJldmlvdXNDb21wb25lbnQ7XG4gICAgbGFzdENvbXBvbmVudCA9IG5leHRDb21wb25lbnQ7XG4gIH1cbiAgY29tcG9uZW50cy5yZXZlcnNlKCk7XG5cbiAgbGV0IGNvbXBvbmVudFBvcyA9IDAsXG4gICAgICBjb21wb25lbnRMZW4gPSBjb21wb25lbnRzLmxlbmd0aCxcbiAgICAgIG5ld1BvcyA9IDAsXG4gICAgICBvbGRQb3MgPSAwO1xuXG4gIGZvciAoOyBjb21wb25lbnRQb3MgPCBjb21wb25lbnRMZW47IGNvbXBvbmVudFBvcysrKSB7XG4gICAgbGV0IGNvbXBvbmVudCA9IGNvbXBvbmVudHNbY29tcG9uZW50UG9zXTtcbiAgICBpZiAoIWNvbXBvbmVudC5yZW1vdmVkKSB7XG4gICAgICBpZiAoIWNvbXBvbmVudC5hZGRlZCAmJiB1c2VMb25nZXN0VG9rZW4pIHtcbiAgICAgICAgbGV0IHZhbHVlID0gbmV3U3RyaW5nLnNsaWNlKG5ld1BvcywgbmV3UG9zICsgY29tcG9uZW50LmNvdW50KTtcbiAgICAgICAgdmFsdWUgPSB2YWx1ZS5tYXAoZnVuY3Rpb24odmFsdWUsIGkpIHtcbiAgICAgICAgICBsZXQgb2xkVmFsdWUgPSBvbGRTdHJpbmdbb2xkUG9zICsgaV07XG4gICAgICAgICAgcmV0dXJuIG9sZFZhbHVlLmxlbmd0aCA+IHZhbHVlLmxlbmd0aCA/IG9sZFZhbHVlIDogdmFsdWU7XG4gICAgICAgIH0pO1xuXG4gICAgICAgIGNvbXBvbmVudC52YWx1ZSA9IGRpZmYuam9pbih2YWx1ZSk7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBjb21wb25lbnQudmFsdWUgPSBkaWZmLmpvaW4obmV3U3RyaW5nLnNsaWNlKG5ld1BvcywgbmV3UG9zICsgY29tcG9uZW50LmNvdW50KSk7XG4gICAgICB9XG4gICAgICBuZXdQb3MgKz0gY29tcG9uZW50LmNvdW50O1xuXG4gICAgICAvLyBDb21tb24gY2FzZVxuICAgICAgaWYgKCFjb21wb25lbnQuYWRkZWQpIHtcbiAgICAgICAgb2xkUG9zICs9IGNvbXBvbmVudC5jb3VudDtcbiAgICAgIH1cbiAgICB9IGVsc2Uge1xuICAgICAgY29tcG9uZW50LnZhbHVlID0gZGlmZi5qb2luKG9sZFN0cmluZy5zbGljZShvbGRQb3MsIG9sZFBvcyArIGNvbXBvbmVudC5jb3VudCkpO1xuICAgICAgb2xkUG9zICs9IGNvbXBvbmVudC5jb3VudDtcbiAgICB9XG4gIH1cblxuICByZXR1cm4gY29tcG9uZW50cztcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7QUFBZSxTQUFTQSxJQUFJQSxDQUFBLEVBQUcsQ0FBQztBQUVoQ0EsSUFBSSxD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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/character.js":
+/***/ "./node_modules/diff/lib/diff/character.js"
 /*!*************************************************!*\
   !*** ./node_modules/diff/lib/diff/character.js ***!
   \*************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13445,20 +12674,21 @@ function clonePath(path) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.diffChars = diffChars;
 exports.characterDiff = void 0;
-
+exports.diffChars = diffChars;
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-var characterDiff = new
+var characterDiff =
+/*istanbul ignore start*/
+exports.characterDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13467,24 +12697,19 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.characterDiff = characterDiff;
-
-/*istanbul ignore end*/
 function diffChars(oldStr, newStr, options) {
   return characterDiff.diff(oldStr, newStr, options);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2NoYXJhY3Rlci5qcyJdLCJuYW1lcyI6WyJjaGFyYWN0ZXJEaWZmIiwiRGlmZiIsImRpZmZDaGFycyIsIm9sZFN0ciIsIm5ld1N0ciIsIm9wdGlvbnMiLCJkaWZmIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7QUFFTyxJQUFNQSxhQUFhLEdBQUc7QUFBSUM7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSixFQUF0Qjs7Ozs7O0FBQ0EsU0FBU0MsU0FBVCxDQUFtQkMsTUFBbkIsRUFBMkJDLE1BQTNCLEVBQW1DQyxPQUFuQyxFQUE0QztBQUFFLFNBQU9MLGFBQWEsQ0FBQ00sSUFBZCxDQUFtQkgsTUFBbkIsRUFBMkJDLE1BQTNCLEVBQW1DQyxPQUFuQyxDQUFQO0FBQXFEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcblxuZXhwb3J0IGNvbnN0IGNoYXJhY3RlckRpZmYgPSBuZXcgRGlmZigpO1xuZXhwb3J0IGZ1bmN0aW9uIGRpZmZDaGFycyhvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucykgeyByZXR1cm4gY2hhcmFjdGVyRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBvcHRpb25zKTsgfVxuIl19
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwib2JqIiwiX19lc01vZHVsZSIsImNoYXJhY3RlckRpZmYiLCJleHBvcnRzIiwiRGlmZiIsImRpZmZDaGFycyIsIm9sZFN0ciIsIm5ld1N0ciIsIm9wdGlvbnMiLCJkaWZmIl0sInNvdXJjZXMiOlsiLi4vLi4vc3JjL2RpZmYvY2hhcmFjdGVyLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5cbmV4cG9ydCBjb25zdCBjaGFyYWN0ZXJEaWZmID0gbmV3IERpZmYoKTtcbmV4cG9ydCBmdW5jdGlvbiBkaWZmQ2hhcnMob2xkU3RyLCBuZXdTdHIsIG9wdGlvbnMpIHsgcmV0dXJuIGNoYXJhY3RlckRpZmYuZGlmZihvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucyk7IH1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBQSxLQUFBLEdBQUFDLHNCQUFBLENBQUFDLE9BQUE7QUFBQTtBQUFBO0FBQTBCLG1DQUFBRCx1QkFBQUUsR0FBQSxXQUFBQSxHQUFBLElBQUFBLEdBQUEsQ0FBQUMsVUFBQSxHQUFBRCxHQUFBLGdCQUFBQSxHQUFBO0FBQUE7QUFFbkIsSUFBTUUsYUFBYTtBQUFBO0FBQUFDLE9BQUEsQ0FBQUQsYUFBQTtBQUFBO0FBQUc7QUFBSUU7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSSxDQUFDLENBQUM7QUFDaEMsU0FBU0MsU0FBU0EsQ0FBQ0MsTUFBTSxFQUFFQyxNQUFNLEVBQUVDLE9BQU8sRUFBRTtFQUFFLE9BQU9OLGFBQWEsQ0FBQ08sSUFBSSxDQUFDSCxNQUFNLEVBQUVDLE1BQU0sRUFBRUMsT0FBTyxDQUFDO0FBQUUiLCJpZ25vcmVMaXN0IjpbXX0=
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/css.js":
+/***/ "./node_modules/diff/lib/diff/css.js"
 /*!*******************************************!*\
   !*** ./node_modules/diff/lib/diff/css.js ***!
   \*******************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13492,20 +12717,21 @@ function diffChars(oldStr, newStr, options) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.diffCss = diffCss;
 exports.cssDiff = void 0;
-
+exports.diffCss = diffCss;
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-var cssDiff = new
+var cssDiff =
+/*istanbul ignore start*/
+exports.cssDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13514,28 +12740,22 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.cssDiff = cssDiff;
-
-/*istanbul ignore end*/
 cssDiff.tokenize = function (value) {
   return value.split(/([{}:;,]|\s+)/);
 };
-
 function diffCss(oldStr, newStr, callback) {
   return cssDiff.diff(oldStr, newStr, callback);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2Nzcy5qcyJdLCJuYW1lcyI6WyJjc3NEaWZmIiwiRGlmZiIsInRva2VuaXplIiwidmFsdWUiLCJzcGxpdCIsImRpZmZDc3MiLCJvbGRTdHIiLCJuZXdTdHIiLCJjYWxsYmFjayIsImRpZmYiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBOzs7OztBQUVPLElBQU1BLE9BQU8sR0FBRztBQUFJQztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQSxDQUFKLEVBQWhCOzs7Ozs7QUFDUEQsT0FBTyxDQUFDRSxRQUFSLEdBQW1CLFVBQVNDLEtBQVQsRUFBZ0I7QUFDakMsU0FBT0EsS0FBSyxDQUFDQyxLQUFOLENBQVksZUFBWixDQUFQO0FBQ0QsQ0FGRDs7QUFJTyxTQUFTQyxPQUFULENBQWlCQyxNQUFqQixFQUF5QkMsTUFBekIsRUFBaUNDLFFBQWpDLEVBQTJDO0FBQUUsU0FBT1IsT0FBTyxDQUFDUyxJQUFSLENBQWFILE1BQWIsRUFBcUJDLE1BQXJCLEVBQTZCQyxRQUE3QixDQUFQO0FBQWdEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcblxuZXhwb3J0IGNvbnN0IGNzc0RpZmYgPSBuZXcgRGlmZigpO1xuY3NzRGlmZi50b2tlbml6ZSA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gIHJldHVybiB2YWx1ZS5zcGxpdCgvKFt7fTo7LF18XFxzKykvKTtcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmQ3NzKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjaykgeyByZXR1cm4gY3NzRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjayk7IH1cbiJdfQ==
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwib2JqIiwiX19lc01vZHVsZSIsImNzc0RpZmYiLCJleHBvcnRzIiwiRGlmZiIsInRva2VuaXplIiwidmFsdWUiLCJzcGxpdCIsImRpZmZDc3MiLCJvbGRTdHIiLCJuZXdTdHIiLCJjYWxsYmFjayIsImRpZmYiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvZGlmZi9jc3MuanMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcblxuZXhwb3J0IGNvbnN0IGNzc0RpZmYgPSBuZXcgRGlmZigpO1xuY3NzRGlmZi50b2tlbml6ZSA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gIHJldHVybiB2YWx1ZS5zcGxpdCgvKFt7fTo7LF18XFxzKykvKTtcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmQ3NzKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjaykgeyByZXR1cm4gY3NzRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjayk7IH1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBQSxLQUFBLEdBQUFDLHNCQUFBLENBQUFDLE9BQUE7QUFBQTtBQUFBO0FBQTBCLG1DQUFBRCx1QkFBQUUsR0FBQSxXQUFBQSxHQUFBLElBQUFBLEdBQUEsQ0FBQUMsVUFBQSxHQUFBRCxHQUFBLGdCQUFBQSxHQUFBO0FBQUE7QUFFbkIsSUFBTUUsT0FBTztBQUFBO0FBQUFDLE9BQUEsQ0FBQUQsT0FBQTtBQUFBO0FBQUc7QUFBSUU7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSSxDQUFDLENBQUM7QUFDakNGLE9BQU8sQ0FBQ0csUUFBUSxHQUFHLFVBQVNDLEtBQUssRUFBRTtFQUNqQyxPQUFPQSxLQUFLLENBQUNDLEtBQUssQ0FBQyxlQUFlLENBQUM7QUFDckMsQ0FBQztBQUVNLFNBQVNDLE9BQU9BLENBQUNDLE1BQU0sRUFBRUMsTUFBTSxFQUFFQyxRQUFRLEVBQUU7RUFBRSxPQUFPVCxPQUFPLENBQUNVLElBQUksQ0FBQ0gsTUFBTSxFQUFFQyxNQUFNLEVBQUVDLFFBQVEsQ0FBQztBQUFFIiwiaWdub3JlTGlzdCI6W119
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/json.js":
+/***/ "./node_modules/diff/lib/diff/json.js"
 /*!********************************************!*\
   !*** ./node_modules/diff/lib/diff/json.js ***!
   \********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13543,30 +12763,28 @@ function diffCss(oldStr, newStr, callback) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.diffJson = diffJson;
 exports.canonicalize = canonicalize;
+exports.diffJson = diffJson;
 exports.jsonDiff = void 0;
-
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _line = __webpack_require__(/*! ./line */ "./node_modules/diff/lib/diff/line.js")
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 /*istanbul ignore end*/
-var objectPrototypeToString = Object.prototype.toString;
-var jsonDiff = new
+var jsonDiff =
+/*istanbul ignore start*/
+exports.jsonDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13574,13 +12792,9 @@ _base
 /*istanbul ignore start*/
 "default"
 /*istanbul ignore end*/
-](); // Discriminate between two lines of pretty-printed, serialized JSON where one of them has a
+]();
+// Discriminate between two lines of pretty-printed, serialized JSON where one of them has a
 // dangling comma and the other doesn't. Turns out including the dangling comma yields the nicest output:
-
-/*istanbul ignore start*/
-exports.jsonDiff = jsonDiff;
-
-/*istanbul ignore end*/
 jsonDiff.useLongestToken = true;
 jsonDiff.tokenize =
 /*istanbul ignore start*/
@@ -13591,26 +12805,28 @@ _line
 lineDiff
 /*istanbul ignore end*/
 .tokenize;
-
-jsonDiff.castInput = function (value) {
-  /*istanbul ignore start*/
-  var _this$options =
-  /*istanbul ignore end*/
-  this.options,
-      undefinedReplacement = _this$options.undefinedReplacement,
-      _this$options$stringi = _this$options.stringifyReplacer,
-      stringifyReplacer = _this$options$stringi === void 0 ? function (k, v)
-  /*istanbul ignore start*/
-  {
-    return (
-      /*istanbul ignore end*/
-      typeof v === 'undefined' ? undefinedReplacement : v
-    );
-  } : _this$options$stringi;
+jsonDiff.castInput = function (value, options) {
+  var
+    /*istanbul ignore start*/
+    /*istanbul ignore end*/
+    undefinedReplacement = options.undefinedReplacement,
+    /*istanbul ignore start*/
+    _options$stringifyRep =
+    /*istanbul ignore end*/
+    options.stringifyReplacer,
+    /*istanbul ignore start*/
+    /*istanbul ignore end*/
+    stringifyReplacer = _options$stringifyRep === void 0 ? function (k, v)
+    /*istanbul ignore start*/
+    {
+      return (
+        /*istanbul ignore end*/
+        typeof v === 'undefined' ? undefinedReplacement : v
+      );
+    } : _options$stringifyRep;
   return typeof value === 'string' ? value : JSON.stringify(canonicalize(value, null, null, stringifyReplacer), stringifyReplacer, '  ');
 };
-
-jsonDiff.equals = function (left, right) {
+jsonDiff.equals = function (left, right, options) {
   return (
     /*istanbul ignore start*/
     _base
@@ -13619,52 +12835,42 @@ jsonDiff.equals = function (left, right) {
     /*istanbul ignore start*/
     "default"
     /*istanbul ignore end*/
-    ].prototype.equals.call(jsonDiff, left.replace(/,([\r\n])/g, '$1'), right.replace(/,([\r\n])/g, '$1'))
+    ].prototype.equals.call(jsonDiff, left.replace(/,([\r\n])/g, '$1'), right.replace(/,([\r\n])/g, '$1'), options)
   );
 };
-
 function diffJson(oldObj, newObj, options) {
   return jsonDiff.diff(oldObj, newObj, options);
-} // This function handles the presence of circular references by bailing out when encountering an
+}
+
+// This function handles the presence of circular references by bailing out when encountering an
 // object that is already on the "stack" of items being processed. Accepts an optional replacer
-
-
 function canonicalize(obj, stack, replacementStack, replacer, key) {
   stack = stack || [];
   replacementStack = replacementStack || [];
-
   if (replacer) {
     obj = replacer(key, obj);
   }
-
   var i;
-
   for (i = 0; i < stack.length; i += 1) {
     if (stack[i] === obj) {
       return replacementStack[i];
     }
   }
-
   var canonicalizedObj;
-
-  if ('[object Array]' === objectPrototypeToString.call(obj)) {
+  if ('[object Array]' === Object.prototype.toString.call(obj)) {
     stack.push(obj);
     canonicalizedObj = new Array(obj.length);
     replacementStack.push(canonicalizedObj);
-
     for (i = 0; i < obj.length; i += 1) {
       canonicalizedObj[i] = canonicalize(obj[i], stack, replacementStack, replacer, key);
     }
-
     stack.pop();
     replacementStack.pop();
     return canonicalizedObj;
   }
-
   if (obj && obj.toJSON) {
     obj = obj.toJSON();
   }
-
   if (
   /*istanbul ignore start*/
   _typeof(
@@ -13673,42 +12879,36 @@ function canonicalize(obj, stack, replacementStack, replacer, key) {
     stack.push(obj);
     canonicalizedObj = {};
     replacementStack.push(canonicalizedObj);
-
     var sortedKeys = [],
-        _key;
-
+      _key;
     for (_key in obj) {
       /* istanbul ignore else */
-      if (obj.hasOwnProperty(_key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, _key)) {
         sortedKeys.push(_key);
       }
     }
-
     sortedKeys.sort();
-
     for (i = 0; i < sortedKeys.length; i += 1) {
       _key = sortedKeys[i];
       canonicalizedObj[_key] = canonicalize(obj[_key], stack, replacementStack, replacer, _key);
     }
-
     stack.pop();
     replacementStack.pop();
   } else {
     canonicalizedObj = obj;
   }
-
   return canonicalizedObj;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2pzb24uanMiXSwibmFtZXMiOlsib2JqZWN0UHJvdG90eXBlVG9TdHJpbmciLCJPYmplY3QiLCJwcm90b3R5cGUiLCJ0b1N0cmluZyIsImpzb25EaWZmIiwiRGlmZiIsInVzZUxvbmdlc3RUb2tlbiIsInRva2VuaXplIiwibGluZURpZmYiLCJjYXN0SW5wdXQiLCJ2YWx1ZSIsIm9wdGlvbnMiLCJ1bmRlZmluZWRSZXBsYWNlbWVudCIsInN0cmluZ2lmeVJlcGxhY2VyIiwiayIsInYiLCJKU09OIiwic3RyaW5naWZ5IiwiY2Fub25pY2FsaXplIiwiZXF1YWxzIiwibGVmdCIsInJpZ2h0IiwiY2FsbCIsInJlcGxhY2UiLCJkaWZmSnNvbiIsIm9sZE9iaiIsIm5ld09iaiIsImRpZmYiLCJvYmoiLCJzdGFjayIsInJlcGxhY2VtZW50U3RhY2siLCJyZXBsYWNlciIsImtleSIsImkiLCJsZW5ndGgiLCJjYW5vbmljYWxpemVkT2JqIiwicHVzaCIsIkFycmF5IiwicG9wIiwidG9KU09OIiwic29ydGVkS2V5cyIsImhhc093blByb3BlcnR5Iiwic29ydCJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUE7Ozs7Ozs7QUFFQSxJQUFNQSx1QkFBdUIsR0FBR0MsTUFBTSxDQUFDQyxTQUFQLENBQWlCQyxRQUFqRDtBQUdPLElBQU1DLFFBQVEsR0FBRztBQUFJQztBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQTtBQUFBQSxDQUFKLEVBQWpCLEMsQ0FDUDtBQUNBOzs7Ozs7QUFDQUQsUUFBUSxDQUFDRSxlQUFULEdBQTJCLElBQTNCO0FBRUFGLFFBQVEsQ0FBQ0csUUFBVDtBQUFvQkM7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQTtBQUFBLENBQVNELFFBQTdCOztBQUNBSCxRQUFRLENBQUNLLFNBQVQsR0FBcUIsVUFBU0MsS0FB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Z0IsR0FBR1AsR0FBbkI7QUFDRDs7QUFDRCxTQUFPTyxnQkFBUDtBQUNEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcbmltcG9ydCB7bGluZURpZmZ9IGZyb20gJy4vbGluZSc7XG5cbmNvbnN0IG9iamVjdFByb3RvdHlwZVRvU3RyaW5nID0gT2JqZWN0LnByb3RvdHlwZS50b1N0cmluZztcblxuXG5leHBvcnQgY29uc3QganNvbkRpZmYgPSBuZXcgRGlmZigpO1xuLy8gRGlzY3JpbWluYXRlIGJldHdlZW4gdHdvIGxpbmVzIG9mIHByZXR0eS1wcmludGVkLCBzZXJpYWxpemVkIEpTT04gd2hlcmUgb25lIG9mIHRoZW0gaGFzIGFcbi8vIGRhbmdsaW5nIGNvbW1hIGFuZCB0aGUgb3RoZXIgZG9lc24ndC4gVHVybnMgb3V0IGluY2x1ZGluZyB0aGUgZGFuZ2xpbmcgY29tbWEgeWllbGRzIHRoZSBuaWNlc3Qgb3V0cHV0OlxuanNvbkRpZmYudXNlTG9uZ2VzdFRva2VuID0gdHJ1ZTtcblxuanNvbkRpZmYudG9rZW5pemUgPSBsaW5lRGlmZi50b2tlbml6ZTtcbmpzb25EaWZmLmNhc3RJbnB1dCA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gIGNvbnN0IHt1bmRlZmluZWRSZXBsYWNlbWVudCwgc3RyaW5naWZ5UmVwbGFjZXIgPSAoaywgdikgPT4gdHlwZW9mIHYgPT09ICd1bmRlZmluZWQnID8gdW5kZWZpbmVkUmVwbGFjZW1lbnQgOiB2fSA9IHRoaXMub3B0aW9ucztcblxuICByZXR1cm4gdHlwZW9mIHZhbHVlID09PSAnc3RyaW5nJyA/IHZhbHVlIDogSlNPTi5zdHJpbmdpZnkoY2Fub25pY2FsaXplKHZhbHVlLCBudWxsLCBudWxsLCBzdHJpbmdpZnlSZXBsYWNlciksIHN0cmluZ2lmeVJlcGxhY2VyLCAnICAnKTtcbn07XG5qc29uRGlmZi5lcXVhbHMgPSBmdW5jdGlvbihsZWZ0LCByaWdodCkge1xuICByZXR1cm4gRGlmZi5wcm90b3R5cGUuZXF1YWxzLmNhbGwoanNvbkRpZmYsIGxlZnQucmVwbGFjZSgvLChbXFxyXFxuXSkvZywgJyQxJyksIHJpZ2h0LnJlcGxhY2UoLywoW1xcclxcbl0pL2csICckMScpKTtcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmSnNvbihvbGRPYmosIG5ld09iaiwgb3B0aW9ucykgeyByZXR1cm4ganNvbkRpZmYuZGlmZihvbGRPYmosIG5ld09iaiwgb3B0aW9ucyk7IH1cblxuLy8gVGhpcyBmdW5jdGlvbiBoYW5kbGVzIHRoZSBwcmVzZW5jZSBvZiBjaXJjdWxhciByZWZlcmVuY2VzIGJ5IGJhaWxpbmcgb3V0IHdoZW4gZW5jb3VudGVyaW5nIGFuXG4vLyBvYmplY3QgdGhhdCBpcyBhbHJlYWR5IG9uIHRoZSBcInN0YWNrXCIgb2YgaXRlbXMgYmVpbmcgcHJvY2Vzc2VkLiBBY2NlcHRzIGFuIG9wdGlvbmFsIHJlcGxhY2VyXG5leHBvcnQgZnVuY3Rpb24gY2Fub25pY2FsaXplKG9iaiwgc3RhY2ssIHJlcGxhY2VtZW50U3RhY2ssIHJlcGxhY2VyLCBrZXkpIHtcbiAgc3RhY2sgPSBzdGFjayB8fCBbXTtcbiAgcmVwbGFjZW1lbnRTdGFjayA9IHJlcGxhY2VtZW50U3RhY2sgfHwgW107XG5cbiAgaWYgKHJlcGxhY2VyKSB7XG4gICAgb2JqID0gcmVwbGFjZXIoa2V5LCBvYmopO1xuICB9XG5cbiAgbGV0IGk7XG5cbiAgZm9yIChpID0gMDsgaSA8IHN0YWNrLmxlbmd0aDsgaSArPSAxKSB7XG4gICAgaWYgKHN0YWNrW2ldID09PSBvYmopIHtcbiAgICAgIHJldHVybiByZXBsYWNlbWVudFN0YWNrW2ldO1xuICAgIH1cbiAgfVxuXG4gIGxldCBjYW5vbmljYWxpemVkT2JqO1xuXG4gIGlmICgnW29iamVjdCBBcnJheV0nID09PSBvYmplY3RQcm90b3R5cGVUb1N0cmluZy5jYWxsKG9iaikpIHtcbiAgICBzdGFjay5wdXNoKG9iaik7XG4gICAgY2Fub25pY2FsaXplZE9iaiA9IG5ldyBBcnJheShvYmoubGVuZ3RoKTtcbiAgICByZXBsYWNlbWVudFN0YWNrLnB1c2goY2Fub25pY2FsaXplZE9iaik7XG4gICAgZm9yIChpID0gMDsgaSA8IG9iai5sZW5ndGg7IGkgKz0gMSkge1xuICAgICAgY2Fub25pY2FsaXplZE9ialtpXSA9IGNhbm9uaWNhbGl6ZShvYmpbaV0sIHN0YWNrLCByZXBsYWNlbWVudFN0YWNrLCByZXBsYWNlciwga2V5KTtcbiAgICB9XG4gICAgc3RhY2sucG9wKCk7XG4gICAgcmVwbGFjZW1lbnRTdGFjay5wb3AoKTtcbiAgICByZXR1cm4gY2Fub25pY2FsaXplZE9iajtcbiAgfVxuXG4gIGlmIChvYmogJiYgb2JqLnRvSlNPTikge1xuICAgIG9iaiA9IG9iai50b0pTT04oKTtcbiAgfVxuXG4gIGlmICh0eXBlb2Ygb2JqID09PSAnb2JqZWN0JyAmJiBvYmogIT09IG51bGwpIHtcbiAgICBzdGFjay5wdXNoKG9iaik7XG4gICAgY2Fub25pY2FsaXplZE9iaiA9IHt9O1xuICAgIHJlcGxhY2VtZW50U3RhY2sucHVzaChjYW5vbmljYWxpemVkT2JqKTtcbiAgICBsZXQgc29ydGVkS2V5cyA9IFtdLFxuICAgICAgICBrZXk7XG4gICAgZm9yIChrZXkgaW4gb2JqKSB7XG4gICAgICAvKiBpc3RhbmJ1bCBpZ25vcmUgZWxzZSAqL1xuICAgICAgaWYgKG9iai5oYXNPd25Qcm9wZXJ0eShrZXkpKSB7XG4gICAgICAgIHNvcnRlZEtleXMucHVzaChrZXkpO1xuICAgICAgfVxuICAgIH1cbiAgICBzb3J0ZWRLZXlzLnNvcnQoKTtcbiAgICBmb3IgKGkgPSAwOyBpIDwgc29ydGVkS2V5cy5sZW5ndGg7IGkgKz0gMSkge1xuICAgICAga2V5ID0gc29ydGVkS2V5c1tpXTtcbiAgICAgIGNhbm9uaWNhbGl6ZWRPYmpba2V5XSA9IGNhbm9uaWNhbGl6ZShvYmpba2V5XSwgc3RhY2ssIHJlcGxhY2VtZW50U3RhY2ssIHJlcGxhY2VyLCBrZXkpO1xuICAgIH1cbiAgICBzdGFjay5wb3AoKTtcbiAgICByZXBsYWNlbWVudFN0YWNrLnBvcCgpO1xuICB9IGVsc2Uge1xuICAgIGNhbm9uaWNhbGl6ZWRPYmogPSBvYmo7XG4gIH1cbiAgcmV0dXJuIGNhbm9uaWNhbGl6ZWRPYmo7XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwiX2xpbmUiLCJvYmoiLCJfX2VzTW9kdWxlIiwiX3R5cGVvZiIsIm8iLCJTeW1ib2wiLCJpdGVyYXRvciIsImNvbnN0cnVjdG9yIiwicHJvdG90eXBlIiwianNvbkRpZmYiLCJleHBvcnRzIiwiRGlmZiIsInVzZUxvbmdlc3RUb2tlbiIsInRva2VuaXplIiwibGluZURpZmYiLCJjYXN0SW5wdXQiLCJ2YWx1ZSIsIm9wdGlvbnMiLCJ1bmRlZmluZWRSZXBsYWNlbWVudCIsIl9vcHRpb25zJHN0cmluZ2lmeVJlcCIsInN0cmluZ2lmeVJlcGxhY2VyIiwiayIsInYiLCJKU09OIiwic3RyaW5naWZ5IiwiY2Fub25pY2FsaXplIiwiZXF1YWxzIiwibGVmdCIsInJpZ2h0IiwiY2FsbCIsInJlcGxhY2UiLCJkaWZmSnNvbiIsIm9sZE9iaiIsIm5ld09iaiIsImRpZmYiLCJzdGFjayIsInJlcGxhY2VtZW50U3RhY2siLCJyZXBsYWNlciIsImtleSIsImkiLCJsZW5ndGgiLCJjYW5vbmljYWxpemVkT2JqIiwiT2JqZWN0IiwidG9TdHJpbmciLCJwdXNoIiwiQXJyYXkiLCJwb3AiLCJ0b0pTT04iLCJzb3J0ZWRLZXlzIiwiaGFzT3duUHJvcGVydHkiLCJzb3J0Il0sInNvdXJjZXMiOlsiLi4vLi4vc3JjL2RpZmYvanNvbi5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgRGlmZiBmcm9tICcuL2Jhc2UnO1xuaW1wb3J0IHtsaW5lRGlmZn0gZnJvbSAnLi9saW5lJztcblxuZXhwb3J0IGNvbnN0IGpzb25EaWZmID0gbmV3IERpZmYoKTtcbi8vIERpc2NyaW1pbmF0ZSBiZXR3ZWVuIHR3byBsaW5lcyBvZiBwcmV0dHktcHJpbnRlZCwgc2VyaWFsaXplZCBKU09OIHdoZXJlIG9uZSBvZiB0aGVtIGhhcyBhXG4vLyBkYW5nbGluZyBjb21tYSBhbmQgdGhlIG90aGVyIGRvZXNuJ3QuIFR1cm5zIG91dCBpbmNsdWRpbmcgdGhlIGRhbmdsaW5nIGNvbW1hIHlpZWxkcyB0aGUgbmljZXN0IG91dHB1dDpcbmpzb25EaWZmLnVzZUxvbmdlc3RUb2tlbiA9IHRydWU7XG5cbmpzb25EaWZmLnRva2VuaXplID0gbGluZURpZmYudG9rZW5pemU7XG5qc29uRGlmZi5jYXN0SW5wdXQgPSBmdW5jdGlvbih2YWx1ZSwgb3B0aW9ucykge1xuICBjb25zdCB7dW5kZWZpbmVkUmVwbGFjZW1lbnQsIHN0cmluZ2lmeVJlcGxhY2VyID0gKGssIHYpID0+IHR5cGVvZiB2ID09PSAndW5kZWZpbmVkJyA/IHVuZGVmaW5lZFJlcGxhY2VtZW50IDogdn0gPSBvcHRpb25zO1xuXG4gIHJldHVybiB0eXBlb2YgdmFsdWUgPT09ICdzdHJpbmcnID8gdmFsdWUgOiBKU09OLnN0cmluZ2lmeShjYW5vbmljYWxpemUodmFsdWUsIG51bGwsIG51bGwsIHN0cmluZ2lmeVJlcGxhY2VyKSwgc3RyaW5naWZ5UmVwbGFjZXIsICcgICcpO1xufTtcbmpzb25EaWZmLmVxdWFscyA9IGZ1bmN0aW9uKGxlZnQsIHJpZ2h0LCBvcHRpb25zKSB7XG4gIHJldHVybiBEaWZmLnByb3RvdHlwZS5lcXVhbHMuY2FsbChqc29uRGlmZiwgbGVmdC5yZXBsYWNlKC8sKFtcXHJcXG5dKS9nLCAnJDEnKSwgcmlnaHQucmVwbGFjZSgvLChbXFxyXFxuXSkvZywgJyQxJyksIG9wdGlvbnMpO1xufTtcblxuZXhwb3J0IGZ1bmN0aW9uIGRpZmZKc29uKG9sZE9iaiwgbmV3T2JqLCBvcHRpb25zKSB7IHJldHVybiBqc29uRGlmZi5kaWZmKG9sZE9iaiwgbmV3T2JqLCBvcHRpb25zKTsgfVxuXG4vLyBUaGlzIGZ1bmN0aW9uIGhhbmRsZXMgdGhlIHByZXNlbmNlIG9mIGNpcmN1bGFyIHJlZmVyZW5jZXMgYnkgYmFpbGluZyBvdXQgd2hlbiBlbmNvdW50ZXJpbmcgYW5cbi8vIG9iamVjdCB0aGF0IGlzIGFscmVhZHkgb24gdGhlIFwic3RhY2tcIiBvZiBpdGVtcyBiZWluZyBwcm9jZXNzZWQuIEFjY2VwdHMgYW4gb3B0aW9uYWwgcmVwbGFjZXJcbmV4cG9ydCBmdW5jdGlvbiBjYW5vbmljYWxpemUob2JqLCBzdGFjaywgcmVwbGFjZW1lbnRTdGFjaywgcmVwbGFjZXIsIGtleSkge1xuICBzdGFjayA9IHN0YWNrIHx8IFtdO1xuICByZXBsYWNlbWVudFN0YWNrID0gcmVwbGFjZW1lbnRTdGFjayB8fCBbXTtcblxuICBpZiAocmVwbGFjZXIpIHtcbiAgICBvYmogPSByZXBsYWNlcihrZXksIG9iaik7XG4gIH1cblxuICBsZXQgaTtcblxuICBmb3IgKGkgPSAwOyBpIDwgc3RhY2subGVuZ3RoOyBpICs9IDEpIHtcbiAgICBpZiAoc3RhY2tbaV0gPT09IG9iaikge1xuICAgICAgcmV0dXJuIHJlcGxhY2VtZW50U3RhY2tbaV07XG4gICAgfVxuICB9XG5cbiAgbGV0IGNhbm9uaWNhbGl6ZWRPYmo7XG5cbiAgaWYgKCdbb2JqZWN0IEFycmF5XScgPT09IE9iamVjdC5wcm90b3R5cGUudG9TdHJpbmcuY2FsbChvYmopKSB7XG4gICAgc3RhY2sucHVzaChvYmopO1xuICAgIGNhbm9uaWNhbGl6ZWRPYmogPSBuZXcgQXJyYXkob2JqLmxlbmd0aCk7XG4gICAgcmVwbGFjZW1lbnRTdGFjay5wdXNoKGNhbm9uaWNhbGl6ZWRPYmopO1xuICAgIGZvciAoaSA9IDA7IGkgPCBvYmoubGVuZ3RoOyBpICs9IDEpIHtcbiAgICAgIGNhbm9uaWNhbGl6ZWRPYmpbaV0gPSBjYW5vbmljYWxpemUob2JqW2ldLCBzdGFjaywgcmVwbGFjZW1lbnRTdGFjaywgcmVwbGFjZXIsIGtleSk7XG4gICAgfVxuICAgIHN0YWNrLnBvcCgpO1xuICAgIHJlcGxhY2VtZW50U3RhY2sucG9wKCk7XG4gICAgcmV0dXJuIGNhbm9uaWNhbGl6ZWRPYmo7XG4gIH1cblxuICBpZiAob2JqICYmIG9iai50b0pTT04pIHtcbiAgICBvYmogPSBvYmoudG9KU09OKCk7XG4gIH1cblxuICBpZiAodHlwZW9mIG9iaiA9PT0gJ29iamVjdCcgJiYgb2JqICE9PSBudWxsKSB7XG4gICAgc3RhY2sucHVzaChvYmopO1xuICAgIGNhbm9uaWNhbGl6ZWRPYmogPSB7fTtcbiAgICByZXBsYWNlbWVudFN0YWNrLnB1c2goY2Fub25pY2FsaXplZE9iaik7XG4gICAgbGV0IHNvcnRlZEtleXMgPSBbXSxcbiAgICAgICAga2V5O1xuICAgIGZvciAoa2V5IGluIG9iaikge1xuICAgICAgLyogaXN0YW5idWwgaWdub3JlIGVsc2UgKi9cbiAgICAgIGlmIChPYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwob2JqLCBrZXkpKSB7XG4gICAgICAgIHNvcnRlZEtleXMucHVzaChrZXkpO1xuICAgICAgfVxuICAgIH1cbiAgICBzb3J0ZWRLZXlzLnNvcnQoKTtcbiAgICBmb3IgKGkgPSAwOyBpIDwgc29ydGVkS2V5cy5sZW5ndGg7IGkgKz0gMSkge1xuICAgICAga2V5ID0gc29ydGVkS2V5c1tpXTtcbiAgICAgIGNhbm9uaWNhbGl6ZWRPYmpba2V5XSA9IGNhbm9uaWNhbGl6ZShvYmpba2V5XSwgc3RhY2ssIHJlcGxhY2VtZW50U3RhY2ssIHJlcGxhY2VyLCBrZXkpO1xuICAgIH1cbiAgICBzdGFjay5wb3AoKTtcbiAgICByZXBsYWNlbWVudFN0YWNrLnBvcCgpO1xuICB9IGVsc2Uge1xuICAgIGNhbm9uaWNhbGl6ZWRPYmogPSBvYmo7XG4gIH1cbiAgcmV0dXJuIGNhbm9uaWNhbGl6ZWRPYmo7XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUFBLEtBQUEsR0FBQUMsc0JBQUEsQ0FBQUMsT0FBQTtBQUFBO0FBQUE7QUFDQTtBQUFBO0FBQUFDLEtBQUEsR0FBQUQsT0FBQTtBQUFBO0FBQUE7QUFBZ0MsbUNBQUFELHVCQUFBRyxHQUFBLFdBQUFBLEdBQUEsSUFBQUEsR0FBQSxDQUFBQyxVQUFBLEdBQUFELEdBQUEsZ0JBQUFBLEdBQUE7QUFBQSxTQUFBRSxRQUFBQyxDQUFBLHNDQUFBRCxPQUFBLHdCQUFBRSxNQUFBLHVCQUFBQSxNQUFBLENBQUFDLFFBQUEsYUFBQUYsQ0FBQSxrQkFBQUEsQ0FBQSxnQkFBQUEsQ0FBQSxXQUFBQSxDQUFBLHlCQUFBQyxNQUFBLElBQUFELENBQUEsQ0FBQUcsV0FBQSxLQUFBRixNQUFBLElBQUFELENBQUEsS0FBQUMsTUFBQSxDQUFBRyxTQUFBLHFCQUFBSixDQUFBLEtBQUFELE9BQUEsQ0FBQUMsQ0FBQTtBQUFBO0FBRXpCLElBQU1LLFFBQVE7QUFBQTtBQUFBQyxPQUFBLENBQUFELFFBQUE7QUFBQTtBQUFHO0FBQUlFO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBLENBQUksQ0FBQyxDQUFDO0FBQ2xDO0FBQ0E7QUFDQUYsUUFBUSxDQUFDRyxlQUFlLEdBQUcsSUFBSTtBQUUvQkgsUUFBUSxDQUFDSSxRQUFRO0FBQUdDO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQVE7QUFBQSxDQUFDRCxRQUFRO0FBQ3JDSixRQUFRLENBQUNNLFNBQVMsR0FBRyxVQUFTQyxLQUFLLEVBQUVDLE9BQU8sRUFBRTtFQUM1QztJQUFBO0lBQUE7SUFBT0Msb0JBQW9CLEdBQXVGRCxPQUFPLENBQWxIQyxvQkFBb0I7SUFBQTtJQUFBQyxxQkFBQTtJQUFBO0lBQXVGRixPQUFPLENBQTVGRyxpQkFBaUI7SUFBQTtJQUFBO0lBQWpCQSxpQkFBaUIsR0FBQUQscUJBQUEsY0FBRyxVQUFDRSxDQUFDLEVBQUVDLENBQUM7SUFBQTtJQUFBO01BQUE7UUFBQTtRQUFLLE9BQU9BLENBQUMsS0FBSyxXQUFXLEdBQUdKLG9CQUFvQixHQUFHSTtNQUFDO0lBQUEsSUFBQUgscUJBQUE7RUFFOUcsT0FBTyxPQUFPSCxLQUFLLEtBQUssUUFBUSxHQUFHQSxLQUFLLEdBQUdPLElBQUksQ0FBQ0MsU0FBUyxDQUFDQyxZQUFZLENBQUNULEtBQUssRUFBRSxJQUFJLEVBQUUsSUFBSSxFQUFFSSxpQkFBaUIsQ0FBQyxFQUFFQSxpQkFBaUIsRUFBRSxJQUFJLENBQUM7QUFDeEksQ0FBQztBQUNEWCxRQUFRLENBQUNpQixNQUFNLEdBQUcsVUFBU0MsSUFBSSxFQUFFQyxLQUFLLEVBQUVYLE9BQU8sRUFBRTtFQUMvQyxPQUFPTjtJQUFBQTtJQUFBQTtJQUFBQTtJQUFBQTtJQUFBQTtJQUFBQTtJQUFBQTtJQUFBQSxDQUFJLENBQUNILFNBQVMsQ0FBQ2tCLE1BQU0sQ0FBQ0csSUFBSSxDQUFDcEIsUUFBUSxFQUFFa0IsSUFBSSxDQUFDRyxPQUFPLENBQUMsWUFBWSxFQUFFLElBQUksQ0FBQyxFQUFFRixLQUFLLENBQUNFLE9BQU8sQ0FBQyxZQUFZLEVBQUUsSUFBSSxDQUFDLEVBQUViLE9BQU87RUFBQztBQUMzSCxDQUFDO0FBRU0sU0FBU2MsUUFBUUEsQ0FBQ0MsTUFBTSxFQUFFQyxNQUFNLEVBQUVoQixPQUFPLEVBQUU7RUFBRSxPQUFPUixRQUFRLENBQUN5QixJQUFJLENBQUNGLE1BQU0sRUFBRUMsTUFBTSxFQUFFaEIsT0FBTyxDQUFDO0FBQUU7O0FBRW5HO0FBQ0E7QUFDTyxTQUFTUSxZQUFZQSxDQUFDeEIsR0FBRyxFQUFFa0MsS0FBSyxFQUFFQyxnQkFBZ0IsRUFBRUMsUUFBUSxFQUFFQyxHQUFHLEVBQUU7RUFDeEVILEtBQUssR0FBR0EsS0FBSyxJQUFJLEVBQUU7RUFDbkJDLGdCQUFnQixHQUFHQSxnQkFBZ0IsSUFBSSxFQUFFO0VBRXpDLElBQUlDLFFBQVEsRUFBRTtJQUNacEMsR0FBRyxHQUFHb0MsUUFBUSxDQUFDQyxHQUFHLEVBQUVyQyxHQUFHLENBQUM7RUFDMUI7RUFFQSxJQUFJc0MsQ0FBQztFQUVMLEtBQUtBLENBQUMsR0FBRyxDQUFDLEVBQUVBLENBQUMsR0FBR0osS0FBSyxDQUFDSyxNQUFNLEVBQUVELENBQUMsSUFBSSxDQUFDLEVBQUU7SUFDcEMsSUFBSUosS0FBSyxDQUFDSSxDQUFDLENBQUMsS0FBS3RDLEdBQUcsRUFBRTtNQUNwQixPQUFPbUMsZ0JBQWdCLENBQUNHLENBQUMsQ0FBQztJQUM1QjtFQUNGO0VBRUEsSUFBSUUsZ0JBQWdCO0VBRXBCLElBQUksZ0JBQWdCLEtBQUtDLE1BQU0sQ0FBQ2xDLFNBQVMsQ0FBQ21DLFFBQVEsQ0FBQ2QsSUFBSSxDQUFDNUIsR0FBRyxDQUFDLEVBQUU7SUFDNURrQyxLQUFLLENBQUNTLElBQUksQ0FBQzNDLEdBQUcsQ0FBQztJQUNmd0MsZ0JBQWdCLEdBQUcsSUFBSUksS0FBSyxDQUFDNUMsR0FBRyxDQUFDdUMsTUFBTSxDQUFDO0lBQ3hDSixnQkFBZ0IsQ0FBQ1EsSUFBSSxDQUFDSCxnQkFBZ0IsQ0FBQztJQUN2QyxLQUFLRixDQUFDLEdBQUcsQ0FBQyxFQUFFQSxDQUFDLEdBQUd0QyxHQUFHLENBQUN1QyxNQUFNLEVBQUVELENBQUMsSUFBSSxDQUFDLEVBQUU7TUFDbENFLGdCQUFnQixDQUFDRixDQUFDLENBQUMsR0FBR2QsWUFBWSxDQUFDeEIsR0FBRyxDQUFDc0MsQ0FBQyxDQUFDLEVBQUVKLEtBQUssRUFBRUMsZ0JBQWdCLEVBQUVDLFFBQVEsRUFBRUMsR0FBRyxDQUFDO0lBQ3BGO0lBQ0FILEtBQUssQ0FBQ1csR0FBRyxDQUFDLENBQUM7SUFDWFYsZ0JBQWdCLENBQUNVLEdBQUcsQ0FBQyxDQUFDO0lBQ3RCLE9BQU9MLGdCQUFnQjtFQUN6QjtFQUVBLElBQUl4QyxHQUFHLElBQUlBLEdBQUcsQ0FBQzhDLE1BQU0sRUFBRTtJQUNyQjlDLEdBQUcsR0FBR0EsR0FBRyxDQUFDOEMsTUFBTSxDQUFDLENBQUM7RUFDcEI7RUFFQTtFQUFJO0VBQUE1QyxPQUFBO0VBQUE7RUFBT0YsR0FBRyxNQUFLLFFBQVEsSUFBSUEsR0FBRyxLQUFLLElBQUksRUFBRTtJQUMzQ2tDLEtBQUssQ0FBQ1MsSUFBSSxDQUFDM0MsR0FBRyxDQUFDO0lBQ2Z3QyxnQkFBZ0IsR0FBRyxDQUFDLENBQUM7SUFDckJMLGdCQUFnQixDQUFDUSxJQUFJLENBQUNILGdCQUFnQixDQUFDO0lBQ3ZDLElBQUlPLFVBQVUsR0FBRyxFQUFFO01BQ2ZWLElBQUc7SUFDUCxLQUFLQSxJQUFHLElBQUlyQyxHQUFHLEVBQUU7TUFDZjtNQUNBLElBQUl5QyxNQUFNLENBQUNsQyxTQUFTLENBQUN5QyxjQUFjLENBQUNwQixJQUFJLENBQUM1QixHQUFHLEVBQUVxQyxJQUFHLENBQUMsRUFBRTtRQUNsRFUsVUFBVSxDQUFDSixJQUFJLENBQUNOLElBQUcsQ0FBQztNQUN0QjtJQUNGO0lBQ0FVLFVBQVUsQ0FBQ0UsSUFBSSxDQUFDLENBQUM7SUFDakIsS0FBS1gsQ0FBQyxHQUFHLENBQUMsRUFBRUEsQ0FBQyxHQUFHUyxVQUFVLENBQUNSLE1BQU0sRUFBRUQsQ0FBQyxJQUFJLENBQUMsRUFBRTtNQUN6Q0QsSUFBRyxHQUFHVSxVQUFVLENBQUNULENBQUMsQ0FBQztNQUNuQkUsZ0JBQWdCLENBQUNILElBQUcsQ0FBQyxHQUFHYixZQUFZLENBQUN4QixHQUFHLENBQUNxQyxJQUFHLENBQUMsRUFBRUgsS0FBSyxFQUFFQyxnQkFBZ0IsRUFBRUMsUUFBUSxFQUFFQyxJQUFHLENBQUM7SUFDeEY7SUFDQUgsS0FBSyxDQUFDVyxHQUFHLENBQUMsQ0FBQztJQUNYVixnQkFBZ0IsQ0FBQ1UsR0FBRyxDQUFDLENBQUM7RUFDeEIsQ0FBQyxNQUFNO0lBQ0xMLGdCQUFnQixHQUFHeEMsR0FBRztFQUN4QjtFQUNBLE9BQU93QyxnQkFBZ0I7QUFDekIiLCJpZ25vcmVMaXN0IjpbXX0=
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/line.js":
+/***/ "./node_modules/diff/lib/diff/line.js"
 /*!********************************************!*\
   !*** ./node_modules/diff/lib/diff/line.js ***!
   \********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13719,24 +12919,24 @@ Object.defineProperty(exports, "__esModule", ({
 exports.diffLines = diffLines;
 exports.diffTrimmedLines = diffTrimmedLines;
 exports.lineDiff = void 0;
-
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _params = __webpack_require__(/*! ../util/params */ "./node_modules/diff/lib/util/params.js")
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-var lineDiff = new
+var lineDiff =
+/*istanbul ignore start*/
+exports.lineDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13745,47 +12945,79 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.lineDiff = lineDiff;
-
-/*istanbul ignore end*/
-lineDiff.tokenize = function (value) {
+lineDiff.tokenize = function (value, options) {
+  if (options.stripTrailingCr) {
+    // remove one \r before \n to match GNU diff's --strip-trailing-cr behavior
+    value = value.replace(/\r\n/g, '\n');
+  }
   var retLines = [],
-      linesAndNewlines = value.split(/(\n|\r\n)/); // Ignore the final empty token that occurs if the string ends with a new line
+    linesAndNewlines = value.split(/(\n|\r\n)/);
 
+  // Ignore the final empty token that occurs if the string ends with a new line
   if (!linesAndNewlines[linesAndNewlines.length - 1]) {
     linesAndNewlines.pop();
-  } // Merge the content and line separators into single tokens
+  }
 
-
+  // Merge the content and line separators into single tokens
   for (var i = 0; i < linesAndNewlines.length; i++) {
     var line = linesAndNewlines[i];
-
-    if (i % 2 && !this.options.newlineIsToken) {
+    if (i % 2 && !options.newlineIsToken) {
       retLines[retLines.length - 1] += line;
     } else {
-      if (this.options.ignoreWhitespace) {
-        line = line.trim();
-      }
-
       retLines.push(line);
     }
   }
-
   return retLines;
 };
-
+lineDiff.equals = function (left, right, options) {
+  // If we're ignoring whitespace, we need to normalise lines by stripping
+  // whitespace before checking equality. (This has an annoying interaction
+  // with newlineIsToken that requires special handling: if newlines get their
+  // own token, then we DON'T want to trim the *newline* tokens down to empty
+  // strings, since this would cause us to treat whitespace-only line content
+  // as equal to a separator between lines, which would be weird and
+  // inconsistent with the documented behavior of the options.)
+  if (options.ignoreWhitespace) {
+    if (!options.newlineIsToken || !left.includes('\n')) {
+      left = left.trim();
+    }
+    if (!options.newlineIsToken || !right.includes('\n')) {
+      right = right.trim();
+    }
+  } else if (options.ignoreNewlineAtEof && !options.newlineIsToken) {
+    if (left.endsWith('\n')) {
+      left = left.slice(0, -1);
+    }
+    if (right.endsWith('\n')) {
+      right = right.slice(0, -1);
+    }
+  }
+  return (
+    /*istanbul ignore start*/
+    _base
+    /*istanbul ignore end*/
+    [
+    /*istanbul ignore start*/
+    "default"
+    /*istanbul ignore end*/
+    ].prototype.equals.call(this, left, right, options)
+  );
+};
 function diffLines(oldStr, newStr, callback) {
   return lineDiff.diff(oldStr, newStr, callback);
 }
 
+// Kept for backwards compatibility. This is a rather arbitrary wrapper method
+// that just calls `diffLines` with `ignoreWhitespace: true`. It's confusing to
+// have two ways to do exactly the same thing in the API, so we no longer
+// document this one (library users should explicitly use `diffLines` with
+// `ignoreWhitespace: true` instead) but we keep it around to maintain
+// compatibility with code that used old versions.
 function diffTrimmedLines(oldStr, newStr, callback) {
   var options =
   /*istanbul ignore start*/
   (0,
   /*istanbul ignore end*/
-
   /*istanbul ignore start*/
   _params
   /*istanbul ignore end*/
@@ -13798,16 +13030,16 @@ function diffTrimmedLines(oldStr, newStr, callback) {
   });
   return lineDiff.diff(oldStr, newStr, options);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL2xpbmUuanMiXSwibmFtZXMiOlsibGluZURpZmYiLCJEaWZmIiwidG9rZW5pemUiLCJ2YWx1ZSIsInJldExpbmVzIiwibGluZXNBbmROZXdsaW5lcyIsInNwbGl0IiwibGVuZ3RoIiwicG9wIiwiaSIsImxpbmUiLCJvcHRpb25zIiwibmV3bGluZUlzVG9rZW4iLCJpZ25vcmVXaGl0ZXNwYWNlIiwidHJpbSIsInB1c2giLCJkaWZmTGluZXMiLCJvbGRTdHIiLCJuZXdTdHIiLCJjYWxsYmFjayIsImRpZmYiLCJkaWZmVHJpbW1lZExpbmVzIiwiZ2VuZXJhdGVPcHRpb25zIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7OztBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQ0E7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7QUFFTyxJQUFNQSxRQUFRLEdBQUc7QUFBSUM7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSixFQUFqQjs7Ozs7O0FBQ1BELFFBQVEsQ0FBQ0UsUUFBVCxHQUFvQixVQUFTQyxLQUFULEVBQWdCO0FBQ2xDLE1BQUlDLFFBQVEsR0FBRyxFQUFmO0FBQUEsTUFDSUMsZ0JBQWdCLEdBQUdGLEtBQUssQ0FBQ0csS0FBTixDQUFZLFdBQVosQ0FEdkIsQ0FEa0MsQ0FJbEM7O0FBQ0EsTUFBSSxDQUFDRCxnQkFBZ0IsQ0FBQ0EsZ0JBQWdCLENBQUNFLE1BQWpCLEdBQTBCLENBQTNCLENBQXJCLEVBQW9EO0FBQ2xERixJQUFBQSxnQkFBZ0IsQ0FBQ0csR0FBakI7QUFDRCxHQVBpQyxDQVNsQzs7O0FBQ0EsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHSixnQkFBZ0IsQ0FBQ0UsTUFBckMsRUFBNkNFLENBQUMsRUFBOUMsRUFBa0Q7QUFDaEQsUUFBSUMsSUFBSSxHQUFHTCxnQkFBZ0IsQ0FBQ0ksQ0FBRCxDQUEzQjs7QUFFQSxRQUFJQSxDQUFDLEdBQUcsQ0FBSixJQUFTLENBQUMsS0FBS0UsT0FBTCxDQUFhQyxjQUEzQixFQUEyQztBQUN6Q1IsTUFBQUEsUUFBUSxDQUFDQSxRQUFRLENBQUNHLE1BQVQsR0FBa0IsQ0FBbkIsQ0FBUixJQUFpQ0csSUFBakM7QUFDRCxLQUZELE1BRU87QUFDTCxVQUFJLEtBQUtDLE9BQUwsQ0FBYUUsZ0JBQWpCLEVBQW1DO0FBQ2pDSCxRQUFBQSxJQUFJLEdBQUdBLElBQUksQ0FBQ0ksSUFBTCxFQUFQO0FBQ0Q7O0FBQ0RWLE1BQUFBLFFBQVEsQ0FBQ1csSUFBVCxDQUFjTCxJQUFkO0FBQ0Q7QUFDRjs7QUFFRCxTQUFPTixRQUFQO0FBQ0QsQ0F4QkQ7O0FBMEJPLFNBQVNZLFNBQVQsQ0FBbUJDLE1BQW5CLEVBQTJCQyxNQUEzQixFQUFtQ0MsUUFBbkMsRUFBNkM7QUFBRSxTQUFPbkIsUUFBUSxDQUFDb0IsSUFBVCxDQUFjSCxNQUFkLEVBQXNCQyxNQUF0QixFQUE4QkMsUUFBOUIsQ0FBUDtBQUFpRDs7QUFDaEcsU0FBU0UsZ0JBQVQsQ0FBMEJKLE1BQTFCLEVBQWtDQyxNQUFsQyxFQUEwQ0MsUUFBMUMsRUFBb0Q7QUFDekQsTUFBSVIsT0FBTztBQUFHO0FBQUE7QUFBQTs7QUFBQVc7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQTtBQUFBLEdBQWdCSCxRQUFoQixFQUEwQjtBQUFDTixJQUFBQSxnQkFBZ0IsRUFBRTtBQUFuQixHQUExQixDQUFkO0FBQ0EsU0FBT2IsUUFBUSxDQUFDb0IsSUFBVCxDQUFjSCxNQUFkLEVBQXNCQyxNQUF0QixFQUE4QlAsT0FBOUIsQ0FBUDtBQUNEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcbmltcG9ydCB7Z2VuZXJhdGVPcHRpb25zfSBmcm9tICcuLi91dGlsL3BhcmFtcyc7XG5cbmV4cG9ydCBjb25zdCBsaW5lRGlmZiA9IG5ldyBEaWZmKCk7XG5saW5lRGlmZi50b2tlbml6ZSA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gIGxldCByZXRMaW5lcyA9IFtdLFxuICAgICAgbGluZXNBbmROZXdsaW5lcyA9IHZhbHVlLnNwbGl0KC8oXFxufFxcclxcbikvKTtcblxuICAvLyBJZ25vcmUgdGhlIGZpbmFsIGVtcHR5IHRva2VuIHRoYXQgb2NjdXJzIGlmIHRoZSBzdHJpbmcgZW5kcyB3aXRoIGEgbmV3IGxpbmVcbiAgaWYgKCFsaW5lc0FuZE5ld2xpbmVzW2xpbmVzQW5kTmV3bGluZXMubGVuZ3RoIC0gMV0pIHtcbiAgICBsaW5lc0FuZE5ld2xpbmVzLnBvcCgpO1xuICB9XG5cbiAgLy8gTWVyZ2UgdGhlIGNvbnRlbnQgYW5kIGxpbmUgc2VwYXJhdG9ycyBpbnRvIHNpbmdsZSB0b2tlbnNcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBsaW5lc0FuZE5ld2xpbmVzLmxlbmd0aDsgaSsrKSB7XG4gICAgbGV0IGxpbmUgPSBsaW5lc0FuZE5ld2xpbmVzW2ldO1xuXG4gICAgaWYgKGkgJSAyICYmICF0aGlzLm9wdGlvbnMubmV3bGluZUlzVG9rZW4pIHtcbiAgICAgIHJldExpbmVzW3JldExpbmVzLmxlbmd0aCAtIDFdICs9IGxpbmU7XG4gICAgfSBlbHNlIHtcbiAgICAgIGlmICh0aGlzLm9wdGlvbnMuaWdub3JlV2hpdGVzcGFjZSkge1xuICAgICAgICBsaW5lID0gbGluZS50cmltKCk7XG4gICAgICB9XG4gICAgICByZXRMaW5lcy5wdXNoKGxpbmUpO1xuICAgIH1cbiAgfVxuXG4gIHJldHVybiByZXRMaW5lcztcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmTGluZXMob2xkU3RyLCBuZXdTdHIsIGNhbGxiYWNrKSB7IHJldHVybiBsaW5lRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjayk7IH1cbmV4cG9ydCBmdW5jdGlvbiBkaWZmVHJpbW1lZExpbmVzKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjaykge1xuICBsZXQgb3B0aW9ucyA9IGdlbmVyYXRlT3B0aW9ucyhjYWxsYmFjaywge2lnbm9yZVdoaXRlc3BhY2U6IHRydWV9KTtcbiAgcmV0dXJuIGxpbmVEaWZmLmRpZmYob2xkU3RyLCBuZXdTdHIsIG9wdGlvbnMpO1xufVxuIl19
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwiX3BhcmFtcyIsIm9iaiIsIl9fZXNNb2R1bGUiLCJsaW5lRGlmZiIsImV4cG9ydHMiLCJEaWZmIiwidG9rZW5pemUiLCJ2YWx1ZSIsIm9wdGlvbnMiLCJzdHJpcFRyYWlsaW5nQ3IiLCJyZXBsYWNlIiwicmV0TGluZXMiLCJsaW5lc0FuZE5ld2xpbmVzIiwic3BsaXQiLCJsZW5ndGgiLCJwb3AiLCJpIiwibGluZSIsIm5ld2xpbmVJc1Rva2VuIiwicHVzaCIsImVxdWFscyIsImxlZnQiLCJyaWdodCIsImlnbm9yZVdoaXRlc3BhY2UiLCJpbmNsdWRlcyIsInRyaW0iLCJpZ25vcmVOZXdsaW5lQXRFb2YiLCJlbmRzV2l0aCIsInNsaWNlIiwicHJvdG90eXBlIiwiY2FsbCIsImRpZmZMaW5lcyIsIm9sZFN0ciIsIm5ld1N0ciIsImNhbGxiYWNrIiwiZGlmZiIsImRpZmZUcmltbWVkTGluZXMiLCJnZW5lcmF0ZU9wdGlvbnMiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvZGlmZi9saW5lLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5pbXBvcnQge2dlbmVyYXRlT3B0aW9uc30gZnJvbSAnLi4vdXRpbC9wYXJhbXMnO1xuXG5leHBvcnQgY29uc3QgbGluZURpZmYgPSBuZXcgRGlmZigpO1xubGluZURpZmYudG9rZW5pemUgPSBmdW5jdGlvbih2YWx1ZSwgb3B0aW9ucykge1xuICBpZihvcHRpb25zLnN0cmlwVHJhaWxpbmdDcikge1xuICAgIC8vIHJlbW92ZSBvbmUgXFxyIGJlZm9yZSBcXG4gdG8gbWF0Y2ggR05VIGRpZmYncyAtLXN0cmlwLXRyYWlsaW5nLWNyIGJlaGF2aW9yXG4gICAgdmFsdWUgPSB2YWx1ZS5yZXBsYWNlKC9cXHJcXG4vZywgJ1xcbicpO1xuICB9XG5cbiAgbGV0IHJldExpbmVzID0gW10sXG4gICAgICBsaW5lc0FuZE5ld2xpbmVzID0gdmFsdWUuc3BsaXQoLyhcXG58XFxyXFxuKS8pO1xuXG4gIC8vIElnbm9yZSB0aGUgZmluYWwgZW1wdHkgdG9rZW4gdGhhdCBvY2N1cnMgaWYgdGhlIHN0cmluZyBlbmRzIHdpdGggYSBuZXcgbGluZVxuICBpZiAoIWxpbmVzQW5kTmV3bGluZXNbbGluZXNBbmROZXdsaW5lcy5sZW5ndGggLSAxXSkge1xuICAgIGxpbmVzQW5kTmV3bGluZXMucG9wKCk7XG4gIH1cblxuICAvLyBNZXJnZSB0aGUgY29udGVudCBhbmQgbGluZSBzZXBhcmF0b3JzIGludG8gc2luZ2xlIHRva2Vuc1xuICBmb3IgKGxldCBpID0gMDsgaSA8IGxpbmVzQW5kTmV3bGluZXMubGVuZ3RoOyBpKyspIHtcbiAgICBsZXQgbGluZSA9IGxpbmVzQW5kTmV3bGluZXNbaV07XG5cbiAgICBpZiAoaSAlIDIgJiYgIW9wdGlvbnMubmV3bGluZUlzVG9rZW4pIHtcbiAgICAgIHJldExpbmVzW3JldExpbmVzLmxlbmd0aCAtIDFdICs9IGxpbmU7XG4gICAgfSBlbHNlIHtcbiAgICAgIHJldExpbmVzLnB1c2gobGluZSk7XG4gICAgfVxuICB9XG5cbiAgcmV0dXJuIHJldExpbmVzO1xufTtcblxubGluZURpZmYuZXF1YWxzID0gZnVuY3Rpb24obGVmdCwgcmlnaHQsIG9wdGlvbnMpIHtcbiAgLy8gSWYgd2UncmUgaWdub3Jpbmcgd2hpdGVzcGFjZSwgd2UgbmVlZCB0byBub3JtYWxpc2UgbGluZXMgYnkgc3RyaXBwaW5nXG4gIC8vIHdoaXRlc3BhY2UgYmVmb3JlIGNoZWNraW5nIGVxdWFsaXR5LiAoVGhpcyBoYXMgYW4gYW5ub3lpbmcgaW50ZXJhY3Rpb25cbiAgLy8gd2l0aCBuZXdsaW5lSXNUb2tlbiB0aGF0IHJlcXVpcmVzIHNwZWNpYWwgaGFuZGxpbmc6IGlmIG5ld2xpbmVzIGdldCB0aGVpclxuICAvLyBvd24gdG9rZW4sIHRoZW4gd2UgRE9OJ1Qgd2FudCB0byB0cmltIHRoZSAqbmV3bGluZSogdG9rZW5zIGRvd24gdG8gZW1wdHlcbiAgLy8gc3RyaW5ncywgc2luY2UgdGhpcyB3b3VsZCBjYXVzZSB1cyB0byB0cmVhdCB3aGl0ZXNwYWNlLW9ubHkgbGluZSBjb250ZW50XG4gIC8vIGFzIGVxdWFsIHRvIGEgc2VwYXJhdG9yIGJldHdlZW4gbGluZXMsIHdoaWNoIHdvdWxkIGJlIHdlaXJkIGFuZFxuICAvLyBpbmNvbnNpc3RlbnQgd2l0aCB0aGUgZG9jdW1lbnRlZCBiZWhhdmlvciBvZiB0aGUgb3B0aW9ucy4pXG4gIGlmIChvcHRpb25zLmlnbm9yZVdoaXRlc3BhY2UpIHtcbiAgICBpZiAoIW9wdGlvbnMubmV3bGluZUlzVG9rZW4gfHwgIWxlZnQuaW5jbHVkZXMoJ1xcbicpKSB7XG4gICAgICBsZWZ0ID0gbGVmdC50cmltKCk7XG4gICAgfVxuICAgIGlmICghb3B0aW9ucy5uZXdsaW5lSXNUb2tlbiB8fCAhcmlnaHQuaW5jbHVkZXMoJ1xcbicpKSB7XG4gICAgICByaWdodCA9IHJpZ2h0LnRyaW0oKTtcbiAgICB9XG4gIH0gZWxzZSBpZiAob3B0aW9ucy5pZ25vcmVOZXdsaW5lQXRFb2YgJiYgIW9wdGlvbnMubmV3bGluZUlzVG9rZW4pIHtcbiAgICBpZiAobGVmdC5lbmRzV2l0aCgnXFxuJykpIHtcbiAgICAgIGxlZnQgPSBsZWZ0LnNsaWNlKDAsIC0xKTtcbiAgICB9XG4gICAgaWYgKHJpZ2h0LmVuZHNXaXRoKCdcXG4nKSkge1xuICAgICAgcmlnaHQgPSByaWdodC5zbGljZSgwLCAtMSk7XG4gICAgfVxuICB9XG4gIHJldHVybiBEaWZmLnByb3RvdHlwZS5lcXVhbHMuY2FsbCh0aGlzLCBsZWZ0LCByaWdodCwgb3B0aW9ucyk7XG59O1xuXG5leHBvcnQgZnVuY3Rpb24gZGlmZkxpbmVzKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjaykgeyByZXR1cm4gbGluZURpZmYuZGlmZihvbGRTdHIsIG5ld1N0ciwgY2FsbGJhY2spOyB9XG5cbi8vIEtlcHQgZm9yIGJhY2t3YXJkcyBjb21wYXRpYmlsaXR5LiBUaGlzIGlzIGEgcmF0aGVyIGFyYml0cmFyeSB3cmFwcGVyIG1ldGhvZFxuLy8gdGhhdCBqdXN0IGNhbGxzIGBkaWZmTGluZXNgIHdpdGggYGlnbm9yZVdoaXRlc3BhY2U6IHRydWVgLiBJdCdzIGNvbmZ1c2luZyB0b1xuLy8gaGF2ZSB0d28gd2F5cyB0byBkbyBleGFjdGx5IHRoZSBzYW1lIHRoaW5nIGluIHRoZSBBUEksIHNvIHdlIG5vIGxvbmdlclxuLy8gZG9jdW1lbnQgdGhpcyBvbmUgKGxpYnJhcnkgdXNlcnMgc2hvdWxkIGV4cGxpY2l0bHkgdXNlIGBkaWZmTGluZXNgIHdpdGhcbi8vIGBpZ25vcmVXaGl0ZXNwYWNlOiB0cnVlYCBpbnN0ZWFkKSBidXQgd2Uga2VlcCBpdCBhcm91bmQgdG8gbWFpbnRhaW5cbi8vIGNvbXBhdGliaWxpdHkgd2l0aCBjb2RlIHRoYXQgdXNlZCBvbGQgdmVyc2lvbnMuXG5leHBvcnQgZnVuY3Rpb24gZGlmZlRyaW1tZWRMaW5lcyhvbGRTdHIsIG5ld1N0ciwgY2FsbGJhY2spIHtcbiAgbGV0IG9wdGlvbnMgPSBnZW5lcmF0ZU9wdGlvbnMoY2FsbGJhY2ssIHtpZ25vcmVXaGl0ZXNwYWNlOiB0cnVlfSk7XG4gIHJldHVybiBsaW5lRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBvcHRpb25zKTtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7OztBQUFBO0FBQUE7QUFBQUEsS0FBQSxHQUFBQyxzQkFBQSxDQUFBQyxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQUMsT0FBQSxHQUFBRCxPQUFBO0FBQUE7QUFBQTtBQUErQyxtQ0FBQUQsdUJBQUFHLEdBQUEsV0FBQUEsR0FBQSxJQUFBQSxHQUFBLENBQUFDLFVBQUEsR0FBQUQsR0FBQSxnQkFBQUEsR0FBQTtBQUFBO0FBRXhDLElBQU1FLFFBQVE7QUFBQTtBQUFBQyxPQUFBLENBQUFELFFBQUE7QUFBQTtBQUFHO0FBQUlFO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBLENBQUksQ0FBQyxDQUFDO0FBQ2xDRixRQUFRLENBQUNHLFFBQVEsR0FBRyxVQUFTQyxLQUFLLEVBQUVDLE9BQU8sRUFBRTtFQUMzQyxJQUFHQSxPQUFPLENBQUNDLGVBQWUsRUFBRTtJQUMxQjtJQUNBRixLQUFLLEdBQUdBLEtBQUssQ0FBQ0csT0FBTyxDQUFDLE9BQU8sRUFBRSxJQUFJLENBQUM7RUFDdEM7RUFFQSxJQUFJQyxRQUFRLEdBQUcsRUFBRTtJQUNiQyxnQkFBZ0IsR0FBR0wsS0FBSyxDQUFDTSxLQUFLLENBQUMsV0FBVyxDQUFDOztFQUUvQztFQUNBLElBQUksQ0FBQ0QsZ0JBQWdCLENBQUNBLGdCQUFnQixDQUFDRSxNQUFNLEdBQUcsQ0FBQyxDQUFDLEVBQUU7SUFDbERGLGdCQUFnQixDQUFDRyxHQUFHLENBQUMsQ0FBQztFQUN4Qjs7RUFFQTtFQUNBLEtBQUssSUFBSUMsQ0FBQyxHQUFHLENBQUMsRUFBRUEsQ0FBQyxHQUFHSixnQkFBZ0IsQ0FBQ0UsTUFBTSxFQUFFRSxDQUFDLEVBQUUsRUFBRTtJQUNoRCxJQUFJQyxJQUFJLEdBQUdMLGdCQUFnQixDQUFDSSxDQUFDLENBQUM7SUFFOUIsSUFBSUEsQ0FBQyxHQUFHLENBQUMsSUFBSSxDQUFDUixPQUFPLENBQUNVLGNBQWMsRUFBRTtNQUNwQ1AsUUFBUSxDQUFDQSxRQUFRLENBQUNHLE1BQU0sR0FBRyxDQUFDLENBQUMsSUFBSUcsSUFBSTtJQUN2QyxDQUFDLE1BQU07TUFDTE4sUUFBUSxDQUFDUSxJQUFJLENBQUNGLElBQUksQ0FBQztJQUNyQjtFQUNGO0VBRUEsT0FBT04sUUFBUTtBQUNqQixDQUFDO0FBRURSLFFBQVEsQ0FBQ2lCLE1BQU0sR0FBRyxVQUFTQyxJQUFJLEVBQUVDLEtBQUssRUFBRWQsT0FBTyxFQUFFO0VBQy9DO0VBQ0E7RUFDQTtFQUNBO0VBQ0E7RUFDQTtFQUNBO0VBQ0EsSUFBSUEsT0FBTyxDQUFDZSxnQkFBZ0IsRUFBRTtJQUM1QixJQUFJLENBQUNmLE9BQU8sQ0FBQ1UsY0FBYyxJQUFJLENBQUNHLElBQUksQ0FBQ0csUUFBUSxDQUFDLElBQUksQ0FBQyxFQUFFO01BQ25ESCxJQUFJLEdBQUdBLElBQUksQ0FBQ0ksSUFBSSxDQUFDLENBQUM7SUFDcEI7SUFDQSxJQUFJLENBQUNqQixPQUFPLENBQUNVLGNBQWMsSUFBSSxDQUFDSSxLQUFLLENBQUNFLFFBQVEsQ0FBQyxJQUFJLENBQUMsRUFBRTtNQUNwREYsS0FBSyxHQUFHQSxLQUFLLENBQUNHLElBQUksQ0FBQyxDQUFDO0lBQ3RCO0VBQ0YsQ0FBQyxNQUFNLElBQUlqQixPQUFPLENBQUNrQixrQkFBa0IsSUFBSSxDQUFDbEIsT0FBTyxDQUFDVSxjQUFjLEVBQUU7SUFDaEUsSUFBSUcsSUFBSSxDQUFDTSxRQUFRLENBQUMsSUFBSSxDQUFDLEVBQUU7TUFDdkJOLElBQUksR0FBR0EsSUFBSSxDQUFDTyxLQUFLLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDO0lBQzFCO0lBQ0EsSUFBSU4sS0FBSyxDQUFDSyxRQUFRLENBQUMsSUFBSSxDQUFDLEVBQUU7TUFDeEJMLEtBQUssR0FBR0EsS0FBSyxDQUFDTSxLQUFLLENBQUMsQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDO0lBQzVCO0VBQ0Y7RUFDQSxPQUFPdkI7SUFBQUE7SUFBQUE7SUFBQUE7SUFBQUE7SUFBQUE7SUFBQUE7SUFBQUE7SUFBQUEsQ0FBSSxDQUFDd0IsU0FBUyxDQUFDVCxNQUFNLENBQUNVLElBQUksQ0FBQyxJQUFJLEVBQUVULElBQUksRUFBRUMsS0FBSyxFQUFFZCxPQUFPO0VBQUM7QUFDL0QsQ0FBQztBQUVNLFNBQVN1QixTQUFTQSxDQUFDQyxNQUFNLEVBQUVDLE1BQU0sRUFBRUMsUUFBUSxFQUFFO0VBQUUsT0FBTy9CLFFBQVEsQ0FBQ2dDLElBQUksQ0FBQ0gsTUFBTSxFQUFFQyxNQUFNLEVBQUVDLFFBQVEsQ0FBQztBQUFFOztBQUV0RztBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDTyxTQUFTRSxnQkFBZ0JBLENBQUNKLE1BQU0sRUFBRUMsTUFBTSxFQUFFQyxRQUFRLEVBQUU7RUFDekQsSUFBSTFCLE9BQU87RUFBRztFQUFBO0VBQUE7RUFBQTZCO0VBQUFBO0VBQUFBO0VBQUFBO0VBQUFBO0VBQUFBLGVBQWU7RUFBQTtFQUFBLENBQUNILFFBQVEsRUFBRTtJQUFDWCxnQkFBZ0IsRUFBRTtFQUFJLENBQUMsQ0FBQztFQUNqRSxPQUFPcEIsUUFBUSxDQUFDZ0MsSUFBSSxDQUFDSCxNQUFNLEVBQUVDLE1BQU0sRUFBRXpCLE9BQU8sQ0FBQztBQUMvQyIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/sentence.js":
+/***/ "./node_modules/diff/lib/diff/sentence.js"
 /*!************************************************!*\
   !*** ./node_modules/diff/lib/diff/sentence.js ***!
   \************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13817,18 +13049,19 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.diffSentences = diffSentences;
 exports.sentenceDiff = void 0;
-
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-var sentenceDiff = new
+var sentenceDiff =
+/*istanbul ignore start*/
+exports.sentenceDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13837,28 +13070,22 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.sentenceDiff = sentenceDiff;
-
-/*istanbul ignore end*/
 sentenceDiff.tokenize = function (value) {
   return value.split(/(\S.+?[.!?])(?=\s+|$)/);
 };
-
 function diffSentences(oldStr, newStr, callback) {
   return sentenceDiff.diff(oldStr, newStr, callback);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL3NlbnRlbmNlLmpzIl0sIm5hbWVzIjpbInNlbnRlbmNlRGlmZiIsIkRpZmYiLCJ0b2tlbml6ZSIsInZhbHVlIiwic3BsaXQiLCJkaWZmU2VudGVuY2VzIiwib2xkU3RyIiwibmV3U3RyIiwiY2FsbGJhY2siLCJkaWZmIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7QUFHTyxJQUFNQSxZQUFZLEdBQUc7QUFBSUM7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSixFQUFyQjs7Ozs7O0FBQ1BELFlBQVksQ0FBQ0UsUUFBYixHQUF3QixVQUFTQyxLQUFULEVBQWdCO0FBQ3RDLFNBQU9BLEtBQUssQ0FBQ0MsS0FBTixDQUFZLHVCQUFaLENBQVA7QUFDRCxDQUZEOztBQUlPLFNBQVNDLGFBQVQsQ0FBdUJDLE1BQXZCLEVBQStCQyxNQUEvQixFQUF1Q0MsUUFBdkMsRUFBaUQ7QUFBRSxTQUFPUixZQUFZLENBQUNTLElBQWIsQ0FBa0JILE1BQWxCLEVBQTBCQyxNQUExQixFQUFrQ0MsUUFBbEMsQ0FBUDtBQUFxRCIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5cblxuZXhwb3J0IGNvbnN0IHNlbnRlbmNlRGlmZiA9IG5ldyBEaWZmKCk7XG5zZW50ZW5jZURpZmYudG9rZW5pemUgPSBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gdmFsdWUuc3BsaXQoLyhcXFMuKz9bLiE/XSkoPz1cXHMrfCQpLyk7XG59O1xuXG5leHBvcnQgZnVuY3Rpb24gZGlmZlNlbnRlbmNlcyhvbGRTdHIsIG5ld1N0ciwgY2FsbGJhY2spIHsgcmV0dXJuIHNlbnRlbmNlRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjayk7IH1cbiJdfQ==
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwib2JqIiwiX19lc01vZHVsZSIsInNlbnRlbmNlRGlmZiIsImV4cG9ydHMiLCJEaWZmIiwidG9rZW5pemUiLCJ2YWx1ZSIsInNwbGl0IiwiZGlmZlNlbnRlbmNlcyIsIm9sZFN0ciIsIm5ld1N0ciIsImNhbGxiYWNrIiwiZGlmZiJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL3NlbnRlbmNlLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5cblxuZXhwb3J0IGNvbnN0IHNlbnRlbmNlRGlmZiA9IG5ldyBEaWZmKCk7XG5zZW50ZW5jZURpZmYudG9rZW5pemUgPSBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gdmFsdWUuc3BsaXQoLyhcXFMuKz9bLiE/XSkoPz1cXHMrfCQpLyk7XG59O1xuXG5leHBvcnQgZnVuY3Rpb24gZGlmZlNlbnRlbmNlcyhvbGRTdHIsIG5ld1N0ciwgY2FsbGJhY2spIHsgcmV0dXJuIHNlbnRlbmNlRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBjYWxsYmFjayk7IH1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBQSxLQUFBLEdBQUFDLHNCQUFBLENBQUFDLE9BQUE7QUFBQTtBQUFBO0FBQTBCLG1DQUFBRCx1QkFBQUUsR0FBQSxXQUFBQSxHQUFBLElBQUFBLEdBQUEsQ0FBQUMsVUFBQSxHQUFBRCxHQUFBLGdCQUFBQSxHQUFBO0FBQUE7QUFHbkIsSUFBTUUsWUFBWTtBQUFBO0FBQUFDLE9BQUEsQ0FBQUQsWUFBQTtBQUFBO0FBQUc7QUFBSUU7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSSxDQUFDLENBQUM7QUFDdENGLFlBQVksQ0FBQ0csUUFBUSxHQUFHLFVBQVNDLEtBQUssRUFBRTtFQUN0QyxPQUFPQSxLQUFLLENBQUNDLEtBQUssQ0FBQyx1QkFBdUIsQ0FBQztBQUM3QyxDQUFDO0FBRU0sU0FBU0MsYUFBYUEsQ0FBQ0MsTUFBTSxFQUFFQyxNQUFNLEVBQUVDLFFBQVEsRUFBRTtFQUFFLE9BQU9ULFlBQVksQ0FBQ1UsSUFBSSxDQUFDSCxNQUFNLEVBQUVDLE1BQU0sRUFBRUMsUUFBUSxDQUFDO0FBQUUiLCJpZ25vcmVMaXN0IjpbXX0=
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/diff/word.js":
+/***/ "./node_modules/diff/lib/diff/word.js"
 /*!********************************************!*\
   !*** ./node_modules/diff/lib/diff/word.js ***!
   \********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13868,23 +13095,19 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.diffWords = diffWords;
 exports.diffWordsWithSpace = diffWordsWithSpace;
-exports.wordDiff = void 0;
-
+exports.wordWithSpaceDiff = exports.wordDiff = void 0;
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
-_params = __webpack_require__(/*! ../util/params */ "./node_modules/diff/lib/util/params.js")
+_string = __webpack_require__(/*! ../util/string */ "./node_modules/diff/lib/util/string.js")
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
 // Based on https://en.wikipedia.org/wiki/Latin_script_in_Unicode
 //
@@ -13904,9 +13127,43 @@ _params = __webpack_require__(/*! ../util/params */ "./node_modules/diff/lib/uti
 //  - U+02DC  ˜ &#732;  Small Tilde
 //  - U+02DD  ˝ &#733;  Double Acute Accent
 // Latin Extended Additional, 1E00–1EFF
-var extendedWordChars = /^[A-Za-z\xC0-\u02C6\u02C8-\u02D7\u02DE-\u02FF\u1E00-\u1EFF]+$/;
-var reWhitespace = /\S/;
-var wordDiff = new
+var extendedWordChars = "a-zA-Z0-9_\\u{C0}-\\u{FF}\\u{D8}-\\u{F6}\\u{F8}-\\u{2C6}\\u{2C8}-\\u{2D7}\\u{2DE}-\\u{2FF}\\u{1E00}-\\u{1EFF}";
+
+// Each token is one of the following:
+// - A punctuation mark plus the surrounding whitespace
+// - A word plus the surrounding whitespace
+// - Pure whitespace (but only in the special case where this the entire text
+//   is just whitespace)
+//
+// We have to include surrounding whitespace in the tokens because the two
+// alternative approaches produce horribly broken results:
+// * If we just discard the whitespace, we can't fully reproduce the original
+//   text from the sequence of tokens and any attempt to render the diff will
+//   get the whitespace wrong.
+// * If we have separate tokens for whitespace, then in a typical text every
+//   second token will be a single space character. But this often results in
+//   the optimal diff between two texts being a perverse one that preserves
+//   the spaces between words but deletes and reinserts actual common words.
+//   See https://github.com/kpdecker/jsdiff/issues/160#issuecomment-1866099640
+//   for an example.
+//
+// Keeping the surrounding whitespace of course has implications for .equals
+// and .join, not just .tokenize.
+
+// This regex does NOT fully implement the tokenization rules described above.
+// Instead, it gives runs of whitespace their own "token". The tokenize method
+// then handles stitching whitespace tokens onto adjacent word or punctuation
+// tokens.
+var tokenizeIncludingWhitespace = new RegExp(
+/*istanbul ignore start*/
+"[".concat(
+/*istanbul ignore end*/
+extendedWordChars, "]+|\\s+|[^").concat(extendedWordChars, "]"), 'ug');
+var wordDiff =
+/*istanbul ignore start*/
+exports.wordDiff =
+/*istanbul ignore end*/
+new
 /*istanbul ignore start*/
 _base
 /*istanbul ignore end*/
@@ -13915,68 +13172,473 @@ _base
 "default"
 /*istanbul ignore end*/
 ]();
-
-/*istanbul ignore start*/
-exports.wordDiff = wordDiff;
-
-/*istanbul ignore end*/
-wordDiff.equals = function (left, right) {
-  if (this.options.ignoreCase) {
+wordDiff.equals = function (left, right, options) {
+  if (options.ignoreCase) {
     left = left.toLowerCase();
     right = right.toLowerCase();
   }
-
-  return left === right || this.options.ignoreWhitespace && !reWhitespace.test(left) && !reWhitespace.test(right);
+  return left.trim() === right.trim();
 };
-
 wordDiff.tokenize = function (value) {
-  // All whitespace symbols except newline group into one token, each newline - in separate token
-  var tokens = value.split(/([^\S\r\n]+|[()[\]{}'"\r\n]|\b)/); // Join the boundary splits that we do not consider to be boundaries. This is primarily the extended Latin character set.
-
-  for (var i = 0; i < tokens.length - 1; i++) {
-    // If we have an empty string in the next field and we have only word chars before and after, merge
-    if (!tokens[i + 1] && tokens[i + 2] && extendedWordChars.test(tokens[i]) && extendedWordChars.test(tokens[i + 2])) {
-      tokens[i] += tokens[i + 2];
-      tokens.splice(i + 1, 2);
-      i--;
+  /*istanbul ignore start*/
+  var
+  /*istanbul ignore end*/
+  options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var parts;
+  if (options.intlSegmenter) {
+    if (options.intlSegmenter.resolvedOptions().granularity != 'word') {
+      throw new Error('The segmenter passed must have a granularity of "word"');
     }
+    parts = Array.from(options.intlSegmenter.segment(value), function (segment)
+    /*istanbul ignore start*/
+    {
+      return (
+        /*istanbul ignore end*/
+        segment.segment
+      );
+    });
+  } else {
+    parts = value.match(tokenizeIncludingWhitespace) || [];
   }
-
+  var tokens = [];
+  var prevPart = null;
+  parts.forEach(function (part) {
+    if (/\s/.test(part)) {
+      if (prevPart == null) {
+        tokens.push(part);
+      } else {
+        tokens.push(tokens.pop() + part);
+      }
+    } else if (/\s/.test(prevPart)) {
+      if (tokens[tokens.length - 1] == prevPart) {
+        tokens.push(tokens.pop() + part);
+      } else {
+        tokens.push(prevPart + part);
+      }
+    } else {
+      tokens.push(part);
+    }
+    prevPart = part;
+  });
   return tokens;
 };
-
-function diffWords(oldStr, newStr, options) {
-  options =
-  /*istanbul ignore start*/
-  (0,
-  /*istanbul ignore end*/
-
-  /*istanbul ignore start*/
-  _params
-  /*istanbul ignore end*/
-  .
-  /*istanbul ignore start*/
-  generateOptions)
-  /*istanbul ignore end*/
-  (options, {
-    ignoreWhitespace: true
+wordDiff.join = function (tokens) {
+  // Tokens being joined here will always have appeared consecutively in the
+  // same text, so we can simply strip off the leading whitespace from all the
+  // tokens except the first (and except any whitespace-only tokens - but such
+  // a token will always be the first and only token anyway) and then join them
+  // and the whitespace around words and punctuation will end up correct.
+  return tokens.map(function (token, i) {
+    if (i == 0) {
+      return token;
+    } else {
+      return token.replace(/^\s+/, '');
+    }
+  }).join('');
+};
+wordDiff.postProcess = function (changes, options) {
+  if (!changes || options.oneChangePerToken) {
+    return changes;
+  }
+  var lastKeep = null;
+  // Change objects representing any insertion or deletion since the last
+  // "keep" change object. There can be at most one of each.
+  var insertion = null;
+  var deletion = null;
+  changes.forEach(function (change) {
+    if (change.added) {
+      insertion = change;
+    } else if (change.removed) {
+      deletion = change;
+    } else {
+      if (insertion || deletion) {
+        // May be false at start of text
+        dedupeWhitespaceInChangeObjects(lastKeep, deletion, insertion, change);
+      }
+      lastKeep = change;
+      insertion = null;
+      deletion = null;
+    }
   });
+  if (insertion || deletion) {
+    dedupeWhitespaceInChangeObjects(lastKeep, deletion, insertion, null);
+  }
+  return changes;
+};
+function diffWords(oldStr, newStr, options) {
+  // This option has never been documented and never will be (it's clearer to
+  // just call `diffWordsWithSpace` directly if you need that behavior), but
+  // has existed in jsdiff for a long time, so we retain support for it here
+  // for the sake of backwards compatibility.
+  if (
+  /*istanbul ignore start*/
+  (
+  /*istanbul ignore end*/
+  options === null || options === void 0 ? void 0 : options.ignoreWhitespace) != null && !options.ignoreWhitespace) {
+    return diffWordsWithSpace(oldStr, newStr, options);
+  }
   return wordDiff.diff(oldStr, newStr, options);
 }
+function dedupeWhitespaceInChangeObjects(startKeep, deletion, insertion, endKeep) {
+  // Before returning, we tidy up the leading and trailing whitespace of the
+  // change objects to eliminate cases where trailing whitespace in one object
+  // is repeated as leading whitespace in the next.
+  // Below are examples of the outcomes we want here to explain the code.
+  // I=insert, K=keep, D=delete
+  // 1. diffing 'foo bar baz' vs 'foo baz'
+  //    Prior to cleanup, we have K:'foo ' D:' bar ' K:' baz'
+  //    After cleanup, we want:   K:'foo ' D:'bar ' K:'baz'
+  //
+  // 2. Diffing 'foo bar baz' vs 'foo qux baz'
+  //    Prior to cleanup, we have K:'foo ' D:' bar ' I:' qux ' K:' baz'
+  //    After cleanup, we want K:'foo ' D:'bar' I:'qux' K:' baz'
+  //
+  // 3. Diffing 'foo\nbar baz' vs 'foo baz'
+  //    Prior to cleanup, we have K:'foo ' D:'\nbar ' K:' baz'
+  //    After cleanup, we want K'foo' D:'\nbar' K:' baz'
+  //
+  // 4. Diffing 'foo baz' vs 'foo\nbar baz'
+  //    Prior to cleanup, we have K:'foo\n' I:'\nbar ' K:' baz'
+  //    After cleanup, we ideally want K'foo' I:'\nbar' K:' baz'
+  //    but don't actually manage this currently (the pre-cleanup change
+  //    objects don't contain enough information to make it possible).
+  //
+  // 5. Diffing 'foo   bar baz' vs 'foo  baz'
+  //    Prior to cleanup, we have K:'foo  ' D:'   bar ' K:'  baz'
+  //    After cleanup, we want K:'foo  ' D:' bar ' K:'baz'
+  //
+  // Our handling is unavoidably imperfect in the case where there's a single
+  // indel between keeps and the whitespace has changed. For instance, consider
+  // diffing 'foo\tbar\nbaz' vs 'foo baz'. Unless we create an extra change
+  // object to represent the insertion of the space character (which isn't even
+  // a token), we have no way to avoid losing information about the texts'
+  // original whitespace in the result we return. Still, we do our best to
+  // output something that will look sensible if we e.g. print it with
+  // insertions in green and deletions in red.
 
+  // Between two "keep" change objects (or before the first or after the last
+  // change object), we can have either:
+  // * A "delete" followed by an "insert"
+  // * Just an "insert"
+  // * Just a "delete"
+  // We handle the three cases separately.
+  if (deletion && insertion) {
+    var oldWsPrefix = deletion.value.match(/^\s*/)[0];
+    var oldWsSuffix = deletion.value.match(/\s*$/)[0];
+    var newWsPrefix = insertion.value.match(/^\s*/)[0];
+    var newWsSuffix = insertion.value.match(/\s*$/)[0];
+    if (startKeep) {
+      var commonWsPrefix =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      longestCommonPrefix)
+      /*istanbul ignore end*/
+      (oldWsPrefix, newWsPrefix);
+      startKeep.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      replaceSuffix)
+      /*istanbul ignore end*/
+      (startKeep.value, newWsPrefix, commonWsPrefix);
+      deletion.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      removePrefix)
+      /*istanbul ignore end*/
+      (deletion.value, commonWsPrefix);
+      insertion.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      removePrefix)
+      /*istanbul ignore end*/
+      (insertion.value, commonWsPrefix);
+    }
+    if (endKeep) {
+      var commonWsSuffix =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      longestCommonSuffix)
+      /*istanbul ignore end*/
+      (oldWsSuffix, newWsSuffix);
+      endKeep.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      replacePrefix)
+      /*istanbul ignore end*/
+      (endKeep.value, newWsSuffix, commonWsSuffix);
+      deletion.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      removeSuffix)
+      /*istanbul ignore end*/
+      (deletion.value, commonWsSuffix);
+      insertion.value =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _string
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      removeSuffix)
+      /*istanbul ignore end*/
+      (insertion.value, commonWsSuffix);
+    }
+  } else if (insertion) {
+    // The whitespaces all reflect what was in the new text rather than
+    // the old, so we essentially have no information about whitespace
+    // insertion or deletion. We just want to dedupe the whitespace.
+    // We do that by having each change object keep its trailing
+    // whitespace and deleting duplicate leading whitespace where
+    // present.
+    if (startKeep) {
+      insertion.value = insertion.value.replace(/^\s*/, '');
+    }
+    if (endKeep) {
+      endKeep.value = endKeep.value.replace(/^\s*/, '');
+    }
+    // otherwise we've got a deletion and no insertion
+  } else if (startKeep && endKeep) {
+    var newWsFull = endKeep.value.match(/^\s*/)[0],
+      delWsStart = deletion.value.match(/^\s*/)[0],
+      delWsEnd = deletion.value.match(/\s*$/)[0];
+
+    // Any whitespace that comes straight after startKeep in both the old and
+    // new texts, assign to startKeep and remove from the deletion.
+    var newWsStart =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    longestCommonPrefix)
+    /*istanbul ignore end*/
+    (newWsFull, delWsStart);
+    deletion.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    removePrefix)
+    /*istanbul ignore end*/
+    (deletion.value, newWsStart);
+
+    // Any whitespace that comes straight before endKeep in both the old and
+    // new texts, and hasn't already been assigned to startKeep, assign to
+    // endKeep and remove from the deletion.
+    var newWsEnd =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    longestCommonSuffix)
+    /*istanbul ignore end*/
+    (
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    removePrefix)
+    /*istanbul ignore end*/
+    (newWsFull, newWsStart), delWsEnd);
+    deletion.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    removeSuffix)
+    /*istanbul ignore end*/
+    (deletion.value, newWsEnd);
+    endKeep.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    replacePrefix)
+    /*istanbul ignore end*/
+    (endKeep.value, newWsFull, newWsEnd);
+
+    // If there's any whitespace from the new text that HASN'T already been
+    // assigned, assign it to the start:
+    startKeep.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    replaceSuffix)
+    /*istanbul ignore end*/
+    (startKeep.value, newWsFull, newWsFull.slice(0, newWsFull.length - newWsEnd.length));
+  } else if (endKeep) {
+    // We are at the start of the text. Preserve all the whitespace on
+    // endKeep, and just remove whitespace from the end of deletion to the
+    // extent that it overlaps with the start of endKeep.
+    var endKeepWsPrefix = endKeep.value.match(/^\s*/)[0];
+    var deletionWsSuffix = deletion.value.match(/\s*$/)[0];
+    var overlap =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    maximumOverlap)
+    /*istanbul ignore end*/
+    (deletionWsSuffix, endKeepWsPrefix);
+    deletion.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    removeSuffix)
+    /*istanbul ignore end*/
+    (deletion.value, overlap);
+  } else if (startKeep) {
+    // We are at the END of the text. Preserve all the whitespace on
+    // startKeep, and just remove whitespace from the start of deletion to
+    // the extent that it overlaps with the end of startKeep.
+    var startKeepWsSuffix = startKeep.value.match(/\s*$/)[0];
+    var deletionWsPrefix = deletion.value.match(/^\s*/)[0];
+    var _overlap =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    maximumOverlap)
+    /*istanbul ignore end*/
+    (startKeepWsSuffix, deletionWsPrefix);
+    deletion.value =
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    removePrefix)
+    /*istanbul ignore end*/
+    (deletion.value, _overlap);
+  }
+}
+var wordWithSpaceDiff =
+/*istanbul ignore start*/
+exports.wordWithSpaceDiff =
+/*istanbul ignore end*/
+new
+/*istanbul ignore start*/
+_base
+/*istanbul ignore end*/
+[
+/*istanbul ignore start*/
+"default"
+/*istanbul ignore end*/
+]();
+wordWithSpaceDiff.tokenize = function (value) {
+  // Slightly different to the tokenizeIncludingWhitespace regex used above in
+  // that this one treats each individual newline as a distinct tokens, rather
+  // than merging them into other surrounding whitespace. This was requested
+  // in https://github.com/kpdecker/jsdiff/issues/180 &
+  //    https://github.com/kpdecker/jsdiff/issues/211
+  var regex = new RegExp(
+  /*istanbul ignore start*/
+  "(\\r?\\n)|[".concat(
+  /*istanbul ignore end*/
+  extendedWordChars, "]+|[^\\S\\n\\r]+|[^").concat(extendedWordChars, "]"), 'ug');
+  return value.match(regex) || [];
+};
 function diffWordsWithSpace(oldStr, newStr, options) {
-  return wordDiff.diff(oldStr, newStr, options);
+  return wordWithSpaceDiff.diff(oldStr, newStr, options);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9kaWZmL3dvcmQuanMiXSwibmFtZXMiOlsiZXh0ZW5kZWRXb3JkQ2hhcnMiLCJyZVdoaXRlc3BhY2UiLCJ3b3JkRGlmZiIsIkRpZmYiLCJlcXVhbHMiLCJsZWZ0IiwicmlnaHQiLCJvcHRpb25zIiwiaWdub3JlQ2FzZSIsInRvTG93ZXJDYXNlIiwiaWdub3JlV2hpdGVzcGFjZSIsInRlc3QiLCJ0b2tlbml6ZSIsInZhbHVlIiwidG9rZW5zIiwic3BsaXQiLCJpIiwibGVuZ3RoIiwic3BsaWNlIiwiZGlmZldvcmRzIiwib2xkU3RyIiwibmV3U3RyIiwiZ2VuZXJhdGVPcHRpb25zIiwiZGlmZiIsImRpZmZXb3Jkc1dpdGhTcGFjZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUE7Ozs7O0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUEsaUJBQWlCLEdBQUcsK0RBQTFCO0FBRUEsSUFBTUMsWUFBWSxHQUFHLElBQXJCO0FBRU8sSUFBTUMsUUFBUSxHQUFHO0FBQUlDO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBLENBQUosRUFBakI7Ozs7OztBQUNQRCxRQUFRLENBQUNFLE1BQVQsR0FBa0IsVUFBU0MsSUFBVCxFQUFlQyxLQUFmLEVBQXNCO0FBQ3RDLE1BQUksS0FBS0MsT0FBTCxDQUFhQyxVQUFqQixFQUE2QjtBQUMzQkgsSUFBQUEsSUFBSSxHQUFHQSxJQUFJLENBQUNJLFdBQUwsRUFBUDtBQUNBSCxJQUFBQSxLQUFLLEdBQUdBLEtBQUssQ0FBQ0csV0FBTixFQUFSO0FBQ0Q7O0FBQ0QsU0FBT0osSUFBSSxLQUFLQyxLQUFULElBQW1CLEtBQUtDLE9BQUwsQ0FBYUcsZ0JBQWIsSUFBaUMsQ0FBQ1QsWUFBWSxDQUFDVSxJQUFiLENBQWtCTixJQUFsQixDQUFsQyxJQUE2RCxDQUFDSixZQUFZLENBQUNVLElBQWIsQ0FBa0JMLEtBQWxCLENBQXhGO0FBQ0QsQ0FORDs7QUFPQUosUUFBUSxDQUFDVSxRQUFULEdBQW9CLFVBQVNDLEtBQVQsRUFBZ0I7QUFDbEM7QUFDQSxNQUFJQyxNQUFNLEdBQUdELEtBQUssQ0FBQ0UsS0FBTixDQUFZLGlDQUFaLENBQWIsQ0FGa0MsQ0FJbEM7O0FBQ0EsT0FBSyxJQUFJQyxDQUFDLEdBQUcsQ0FBYixFQUFnQkEsQ0FBQyxHQUFHRixNQUFNLENBQUNHLE1BQVAsR0FBZ0IsQ0FBcEMsRUFBdUNELENBQUMsRUFBeEMsRUFBNEM7QUFDMUM7QUFDQSxRQUFJLENBQUNGLE1BQU0sQ0FBQ0UsQ0FBQyxHQUFHLENBQUwsQ0FBUCxJQUFrQkYsTUFBTSxDQUFDRSxDQUFDLEdBQUcsQ0FBTCxDQUF4QixJQUNLaEIsaUJBQWlCLENBQUNXLElBQWxCLENBQXVCRyxNQUFNLENBQUNFLENBQUQsQ0FBN0IsQ0FETCxJQUVLaEIsaUJBQWlCLENBQUNXLElBQWxCLENBQXVCRyxNQUFNLENBQUNFLENBQUMsR0FBRyxDQUFMLENBQTdCLENBRlQsRUFFZ0Q7QUFDOUNGLE1BQUFBLE1BQU0sQ0FBQ0UsQ0FBRCxDQUFOLElBQWFGLE1BQU0sQ0FBQ0UsQ0FBQyxHQUFHLENBQUwsQ0FBbkI7QUFDQUYsTUFBQUEsTUFBTSxDQUFDSSxNQUFQLENBQWNGLENBQUMsR0FBRyxDQUFsQixFQUFxQixDQUFyQjtBQUNBQSxNQUFBQSxDQUFDO0FBQ0Y7QUFDRjs7QUFFRCxTQUFPRixNQUFQO0FBQ0QsQ0FqQkQ7O0FBbUJPLFNBQVNLLFNBQVQsQ0FBbUJDLE1BQW5CLEVBQTJCQyxNQUEzQixFQUFtQ2QsT0FBbkMsRUFBNEM7QUFDakRBLEVBQUFBLE9BQU87QUFBRztBQUFBO0FBQUE7O0FBQUFlO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUFBO0FBQUE7QUFBQSxHQUFnQmYsT0FBaEIsRUFBeUI7QUFBQ0csSUFBQUEsZ0JBQWdCLEVBQUU7QUFBbkIsR0FBekIsQ0FBVjtBQUNBLFNBQU9SLFFBQVEsQ0FBQ3FCLElBQVQsQ0FBY0gsTUFBZCxFQUFzQkMsTUFBdEIsRUFBOEJkLE9BQTlCLENBQVA7QUFDRDs7QUFFTSxTQUFTaUIsa0JBQVQsQ0FBNEJKLE1BQTVCLEVBQW9DQyxNQUFwQyxFQUE0Q2QsT0FBNUMsRUFBcUQ7QUFDMUQsU0FBT0wsUUFBUSxDQUFDcUIsSUFBVCxDQUFjSCxNQUFkLEVBQXNCQyxNQUF0QixFQUE4QmQsT0FBOUIsQ0FBUDtBQUNEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IERpZmYgZnJvbSAnLi9iYXNlJztcbmltcG9ydCB7Z2VuZXJhdGVPcHRpb25zfSBmcm9tICcuLi91dGlsL3BhcmFtcyc7XG5cbi8vIEJhc2VkIG9uIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL0xhdGluX3NjcmlwdF9pbl9Vbmljb2RlXG4vL1xuLy8gUmFuZ2VzIGFuZCBleGNlcHRpb25zOlxuLy8gTGF0aW4tMSBTdXBwbGVtZW50LCAwMDgw4oCTMDBGRlxuLy8gIC0gVSswMEQ3ICDDlyBNdWx0aXBsaWNhdGlvbiBzaWduXG4vLyAgLSBVKzAwRjcgIMO3IERpdmlzaW9uIHNpZ25cbi8vIExhdGluIEV4dGVuZGVkLUEsIDAxMDDigJMwMTdGXG4vLyBMYXRpbiBFeHRlbmRlZC1CLCAwMTgw4oCTMDI0RlxuLy8gSVBBIEV4dGVuc2lvbnMsIDAyNTDigJMwMkFGXG4vLyBTcGFjaW5nIE1vZGlmaWVyIExldHRlcnMsIDAyQjDigJMwMkZGXG4vLyAgLSBVKzAyQzcgIMuHICYjNzExOyAgQ2Fyb25cbi8vICAtIFUrMDJEOCAgy5ggJiM3Mjg7ICBCcmV2ZVxuLy8gIC0gVSswMkQ5ICDLmSAmIzcyOTsgIERvdCBBYm92ZVxuLy8gIC0gVSswMkRBICDLmiAmIzczMDsgIFJpbmcgQWJvdmVcbi8vICAtIFUrMDJEQiAgy5sgJiM3MzE7ICBPZ29uZWtcbi8vICAtIFUrMDJEQyAgy5wgJiM3MzI7ICBTbWFsbCBUaWxkZVxuLy8gIC0gVSswMkREICDLnSAmIzczMzsgIERvdWJsZSBBY3V0ZSBBY2NlbnRcbi8vIExhdGluIEV4dGVuZGVkIEFkZGl0aW9uYWwsIDFFMDDigJMxRUZGXG5jb25zdCBleHRlbmRlZFdvcmRDaGFycyA9IC9eW2EtekEtWlxcdXtDMH0tXFx1e0ZGfVxcdXtEOH0tXFx1e0Y2fVxcdXtGOH0tXFx1ezJDNn1cXHV7MkM4fS1cXHV7MkQ3fVxcdXsyREV9LVxcdXsyRkZ9XFx1ezFFMDB9LVxcdXsxRUZGfV0rJC91O1xuXG5jb25zdCByZVdoaXRlc3BhY2UgPSAvXFxTLztcblxuZXhwb3J0IGNvbnN0IHdvcmREaWZmID0gbmV3IERpZmYoKTtcbndvcmREaWZmLmVxdWFscyA9IGZ1bmN0aW9uKGxlZnQsIHJpZ2h0KSB7XG4gIGlmICh0aGlzLm9wdGlvbnMuaWdub3JlQ2FzZSkge1xuICAgIGxlZnQgPSBsZWZ0LnRvTG93ZXJDYXNlKCk7XG4gICAgcmlnaHQgPSByaWdodC50b0xvd2VyQ2FzZSgpO1xuICB9XG4gIHJldHVybiBsZWZ0ID09PSByaWdodCB8fCAodGhpcy5vcHRpb25zLmlnbm9yZVdoaXRlc3BhY2UgJiYgIXJlV2hpdGVzcGFjZS50ZXN0KGxlZnQpICYmICFyZVdoaXRlc3BhY2UudGVzdChyaWdodCkpO1xufTtcbndvcmREaWZmLnRva2VuaXplID0gZnVuY3Rpb24odmFsdWUpIHtcbiAgLy8gQWxsIHdoaXRlc3BhY2Ugc3ltYm9scyBleGNlcHQgbmV3bGluZSBncm91cCBpbnRvIG9uZSB0b2tlbiwgZWFjaCBuZXdsaW5lIC0gaW4gc2VwYXJhdGUgdG9rZW5cbiAgbGV0IHRva2VucyA9IHZhbHVlLnNwbGl0KC8oW15cXFNcXHJcXG5dK3xbKClbXFxde30nXCJcXHJcXG5dfFxcYikvKTtcblxuICAvLyBKb2luIHRoZSBib3VuZGFyeSBzcGxpdHMgdGhhdCB3ZSBkbyBub3QgY29uc2lkZXIgdG8gYmUgYm91bmRhcmllcy4gVGhpcyBpcyBwcmltYXJpbHkgdGhlIGV4dGVuZGVkIExhdGluIGNoYXJhY3RlciBzZXQuXG4gIGZvciAobGV0IGkgPSAwOyBpIDwgdG9rZW5zLmxlbmd0aCAtIDE7IGkrKykge1xuICAgIC8vIElmIHdlIGhhdmUgYW4gZW1wdHkgc3RyaW5nIGluIHRoZSBuZXh0IGZpZWxkIGFuZCB3ZSBoYXZlIG9ubHkgd29yZCBjaGFycyBiZWZvcmUgYW5kIGFmdGVyLCBtZXJnZVxuICAgIGlmICghdG9rZW5zW2kgKyAxXSAmJiB0b2tlbnNbaSArIDJdXG4gICAgICAgICAgJiYgZXh0ZW5kZWRXb3JkQ2hhcnMudGVzdCh0b2tlbnNbaV0pXG4gICAgICAgICAgJiYgZXh0ZW5kZWRXb3JkQ2hhcnMudGVzdCh0b2tlbnNbaSArIDJdKSkge1xuICAgICAgdG9rZW5zW2ldICs9IHRva2Vuc1tpICsgMl07XG4gICAgICB0b2tlbnMuc3BsaWNlKGkgKyAxLCAyKTtcbiAgICAgIGktLTtcbiAgICB9XG4gIH1cblxuICByZXR1cm4gdG9rZW5zO1xufTtcblxuZXhwb3J0IGZ1bmN0aW9uIGRpZmZXb3JkcyhvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucykge1xuICBvcHRpb25zID0gZ2VuZXJhdGVPcHRpb25zKG9wdGlvbnMsIHtpZ25vcmVXaGl0ZXNwYWNlOiB0cnVlfSk7XG4gIHJldHVybiB3b3JkRGlmZi5kaWZmKG9sZFN0ciwgbmV3U3RyLCBvcHRpb25zKTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGRpZmZXb3Jkc1dpdGhTcGFjZShvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucykge1xuICByZXR1cm4gd29yZERpZmYuZGlmZihvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucyk7XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwiX3N0cmluZyIsIm9iaiIsIl9fZXNNb2R1bGUiLCJleHRlbmRlZFdvcmRDaGFycyIsInRva2VuaXplSW5jbHVkaW5nV2hpdGVzcGFjZSIsIlJlZ0V4cCIsImNvbmNhdCIsIndvcmREaWZmIiwiZXhwb3J0cyIsIkRpZmYiLCJlcXVhbHMiLCJsZWZ0IiwicmlnaHQiLCJvcHRpb25zIiwiaWdub3JlQ2FzZSIsInRvTG93ZXJDYXNlIiwidHJpbSIsInRva2VuaXplIiwidmFsdWUiLCJhcmd1bWVudHMiLCJsZW5ndGgiLCJ1bmRlZmluZWQiLCJwYXJ0cyIsImludGxTZWdtZW50ZXIiLCJyZXNvbHZlZE9wdGlvbnMiLCJncmFudWxhcml0eSIsIkVycm9yIiwiQXJyYXkiLCJmcm9tIiwic2VnbWVudCIsIm1hdGNoIiwidG9rZW5zIiwicHJldlBhcnQiLCJmb3JFYWNoIiwicGFydCIsInRlc3QiLCJwdXNoIiwicG9wIiwiam9pbiIsIm1hcCIsInRva2VuIiwiaSIsInJlcGxhY2UiLCJwb3N0UHJvY2VzcyIsImNoYW5nZXMiLCJvbmVDaGFuZ2VQZXJUb2tlbiIsImxhc3RLZWVwIiwiaW5zZXJ0aW9uIiwiZGVsZXRpb24iLCJjaGFuZ2UiLCJhZGRlZCIsInJlbW92ZWQiLCJkZWR1cGVXaGl0ZXNwYWNlSW5DaGFuZ2VPYmplY3RzIiwiZGlmZldvcmRzIiwib2xkU3RyIiwibmV3U3RyIiwiaWdub3JlV2hpdGVzcGFjZSIsImRpZmZXb3Jkc1dpdGhTcGFjZSIsImRpZmYiLCJzdGFydEtlZXAiLCJlbmRLZWVwIiwib2xkV3NQcmVmaXgiLCJvbGRXc1N1ZmZpeCIsIm5ld1dzUHJlZml4IiwibmV3V3NTdWZmaXgiLCJjb21tb25Xc1ByZWZpeCIsImxvbmdlc3RDb21tb25QcmVmaXgiLCJyZXBsYWNlU3VmZml4IiwicmVtb3ZlUHJlZml4IiwiY29tbW9uV3NTdWZmaXgiLCJsb25nZXN0Q29tbW9uU3VmZml4IiwicmVwbGFjZVByZWZpeCIsInJlbW92ZVN1ZmZpeCIsIm5ld1dzRnVsbCIsImRlbFdzU3RhcnQiLCJkZWxXc0VuZCIsIm5ld1dzU3RhcnQiLCJuZXdXc0VuZCIsInNsaWNlIiwiZW5kS2VlcFdzUHJlZml4IiwiZGVsZXRpb25Xc1N1ZmZpeCIsIm92ZXJsYXAiLCJtYXhpbXVtT3ZlcmxhcCIsInN0YXJ0S2VlcFdzU3VmZml4IiwiZGVsZXRpb25Xc1ByZWZpeCIsIndvcmRXaXRoU3BhY2VEaWZmIiwicmVnZXgiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvZGlmZi93b3JkLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBEaWZmIGZyb20gJy4vYmFzZSc7XG5pbXBvcnQgeyBsb25nZXN0Q29tbW9uUHJlZml4LCBsb25nZXN0Q29tbW9uU3VmZml4LCByZXBsYWNlUHJlZml4LCByZXBsYWNlU3VmZml4LCByZW1vdmVQcmVmaXgsIHJlbW92ZVN1ZmZpeCwgbWF4aW11bU92ZXJsYXAgfSBmcm9tICcuLi91dGlsL3N0cmluZyc7XG5cbi8vIEJhc2VkIG9uIGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL0xhdGluX3NjcmlwdF9pbl9Vbmljb2RlXG4vL1xuLy8gUmFuZ2VzIGFuZCBleGNlcHRpb25zOlxuLy8gTGF0aW4tMSBTdXBwbGVtZW50LCAwMDgw4oCTMDBGRlxuLy8gIC0gVSswMEQ3ICDDlyBNdWx0aXBsaWNhdGlvbiBzaWduXG4vLyAgLSBVKzAwRjcgIMO3IERpdmlzaW9uIHNpZ25cbi8vIExhdGluIEV4dGVuZGVkLUEsIDAxMDDigJMwMTdGXG4vLyBMYXRpbiBFeHRlbmRlZC1CLCAwMTgw4oCTMDI0RlxuLy8gSVBBIEV4dGVuc2lvbnMsIDAyNTDigJMwMkFGXG4vLyBTcGFjaW5nIE1vZGlmaWVyIExldHRlcnMsIDAyQjDigJMwMkZGXG4vLyAgLSBVKzAyQzcgIMuHICYjNzExOyAgQ2Fyb25cbi8vICAtIFUrMDJEOCAgy5ggJiM3Mjg7ICBCcmV2ZVxuLy8gIC0gVSswMkQ5ICDLmSAmIzcyOTsgIERvdCBBYm92ZVxuLy8gIC0gVSswMkRBICDLmiAmIzczMDsgIFJpbmcgQWJvdmVcbi8vICAtIFUrMDJEQiAgy5sgJiM3MzE7ICBPZ29uZWtcbi8vICAtIFUrMDJEQyAgy5wgJiM3MzI7ICBTbWFsbCBUaWxkZVxuLy8gIC0gVSswMkREICDLnSAmIzczMzsgIERvdWJsZSBBY3V0ZSBBY2NlbnRcbi8vIExhdGluIEV4dGVuZGVkIEFkZGl0aW9uYWwsIDFFMDDigJMxRUZGXG5jb25zdCBleHRlbmRlZFdvcmRDaGFycyA9ICdhLXpBLVowLTlfXFxcXHV7QzB9LVxcXFx1e0ZGfVxcXFx1e0Q4fS1cXFxcdXtGNn1cXFxcdXtGOH0tXFxcXHV7MkM2fVxcXFx1ezJDOH0tXFxcXHV7MkQ3fVxcXFx1ezJERX0tXFxcXHV7MkZGfVxcXFx1ezFFMDB9LVxcXFx1ezFFRkZ9JztcblxuLy8gRWFjaCB0b2tlbiBpcyBvbmUgb2YgdGhlIGZvbGxvd2luZzpcbi8vIC0gQSBwdW5jdHVhdGlvbiBtYXJrIHBsdXMgdGhlIHN1cnJvdW5kaW5nIHdoaXRlc3BhY2Vcbi8vIC0gQSB3b3JkIHBsdXMgdGhlIHN1cnJvdW5kaW5nIHdoaXRlc3BhY2Vcbi8vIC0gUHVyZSB3aGl0ZXNwYWNlIChidXQgb25seSBpbiB0aGUgc3BlY2lhbCBjYXNlIHdoZXJlIHRoaXMgdGhlIGVudGlyZSB0ZXh0XG4vLyAgIGlzIGp1c3Qgd2hpdGVzcGFjZSlcbi8vXG4vLyBXZSBoYXZlIHRvIGluY2x1ZGUgc3Vycm91bmRpbmcgd2hpdGVzcGFjZSBpbiB0aGUgdG9rZW5zIGJlY2F1c2UgdGhlIHR3b1xuLy8gYWx0ZXJuYXRpdmUgYXBwcm9hY2hlcyBwcm9kdWNlIGhvcnJpYmx5IGJyb2tlbiByZXN1bHRzOlxuLy8gKiBJZiB3ZSBqdXN0IGRpc2NhcmQgdGhlIHdoaXRlc3BhY2UsIHdlIGNhbid0IGZ1bGx5IHJlcHJvZHVjZSB0aGUgb3JpZ2luYWxcbi8vICAgdGV4dCBmcm9tIHRoZSBzZXF1ZW5jZSBvZiB0b2tlbnMgYW5kIGFueSBhdHRlbXB0IHRvIHJlbmRlciB0aGUgZGlmZiB3aWxsXG4vLyAgIGdldCB0aGUgd2hpdGVzcGFjZSB3cm9uZy5cbi8vICogSWYgd2UgaGF2ZSBzZXBhcmF0ZSB0b2tlbnMgZm9yIHdoaXRlc3BhY2UsIHRoZW4gaW4gYSB0eXBpY2FsIHRleHQgZXZlcnlcbi8vICAgc2Vjb25kIHRva2VuIHdpbGwgYmUgYSBzaW5nbGUgc3BhY2UgY2hhcmFjdGVyLiBCdXQgdGhpcyBvZnRlbiByZXN1bHRzIGluXG4vLyAgIHRoZSBvcHRpbWFsIGRpZmYgYmV0d2VlbiB0d28gdGV4dHMgYmVpbmcgYSBwZXJ2ZXJzZSBvbmUgdGhhdCBwcmVzZXJ2ZXNcbi8vICAgdGhlIHNwYWNlcyBiZXR3ZWVuIHdvcmRzIGJ1dCBkZWxldGVzIGFuZCByZWluc2VydHMgYWN0dWFsIGNvbW1vbiB3b3Jkcy5cbi8vICAgU2VlIGh0dHBzOi8vZ2l0aHViLmNvbS9rcGRlY2tlci9qc2RpZmYvaXNzdWVzLzE2MCNpc3N1ZWNvbW1lbnQtMTg2NjA5OTY0MFxuLy8gICBmb3IgYW4gZXhhbXBsZS5cbi8vXG4vLyBLZWVwaW5nIHRoZSBzdXJyb3VuZGluZyB3aGl0ZXNwYWNlIG9mIGNvdXJzZSBoYXMgaW1wbGljYXRpb25zIGZvciAuZXF1YWxzXG4vLyBhbmQgLmpvaW4sIG5vdCBqdXN0IC50b2tlbml6ZS5cblxuLy8gVGhpcyByZWdleCBkb2VzIE5PVCBmdWxseSBpbXBsZW1lbnQgdGhlIHRva2VuaXphdGlvbiBydWxlcyBkZXNjcmliZWQgYWJvdmUuXG4vLyBJbnN0ZWFkLCBpdCBnaXZlcyBydW5zIG9mIHdoaXRlc3BhY2UgdGhlaXIgb3duIFwidG9rZW5cIi4gVGhlIHRva2VuaXplIG1ldGhvZFxuLy8gdGhlbiBoYW5kbGVzIHN0aXRjaGluZyB3aGl0ZXNwYWNlIHRva2VucyBvbnRvIGFkamFjZW50IHdvcmQgb3IgcHVuY3R1YXRpb25cbi8vIHRva2Vucy5cbmNvbnN0IHRva2VuaXplSW5jbHVkaW5nV2hpdGVzcGFjZSA9IG5ldyBSZWdFeHAoYFske2V4dGVuZGVkV29yZENoYXJzfV0rfFxcXFxzK3xbXiR7ZXh0ZW5kZWRXb3JkQ2hhcnN9XWAsICd1ZycpO1xuXG5leHBvcnQgY29uc3Qgd29yZERpZmYgPSBuZXcgRGlmZigpO1xud29yZERpZmYuZXF1YWxzID0gZnVuY3Rpb24obGVmdCwgcmlnaHQsIG9wdGlvbnMpIHtcbiAgaWYgKG9wdGlvbnMuaWdub3JlQ2FzZSkge1xuICAgIGxlZnQgPSBsZWZ0LnRvTG93ZXJDYXNlKCk7XG4gICAgcmlnaHQgPSByaWdodC50b0xvd2VyQ2FzZSgpO1xuICB9XG5cbiAgcmV0dXJuIGxlZnQudHJpbSgpID09PSByaWdodC50cmltKCk7XG59O1xuXG53b3JkRGlmZi50b2tlbml6ZSA9IGZ1bmN0aW9uKHZhbHVlLCBvcHRpb25zID0ge30pIHtcbiAgbGV0IHBhcnRzO1xuICBpZiAob3B0aW9ucy5pbnRsU2VnbWVudGVyKSB7XG4gICAgaWYgKG9wdGlvbnMuaW50bFNlZ21lbnRlci5yZXNvbHZlZE9wdGlvbnMoKS5ncmFudWxhcml0eSAhPSAnd29yZCcpIHtcbiAgICAgIHRocm93IG5ldyBFcnJvcignVGhlIHNlZ21lbnRlciBwYXNzZWQgbXVzdCBoYXZlIGEgZ3JhbnVsYXJpdHkgb2YgXCJ3b3JkXCInKTtcbiAgICB9XG4gICAgcGFydHMgPSBBcnJheS5mcm9tKG9wdGlvbnMuaW50bFNlZ21lbnRlci5zZWdtZW50KHZhbHVlKSwgc2VnbWVudCA9PiBzZWdtZW50LnNlZ21lbnQpO1xuICB9IGVsc2Uge1xuICAgIHBhcnRzID0gdmFsdWUubWF0Y2godG9rZW5pemVJbmNsdWRpbmdXaGl0ZXNwYWNlKSB8fCBbXTtcbiAgfVxuICBjb25zdCB0b2tlbnMgPSBbXTtcbiAgbGV0IHByZXZQYXJ0ID0gbnVsbDtcbiAgcGFydHMuZm9yRWFjaChwYXJ0ID0+IHtcbiAgICBpZiAoKC9cXHMvKS50ZXN0KHBhcnQpKSB7XG4gICAgICBpZiAocHJldlBhcnQgPT0gbnVsbCkge1xuICAgICAgICB0b2tlbnMucHVzaChwYXJ0KTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIHRva2Vucy5wdXNoKHRva2Vucy5wb3AoKSArIHBhcnQpO1xuICAgICAgfVxuICAgIH0gZWxzZSBpZiAoKC9cXHMvKS50ZXN0KHByZXZQYXJ0KSkge1xuICAgICAgaWYgKHRva2Vuc1t0b2tlbnMubGVuZ3RoIC0gMV0gPT0gcHJldlBhcnQpIHtcbiAgICAgICAgdG9rZW5zLnB1c2godG9rZW5zLnBvcCgpICsgcGFydCk7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICB0b2tlbnMucHVzaChwcmV2UGFydCArIHBhcnQpO1xuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICB0b2tlbnMucHVzaChwYXJ0KTtcbiAgICB9XG5cbiAgICBwcmV2UGFydCA9IHBhcnQ7XG4gIH0pO1xuICByZXR1cm4gdG9rZW5zO1xufTtcblxud29yZERpZmYuam9pbiA9IGZ1bmN0aW9uKHRva2Vucykge1xuICAvLyBUb2tlbnMgYmVpbmcgam9pbmVkIGhlcmUgd2lsbCBhbHdheXMgaGF2ZSBhcHBlYXJlZCBjb25zZWN1dGl2ZWx5IGluIHRoZVxuICAvLyBzYW1lIHRleHQsIHNvIHdlIGNhbiBzaW1wbHkgc3RyaXAgb2ZmIHRoZSBsZWFkaW5nIHdoaXRlc3BhY2UgZnJvbSBhbGwgdGhlXG4gIC8vIHRva2VucyBleGNlcHQgdGhlIGZpcnN0IChhbmQgZXhjZXB0IGFueSB3aGl0ZXNwYWNlLW9ubHkgdG9rZW5zIC0gYnV0IHN1Y2hcbiAgLy8gYSB0b2tlbiB3aWxsIGFsd2F5cyBiZSB0aGUgZmlyc3QgYW5kIG9ubHkgdG9rZW4gYW55d2F5KSBhbmQgdGhlbiBqb2luIHRoZW1cbiAgLy8gYW5kIHRoZSB3aGl0ZXNwYWNlIGFyb3VuZCB3b3JkcyBhbmQgcHVuY3R1YXRpb24gd2lsbCBlbmQgdXAgY29ycmVjdC5cbiAgcmV0dXJuIHRva2Vucy5tYXAoKHRva2VuLCBpKSA9PiB7XG4gICAgaWYgKGkgPT0gMCkge1xuICAgICAgcmV0dXJuIHRva2VuO1xuICAgIH0gZWxzZSB7XG4gICAgICByZXR1cm4gdG9rZW4ucmVwbGFjZSgoL15cXHMrLyksICcnKTtcbiAgICB9XG4gIH0pLmpvaW4oJycpO1xufTtcblxud29yZERpZmYucG9zdFByb2Nlc3MgPSBmdW5jdGlvbihjaGFuZ2VzLCBvcHRpb25zKSB7XG4gIGlmICghY2hhbmdlcyB8fCBvcHRpb25zLm9uZUNoYW5nZVBlclRva2VuKSB7XG4gICAgcmV0dXJuIGNoYW5nZXM7XG4gIH1cblxuICBsZXQgbGFzdEtlZXAgPSBudWxsO1xuICAvLyBDaGFuZ2Ugb2JqZWN0cyByZXByZXNlbnRpbmcgYW55IGluc2VydGlvbiBvciBkZWxldGlvbiBzaW5jZSB0aGUgbGFzdFxuICAvLyBcImtlZXBcIiBjaGFuZ2Ugb2JqZWN0LiBUaGVyZSBjYW4gYmUgYXQgbW9zdCBvbmUgb2YgZWFjaC5cbiAgbGV0IGluc2VydGlvbiA9IG51bGw7XG4gIGxldCBkZWxldGlvbiA9IG51bGw7XG4gIGNoYW5nZXMuZm9yRWFjaChjaGFuZ2UgPT4ge1xuICAgIGlmIChjaGFuZ2UuYWRkZWQpIHtcbiAgICAgIGluc2VydGlvbiA9IGNoYW5nZTtcbiAgICB9IGVsc2UgaWYgKGNoYW5nZS5yZW1vdmVkKSB7XG4gICAgICBkZWxldGlvbiA9IGNoYW5nZTtcbiAgICB9IGVsc2Uge1xuICAgICAgaWYgKGluc2VydGlvbiB8fCBkZWxldGlvbikgeyAvLyBNYXkgYmUgZmFsc2UgYXQgc3RhcnQgb2YgdGV4dFxuICAgICAgICBkZWR1cGVXaGl0ZXNwYWNlSW5DaGFuZ2VPYmplY3RzKGxhc3RLZWVwLCBkZWxldGlvbiwgaW5zZXJ0aW9uLCBjaGFuZ2UpO1xuICAgICAgfVxuICAgICAgbGFzdEtlZXAgPSBjaGFuZ2U7XG4gICAgICBpbnNlcnRpb24gPSBudWxsO1xuICAgICAgZGVsZXRpb24gPSBudWxsO1xuICAgIH1cbiAgfSk7XG4gIGlmIChpbnNlcnRpb24gfHwgZGVsZXRpb24pIHtcbiAgICBkZWR1cGVXaGl0ZXNwYWNlSW5DaGFuZ2VPYmplY3RzKGxhc3RLZWVwLCBkZWxldGlvbiwgaW5zZXJ0aW9uLCBudWxsKTtcbiAgfVxuICByZXR1cm4gY2hhbmdlcztcbn07XG5cbmV4cG9ydCBmdW5jdGlvbiBkaWZmV29yZHMob2xkU3RyLCBuZXdTdHIsIG9wdGlvbnMpIHtcbiAgLy8gVGhpcyBvcHRpb24gaGFzIG5ldmVyIGJlZW4gZG9jdW1lbnRlZCBhbmQgbmV2ZXIgd2lsbCBiZSAoaXQncyBjbGVhcmVyIHRvXG4gIC8vIGp1c3QgY2FsbCBgZGlmZldvcmRzV2l0aFNwYWNlYCBkaXJlY3RseSBpZiB5b3UgbmVlZCB0aGF0IGJlaGF2aW9yKSwgYnV0XG4gIC8vIGhhcyBleGlzdGVkIGluIGpzZGlmZiBmb3IgYSBsb25nIHRpbWUsIHNvIHdlIHJldGFpbiBzdXBwb3J0IGZvciBpdCBoZXJlXG4gIC8vIGZvciB0aGUgc2FrZSBvZiBiYWNrd2FyZHMgY29tcGF0aWJpbGl0eS5cbiAgaWYgKG9wdGlvbnM/Lmlnbm9yZVdoaXRlc3BhY2UgIT0gbnVsbCAmJiAhb3B0aW9ucy5pZ25vcmVXaGl0ZXNwYWNlKSB7XG4gICAgcmV0dXJuIGRpZmZXb3Jkc1dpdGhTcGFjZShvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucyk7XG4gIH1cblxuICByZXR1cm4gd29yZERpZmYuZGlmZihvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucyk7XG59XG5cbmZ1bmN0aW9uIGRlZHVwZVdoaXRlc3BhY2VJbkNoYW5nZU9iamVjdHMoc3RhcnRLZWVwLCBkZWxldGlvbiwgaW5zZXJ0aW9uLCBlbmRLZWVwKSB7XG4gIC8vIEJlZm9yZSByZXR1cm5pbmcsIHdlIHRpZHkgdXAgdGhlIGxlYWRpbmcgYW5kIHRyYWlsaW5nIHdoaXRlc3BhY2Ugb2YgdGhlXG4gIC8vIGNoYW5nZSBvYmplY3RzIHRvIGVsaW1pbmF0ZSBjYXNlcyB3aGVyZSB0cmFpbGluZyB3aGl0ZXNwYWNlIGluIG9uZSBvYmplY3RcbiAgLy8gaXMgcmVwZWF0ZWQgYXMgbGVhZGluZyB3aGl0ZXNwYWNlIGluIHRoZSBuZXh0LlxuICAvLyBCZWxvdyBhcmUgZXhhbXBsZXMgb2YgdGhlIG91dGNvbWVzIHdlIHdhbnQgaGVyZSB0byBleHBsYWluIHRoZSBjb2RlLlxuICAvLyBJPWluc2VydCwgSz1rZWVwLCBEPWRlbGV0ZVxuICAvLyAxLiBkaWZmaW5nICdmb28gYmFyIGJheicgdnMgJ2ZvbyBiYXonXG4gIC8vICAgIFByaW9yIHRvIGNsZWFudXAsIHdlIGhhdmUgSzonZm9vICcgRDonIGJhciAnIEs6JyBiYXonXG4gIC8vICAgIEFmdGVyIGNsZWFudXAsIHdlIHdhbnQ6ICAgSzonZm9vICcgRDonYmFyICcgSzonYmF6J1xuICAvL1xuICAvLyAyLiBEaWZmaW5nICdmb28gYmFyIGJheicgdnMgJ2ZvbyBxdXggYmF6J1xuICAvLyAgICBQcmlvciB0byBjbGVhbnVwLCB3ZSBoYXZlIEs6J2ZvbyAnIEQ6JyBiYXIgJyBJOicgcXV4ICcgSzonIGJheidcbiAgLy8gICAgQWZ0ZXIgY2xlYW51cCwgd2Ugd2FudCBLOidmb28gJyBEOidiYXInIEk6J3F1eCcgSzonIGJheidcbiAgLy9cbiAgLy8gMy4gRGlmZmluZyAnZm9vXFxuYmFyIGJheicgdnMgJ2ZvbyBiYXonXG4gIC8vICAgIFByaW9yIHRvIGNsZWFudXAsIHdlIGhhdmUgSzonZm9vICcgRDonXFxuYmFyICcgSzonIGJheidcbiAgLy8gICAgQWZ0ZXIgY2xlYW51cCwgd2Ugd2FudCBLJ2ZvbycgRDonXFxuYmFyJyBLOicgYmF6J1xuICAvL1xuICAvLyA0LiBEaWZmaW5nICdmb28gYmF6JyB2cyAnZm9vXFxuYmFyIGJheidcbiAgLy8gICAgUHJpb3IgdG8gY2xlYW51cCwgd2UgaGF2ZSBLOidmb29cXG4nIEk6J1xcbmJhciAnIEs6JyBiYXonXG4gIC8vICAgIEFmdGVyIGNsZWFudXAsIHdlIGlkZWFsbHkgd2FudCBLJ2ZvbycgSTonXFxuYmFyJyBLOicgYmF6J1xuICAvLyAgICBidXQgZG9uJ3QgYWN0dWFsbHkgbWFuYWdlIHRoaXMgY3VycmVudGx5ICh0aGUgcHJlLWNsZWFudXAgY2hhbmdlXG4gIC8vICAgIG9iamVjdHMgZG9uJ3QgY29udGFpbiBlbm91Z2ggaW5mb3JtYXRpb24gdG8gbWFrZSBpdCBwb3NzaWJsZSkuXG4gIC8vXG4gIC8vIDUuIERpZmZpbmcgJ2ZvbyAgIGJhciBiYXonIHZzICdmb28gIGJheidcbiAgLy8gICAgUHJpb3IgdG8gY2xlYW51cCwgd2UgaGF2ZSBLOidmb28gICcgRDonICAgYmFyICcgSzonICBiYXonXG4gIC8vICAgIEFmdGVyIGNsZWFudXAsIHdlIHdhbnQgSzonZm9vICAnIEQ6JyBiYXIgJyBLOidiYXonXG4gIC8vXG4gIC8vIE91ciBoYW5kbGluZyBpcyB1bmF2b2lkYWJseSBpbXBlcmZlY3QgaW4gdGhlIGNhc2Ugd2hlcmUgdGhlcmUncyBhIHNpbmdsZVxuICAvLyBpbmRlbCBiZXR3ZWVuIGtlZXBzIGFuZCB0aGUgd2hpdGVzcGFjZSBoYXMgY2hhbmdlZC4gRm9yIGluc3RhbmNlLCBjb25zaWRlclxuICAvLyBkaWZmaW5nICdmb29cXHRiYXJcXG5iYXonIHZzICdmb28gYmF6Jy4gVW5sZXNzIHdlIGNyZWF0ZSBhbiBleHRyYSBjaGFuZ2VcbiAgLy8gb2JqZWN0IHRvIHJlcHJlc2VudCB0aGUgaW5zZXJ0aW9uIG9mIHRoZSBzcGFjZSBjaGFyYWN0ZXIgKHdoaWNoIGlzbid0IGV2ZW5cbiAgLy8gYSB0b2tlbiksIHdlIGhhdmUgbm8gd2F5IHRvIGF2b2lkIGxvc2luZyBpbmZvcm1hdGlvbiBhYm91dCB0aGUgdGV4dHMnXG4gIC8vIG9yaWdpbmFsIHdoaXRlc3BhY2UgaW4gdGhlIHJlc3VsdCB3ZSByZXR1cm4uIFN0aWxsLCB3ZSBkbyBvdXIgYmVzdCB0b1xuICAvLyBvdXRwdXQgc29tZXRoaW5nIHRoYXQgd2lsbCBsb29rIHNlbnNpYmxlIGlmIHdlIGUuZy4gcHJpbnQgaXQgd2l0aFxuICAvLyBpbnNlcnRpb25zIGluIGdyZWVuIGFuZCBkZWxldGlvbnMgaW4gcmVkLlxuXG4gIC8vIEJldHdlZW4gdHdvIFwia2VlcFwiIGNoYW5nZSBvYmplY3RzIChvciBiZWZvcmUgdGhlIGZpcnN0IG9yIGFmdGVyIHRoZSBsYXN0XG4gIC8vIGNoYW5nZSBvYmplY3QpLCB3ZSBjYW4gaGF2ZSBlaXRoZXI6XG4gIC8vICogQSBcImRlbGV0ZVwiIGZvbGxvd2VkIGJ5IGFuIFwiaW5zZXJ0XCJcbiAgLy8gKiBKdXN0IGFuIFwiaW5zZXJ0XCJcbiAgLy8gKiBKdXN0IGEgXCJkZWxldGVcIlxuICAvLyBXZSBoYW5kbGUgdGhlIHRocmVlIGNhc2VzIHNlcGFyYXRlbHkuXG4gIGlmIChkZWxldGlvbiAmJiBpbnNlcnRpb24pIHtcbiAgICBjb25zdCBvbGRXc1ByZWZpeCA9IGRlbGV0aW9uLnZhbHVlLm1hdGNoKC9eXFxzKi8pWzBdO1xuICAgIGNvbnN0IG9sZFdzU3VmZml4ID0gZGVsZXRpb24udmFsdWUubWF0Y2goL1xccyokLylbMF07XG4gICAgY29uc3QgbmV3V3NQcmVmaXggPSBpbnNlcnRpb24udmFsdWUubWF0Y2goL15cXHMqLylbMF07XG4gICAgY29uc3QgbmV3V3NTdWZmaXggPSBpbnNlcnRpb24udmFsdWUubWF0Y2goL1xccyokLylbMF07XG5cbiAgICBpZiAoc3RhcnRLZWVwKSB7XG4gICAgICBjb25zdCBjb21tb25Xc1ByZWZpeCA9IGxvbmdlc3RDb21tb25QcmVmaXgob2xkV3NQcmVmaXgsIG5ld1dzUHJlZml4KTtcbiAgICAgIHN0YXJ0S2VlcC52YWx1ZSA9IHJlcGxhY2VTdWZmaXgoc3RhcnRLZWVwLnZhbHVlLCBuZXdXc1ByZWZpeCwgY29tbW9uV3NQcmVmaXgpO1xuICAgICAgZGVsZXRpb24udmFsdWUgPSByZW1vdmVQcmVmaXgoZGVsZXRpb24udmFsdWUsIGNvbW1vbldzUHJlZml4KTtcbiAgICAgIGluc2VydGlvbi52YWx1ZSA9IHJlbW92ZVByZWZpeChpbnNlcnRpb24udmFsdWUsIGNvbW1vbldzUHJlZml4KTtcbiAgICB9XG4gICAgaWYgKGVuZEtlZXApIHtcbiAgICAgIGNvbnN0IGNvbW1vbldzU3VmZml4ID0gbG9uZ2VzdENvbW1vblN1ZmZpeChvbGRXc1N1ZmZpeCwgbmV3V3NTdWZmaXgpO1xuICAgICAgZW5kS2VlcC52YWx1ZSA9IHJlcGxhY2VQcmVmaXgoZW5kS2VlcC52YWx1ZSwgbmV3V3NTdWZmaXgsIGNvbW1vbldzU3VmZml4KTtcbiAgICAgIGRlbGV0aW9uLnZhbHVlID0gcmVtb3ZlU3VmZml4KGRlbGV0aW9uLnZhbHVlLCBjb21tb25Xc1N1ZmZpeCk7XG4gICAgICBpbnNlcnRpb24udmFsdWUgPSByZW1vdmVTdWZmaXgoaW5zZXJ0aW9uLnZhbHVlLCBjb21tb25Xc1N1ZmZpeCk7XG4gICAgfVxuICB9IGVsc2UgaWYgKGluc2VydGlvbikge1xuICAgIC8vIFRoZSB3aGl0ZXNwYWNlcyBhbGwgcmVmbGVjdCB3aGF0IHdhcyBpbiB0aGUgbmV3IHRleHQgcmF0aGVyIHRoYW5cbiAgICAvLyB0aGUgb2xkLCBzbyB3ZSBlc3NlbnRpYWxseSBoYXZlIG5vIGluZm9ybWF0aW9uIGFib3V0IHdoaXRlc3BhY2VcbiAgICAvLyBpbnNlcnRpb24gb3IgZGVsZXRpb24uIFdlIGp1c3Qgd2FudCB0byBkZWR1cGUgdGhlIHdoaXRlc3BhY2UuXG4gICAgLy8gV2UgZG8gdGhhdCBieSBoYXZpbmcgZWFjaCBjaGFuZ2Ugb2JqZWN0IGtlZXAgaXRzIHRyYWlsaW5nXG4gICAgLy8gd2hpdGVzcGFjZSBhbmQgZGVsZXRpbmcgZHVwbGljYXRlIGxlYWRpbmcgd2hpdGVzcGFjZSB3aGVyZVxuICAgIC8vIHByZXNlbnQuXG4gICAgaWYgKHN0YXJ0S2VlcCkge1xuICAgICAgaW5zZXJ0aW9uLnZhbHVlID0gaW5zZXJ0aW9uLnZhbHVlLnJlcGxhY2UoL15cXHMqLywgJycpO1xuICAgIH1cbiAgICBpZiAoZW5kS2VlcCkge1xuICAgICAgZW5kS2VlcC52YWx1ZSA9IGVuZEtlZXAudmFsdWUucmVwbGFjZSgvXlxccyovLCAnJyk7XG4gICAgfVxuICAvLyBvdGhlcndpc2Ugd2UndmUgZ290IGEgZGVsZXRpb24gYW5kIG5vIGluc2VydGlvblxuICB9IGVsc2UgaWYgKHN0YXJ0S2VlcCAmJiBlbmRLZWVwKSB7XG4gICAgY29uc3QgbmV3V3NGdWxsID0gZW5kS2VlcC52YWx1ZS5tYXRjaCgvXlxccyovKVswXSxcbiAgICAgICAgZGVsV3NTdGFydCA9IGRlbGV0aW9uLnZhbHVlLm1hdGNoKC9eXFxzKi8pWzBdLFxuICAgICAgICBkZWxXc0VuZCA9IGRlbGV0aW9uLnZhbHVlLm1hdGNoKC9cXHMqJC8pWzBdO1xuXG4gICAgLy8gQW55IHdoaXRlc3BhY2UgdGhhdCBjb21lcyBzdHJhaWdodCBhZnRlciBzdGFydEtlZXAgaW4gYm90aCB0aGUgb2xkIGFuZFxuICAgIC8vIG5ldyB0ZXh0cywgYXNzaWduIHRvIHN0YXJ0S2VlcCBhbmQgcmVtb3ZlIGZyb20gdGhlIGRlbGV0aW9uLlxuICAgIGNvbnN0IG5ld1dzU3RhcnQgPSBsb25nZXN0Q29tbW9uUHJlZml4KG5ld1dzRnVsbCwgZGVsV3NTdGFydCk7XG4gICAgZGVsZXRpb24udmFsdWUgPSByZW1vdmVQcmVmaXgoZGVsZXRpb24udmFsdWUsIG5ld1dzU3RhcnQpO1xuXG4gICAgLy8gQW55IHdoaXRlc3BhY2UgdGhhdCBjb21lcyBzdHJhaWdodCBiZWZvcmUgZW5kS2VlcCBpbiBib3RoIHRoZSBvbGQgYW5kXG4gICAgLy8gbmV3IHRleHRzLCBhbmQgaGFzbid0IGFscmVhZHkgYmVlbiBhc3NpZ25lZCB0byBzdGFydEtlZXAsIGFzc2lnbiB0b1xuICAgIC8vIGVuZEtlZXAgYW5kIHJlbW92ZSBmcm9tIHRoZSBkZWxldGlvbi5cbiAgICBjb25zdCBuZXdXc0VuZCA9IGxvbmdlc3RDb21tb25TdWZmaXgoXG4gICAgICByZW1vdmVQcmVmaXgobmV3V3NGdWxsLCBuZXdXc1N0YXJ0KSxcbiAgICAgIGRlbFdzRW5kXG4gICAgKTtcbiAgICBkZWxldGlvbi52YWx1ZSA9IHJlbW92ZVN1ZmZpeChkZWxldGlvbi52YWx1ZSwgbmV3V3NFbmQpO1xuICAgIGVuZEtlZXAudmFsdWUgPSByZXBsYWNlUHJlZml4KGVuZEtlZXAudmFsdWUsIG5ld1dzRnVsbCwgbmV3V3NFbmQpO1xuXG4gICAgLy8gSWYgdGhlcmUncyBhbnkgd2hpdGVzcGFjZSBmcm9tIHRoZSBuZXcgdGV4dCB0aGF0IEhBU04nVCBhbHJlYWR5IGJlZW5cbiAgICAvLyBhc3NpZ25lZCwgYXNzaWduIGl0IHRvIHRoZSBzdGFydDpcbiAgICBzdGFydEtlZXAudmFsdWUgPSByZXBsYWNlU3VmZml4KFxuICAgICAgc3RhcnRLZWVwLnZhbHVlLFxuICAgICAgbmV3V3NGdWxsLFxuICAgICAgbmV3V3NGdWxsLnNsaWNlKDAsIG5ld1dzRnVsbC5sZW5ndGggLSBuZXdXc0VuZC5sZW5ndGgpXG4gICAgKTtcbiAgfSBlbHNlIGlmIChlbmRLZWVwKSB7XG4gICAgLy8gV2UgYXJlIGF0IHRoZSBzdGFydCBvZiB0aGUgdGV4dC4gUHJlc2VydmUgYWxsIHRoZSB3aGl0ZXNwYWNlIG9uXG4gICAgLy8gZW5kS2VlcCwgYW5kIGp1c3QgcmVtb3ZlIHdoaXRlc3BhY2UgZnJvbSB0aGUgZW5kIG9mIGRlbGV0aW9uIHRvIHRoZVxuICAgIC8vIGV4dGVudCB0aGF0IGl0IG92ZXJsYXBzIHdpdGggdGhlIHN0YXJ0IG9mIGVuZEtlZXAuXG4gICAgY29uc3QgZW5kS2VlcFdzUHJlZml4ID0gZW5kS2VlcC52YWx1ZS5tYXRjaCgvXlxccyovKVswXTtcbiAgICBjb25zdCBkZWxldGlvbldzU3VmZml4ID0gZGVsZXRpb24udmFsdWUubWF0Y2goL1xccyokLylbMF07XG4gICAgY29uc3Qgb3ZlcmxhcCA9IG1heGltdW1PdmVybGFwKGRlbGV0aW9uV3NTdWZmaXgsIGVuZEtlZXBXc1ByZWZpeCk7XG4gICAgZGVsZXRpb24udmFsdWUgPSByZW1vdmVTdWZmaXgoZGVsZXRpb24udmFsdWUsIG92ZXJsYXApO1xuICB9IGVsc2UgaWYgKHN0YXJ0S2VlcCkge1xuICAgIC8vIFdlIGFyZSBhdCB0aGUgRU5EIG9mIHRoZSB0ZXh0LiBQcmVzZXJ2ZSBhbGwgdGhlIHdoaXRlc3BhY2Ugb25cbiAgICAvLyBzdGFydEtlZXAsIGFuZCBqdXN0IHJlbW92ZSB3aGl0ZXNwYWNlIGZyb20gdGhlIHN0YXJ0IG9mIGRlbGV0aW9uIHRvXG4gICAgLy8gdGhlIGV4dGVudCB0aGF0IGl0IG92ZXJsYXBzIHdpdGggdGhlIGVuZCBvZiBzdGFydEtlZXAuXG4gICAgY29uc3Qgc3RhcnRLZWVwV3NTdWZmaXggPSBzdGFydEtlZXAudmFsdWUubWF0Y2goL1xccyokLylbMF07XG4gICAgY29uc3QgZGVsZXRpb25Xc1ByZWZpeCA9IGRlbGV0aW9uLnZhbHVlLm1hdGNoKC9eXFxzKi8pWzBdO1xuICAgIGNvbnN0IG92ZXJsYXAgPSBtYXhpbXVtT3ZlcmxhcChzdGFydEtlZXBXc1N1ZmZpeCwgZGVsZXRpb25Xc1ByZWZpeCk7XG4gICAgZGVsZXRpb24udmFsdWUgPSByZW1vdmVQcmVmaXgoZGVsZXRpb24udmFsdWUsIG92ZXJsYXApO1xuICB9XG59XG5cblxuZXhwb3J0IGNvbnN0IHdvcmRXaXRoU3BhY2VEaWZmID0gbmV3IERpZmYoKTtcbndvcmRXaXRoU3BhY2VEaWZmLnRva2VuaXplID0gZnVuY3Rpb24odmFsdWUpIHtcbiAgLy8gU2xpZ2h0bHkgZGlmZmVyZW50IHRvIHRoZSB0b2tlbml6ZUluY2x1ZGluZ1doaXRlc3BhY2UgcmVnZXggdXNlZCBhYm92ZSBpblxuICAvLyB0aGF0IHRoaXMgb25lIHRyZWF0cyBlYWNoIGluZGl2aWR1YWwgbmV3bGluZSBhcyBhIGRpc3RpbmN0IHRva2VucywgcmF0aGVyXG4gIC8vIHRoYW4gbWVyZ2luZyB0aGVtIGludG8gb3RoZXIgc3Vycm91bmRpbmcgd2hpdGVzcGFjZS4gVGhpcyB3YXMgcmVxdWVzdGVkXG4gIC8vIGluIGh0dHBzOi8vZ2l0aHViLmNvbS9rcGRlY2tlci9qc2RpZmYvaXNzdWVzLzE4MCAmXG4gIC8vICAgIGh0dHBzOi8vZ2l0aHViLmNvbS9rcGRlY2tlci9qc2RpZmYvaXNzdWVzLzIxMVxuICBjb25zdCByZWdleCA9IG5ldyBSZWdFeHAoYChcXFxccj9cXFxcbil8WyR7ZXh0ZW5kZWRXb3JkQ2hhcnN9XSt8W15cXFxcU1xcXFxuXFxcXHJdK3xbXiR7ZXh0ZW5kZWRXb3JkQ2hhcnN9XWAsICd1ZycpO1xuICByZXR1cm4gdmFsdWUubWF0Y2gocmVnZXgpIHx8IFtdO1xufTtcbmV4cG9ydCBmdW5jdGlvbiBkaWZmV29yZHNXaXRoU3BhY2Uob2xkU3RyLCBuZXdTdHIsIG9wdGlvbnMpIHtcbiAgcmV0dXJuIHdvcmRXaXRoU3BhY2VEaWZmLmRpZmYob2xkU3RyLCBuZXdTdHIsIG9wdGlvbnMpO1xufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQUE7QUFBQTtBQUFBQSxLQUFBLEdBQUFDLHNCQUFBLENBQUFDLE9BQUE7QUFBQTtBQUFBO0FBQ0E7QUFBQTtBQUFBQyxPQUFBLEdBQUFELE9BQUE7QUFBQTtBQUFBO0FBQW9KLG1DQUFBRCx1QkFBQUcsR0FBQSxXQUFBQSxHQUFBLElBQUFBLEdBQUEsQ0FBQUMsVUFBQSxHQUFBRCxHQUFBLGdCQUFBQSxHQUFBO0FBQUE7QUFFcEo7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUUsaUJBQWlCLEdBQUcsK0dBQStHOztBQUV6STtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUVBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUMsMkJBQTJCLEdBQUcsSUFBSUMsTUFBTTtBQUFBO0FBQUEsSUFBQUMsTUFBQTtBQUFBO0FBQUtILGlCQUFpQixnQkFBQUcsTUFBQSxDQUFhSCxpQkFBaUIsUUFBSyxJQUFJLENBQUM7QUFFckcsSUFBTUksUUFBUTtBQUFBO0FBQUFDLE9BQUEsQ0FBQUQsUUFBQTtBQUFBO0FBQUc7QUFBSUU7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUE7QUFBQUEsQ0FBSSxDQUFDLENBQUM7QUFDbENGLFFBQVEsQ0FBQ0csTUFBTSxHQUFHLFVBQVNDLElBQUks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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/index.js":
+/***/ "./node_modules/diff/lib/index.js"
 /*!****************************************!*\
   !*** ./node_modules/diff/lib/index.js ***!
   \****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -13988,66 +13650,6 @@ Object.defineProperty(exports, "Diff", ({
   enumerable: true,
   get: function get() {
     return _base["default"];
-  }
-}));
-Object.defineProperty(exports, "diffChars", ({
-  enumerable: true,
-  get: function get() {
-    return _character.diffChars;
-  }
-}));
-Object.defineProperty(exports, "diffWords", ({
-  enumerable: true,
-  get: function get() {
-    return _word.diffWords;
-  }
-}));
-Object.defineProperty(exports, "diffWordsWithSpace", ({
-  enumerable: true,
-  get: function get() {
-    return _word.diffWordsWithSpace;
-  }
-}));
-Object.defineProperty(exports, "diffLines", ({
-  enumerable: true,
-  get: function get() {
-    return _line.diffLines;
-  }
-}));
-Object.defineProperty(exports, "diffTrimmedLines", ({
-  enumerable: true,
-  get: function get() {
-    return _line.diffTrimmedLines;
-  }
-}));
-Object.defineProperty(exports, "diffSentences", ({
-  enumerable: true,
-  get: function get() {
-    return _sentence.diffSentences;
-  }
-}));
-Object.defineProperty(exports, "diffCss", ({
-  enumerable: true,
-  get: function get() {
-    return _css.diffCss;
-  }
-}));
-Object.defineProperty(exports, "diffJson", ({
-  enumerable: true,
-  get: function get() {
-    return _json.diffJson;
-  }
-}));
-Object.defineProperty(exports, "canonicalize", ({
-  enumerable: true,
-  get: function get() {
-    return _json.canonicalize;
-  }
-}));
-Object.defineProperty(exports, "diffArrays", ({
-  enumerable: true,
-  get: function get() {
-    return _array.diffArrays;
   }
 }));
 Object.defineProperty(exports, "applyPatch", ({
@@ -14062,34 +13664,10 @@ Object.defineProperty(exports, "applyPatches", ({
     return _apply.applyPatches;
   }
 }));
-Object.defineProperty(exports, "parsePatch", ({
+Object.defineProperty(exports, "canonicalize", ({
   enumerable: true,
   get: function get() {
-    return _parse.parsePatch;
-  }
-}));
-Object.defineProperty(exports, "merge", ({
-  enumerable: true,
-  get: function get() {
-    return _merge.merge;
-  }
-}));
-Object.defineProperty(exports, "structuredPatch", ({
-  enumerable: true,
-  get: function get() {
-    return _create.structuredPatch;
-  }
-}));
-Object.defineProperty(exports, "createTwoFilesPatch", ({
-  enumerable: true,
-  get: function get() {
-    return _create.createTwoFilesPatch;
-  }
-}));
-Object.defineProperty(exports, "createPatch", ({
-  enumerable: true,
-  get: function get() {
-    return _create.createPatch;
+    return _json.canonicalize;
   }
 }));
 Object.defineProperty(exports, "convertChangesToDMP", ({
@@ -14104,105 +13682,190 @@ Object.defineProperty(exports, "convertChangesToXML", ({
     return _xml.convertChangesToXML;
   }
 }));
-
+Object.defineProperty(exports, "createPatch", ({
+  enumerable: true,
+  get: function get() {
+    return _create.createPatch;
+  }
+}));
+Object.defineProperty(exports, "createTwoFilesPatch", ({
+  enumerable: true,
+  get: function get() {
+    return _create.createTwoFilesPatch;
+  }
+}));
+Object.defineProperty(exports, "diffArrays", ({
+  enumerable: true,
+  get: function get() {
+    return _array.diffArrays;
+  }
+}));
+Object.defineProperty(exports, "diffChars", ({
+  enumerable: true,
+  get: function get() {
+    return _character.diffChars;
+  }
+}));
+Object.defineProperty(exports, "diffCss", ({
+  enumerable: true,
+  get: function get() {
+    return _css.diffCss;
+  }
+}));
+Object.defineProperty(exports, "diffJson", ({
+  enumerable: true,
+  get: function get() {
+    return _json.diffJson;
+  }
+}));
+Object.defineProperty(exports, "diffLines", ({
+  enumerable: true,
+  get: function get() {
+    return _line.diffLines;
+  }
+}));
+Object.defineProperty(exports, "diffSentences", ({
+  enumerable: true,
+  get: function get() {
+    return _sentence.diffSentences;
+  }
+}));
+Object.defineProperty(exports, "diffTrimmedLines", ({
+  enumerable: true,
+  get: function get() {
+    return _line.diffTrimmedLines;
+  }
+}));
+Object.defineProperty(exports, "diffWords", ({
+  enumerable: true,
+  get: function get() {
+    return _word.diffWords;
+  }
+}));
+Object.defineProperty(exports, "diffWordsWithSpace", ({
+  enumerable: true,
+  get: function get() {
+    return _word.diffWordsWithSpace;
+  }
+}));
+Object.defineProperty(exports, "formatPatch", ({
+  enumerable: true,
+  get: function get() {
+    return _create.formatPatch;
+  }
+}));
+Object.defineProperty(exports, "merge", ({
+  enumerable: true,
+  get: function get() {
+    return _merge.merge;
+  }
+}));
+Object.defineProperty(exports, "parsePatch", ({
+  enumerable: true,
+  get: function get() {
+    return _parse.parsePatch;
+  }
+}));
+Object.defineProperty(exports, "reversePatch", ({
+  enumerable: true,
+  get: function get() {
+    return _reverse.reversePatch;
+  }
+}));
+Object.defineProperty(exports, "structuredPatch", ({
+  enumerable: true,
+  get: function get() {
+    return _create.structuredPatch;
+  }
+}));
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _base = _interopRequireDefault(__webpack_require__(/*! ./diff/base */ "./node_modules/diff/lib/diff/base.js"))
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _character = __webpack_require__(/*! ./diff/character */ "./node_modules/diff/lib/diff/character.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _word = __webpack_require__(/*! ./diff/word */ "./node_modules/diff/lib/diff/word.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _line = __webpack_require__(/*! ./diff/line */ "./node_modules/diff/lib/diff/line.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _sentence = __webpack_require__(/*! ./diff/sentence */ "./node_modules/diff/lib/diff/sentence.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _css = __webpack_require__(/*! ./diff/css */ "./node_modules/diff/lib/diff/css.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _json = __webpack_require__(/*! ./diff/json */ "./node_modules/diff/lib/diff/json.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _array = __webpack_require__(/*! ./diff/array */ "./node_modules/diff/lib/diff/array.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _apply = __webpack_require__(/*! ./patch/apply */ "./node_modules/diff/lib/patch/apply.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _parse = __webpack_require__(/*! ./patch/parse */ "./node_modules/diff/lib/patch/parse.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _merge = __webpack_require__(/*! ./patch/merge */ "./node_modules/diff/lib/patch/merge.js")
 /*istanbul ignore end*/
 ;
-
+var
+/*istanbul ignore start*/
+_reverse = __webpack_require__(/*! ./patch/reverse */ "./node_modules/diff/lib/patch/reverse.js")
+/*istanbul ignore end*/
+;
 var
 /*istanbul ignore start*/
 _create = __webpack_require__(/*! ./patch/create */ "./node_modules/diff/lib/patch/create.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _dmp = __webpack_require__(/*! ./convert/dmp */ "./node_modules/diff/lib/convert/dmp.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _xml = __webpack_require__(/*! ./convert/xml */ "./node_modules/diff/lib/convert/xml.js")
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL3NyYy9pbmRleC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQWdCQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQ0E7QUFBQTtBQUFBO0FBQUE7QUFBQTs7QUFDQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBRUE7QUFBQTtBQUFBO0FBQUE7QUFBQTs7QUFDQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUVBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBRUE7QUFBQTtBQUFBO0FBQUE7QUFBQTs7QUFDQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQ0E7QUFBQTtBQUFBO0FBQUE7QUFBQTs7QUFFQTtBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUNBO0FBQUE7QUFBQTtBQUFBO0FBQUEiLCJzb3VyY2VzQ29udGVudCI6WyIvKiBTZWUgTElDRU5TRSBmaWxlIGZvciB0ZXJtcyBvZiB1c2UgKi9cblxuLypcbiAqIFRleHQgZGlmZiBpbXBsZW1lbnRhdGlvbi5cbiAqXG4gKiBUaGlzIGxpYnJhcnkgc3VwcG9ydHMgdGhlIGZvbGxvd2luZyBBUElTOlxuICogSnNEaWZmLmRpZmZDaGFyczogQ2hhcmFjdGVyIGJ5IGNoYXJhY3RlciBkaWZmXG4gKiBKc0RpZmYuZGlmZldvcmRzOiBXb3JkIChhcyBkZWZpbmVkIGJ5IFxcYiByZWdleCkgZGlmZiB3aGljaCBpZ25vcmVzIHdoaXRlc3BhY2VcbiAqIEpzRGlmZi5kaWZmTGluZXM6IExpbmUgYmFzZWQgZGlmZlxuICpcbiAqIEpzRGlmZi5kaWZmQ3NzOiBEaWZmIHRhcmdldGVkIGF0IENTUyBjb250ZW50XG4gKlxuICogVGhlc2UgbWV0aG9kcyBhcmUgYmFzZWQgb24gdGhlIGltcGxlbWVudGF0aW9uIHByb3Bvc2VkIGluXG4gKiBcIkFuIE8oTkQpIERpZmZlcmVuY2UgQWxnb3JpdGhtIGFuZCBpdHMgVmFyaWF0aW9uc1wiIChNeWVycywgMTk4NikuXG4gKiBodHRwOi8vY2l0ZXNlZXJ4LmlzdC5wc3UuZWR1L3ZpZXdkb2Mvc3VtbWFyeT9kb2k9MTAuMS4xLjQuNjkyN1xuICovXG5pbXBvcnQgRGlmZiBmcm9tICcuL2RpZmYvYmFzZSc7XG5pbXBvcnQge2RpZmZDaGFyc30gZnJvbSAnLi9kaWZmL2NoYXJhY3Rlcic7XG5pbXBvcnQge2RpZmZXb3JkcywgZGlmZldvcmRzV2l0aFNwYWNlfSBmcm9tICcuL2RpZmYvd29yZCc7XG5pbXBvcnQge2RpZmZMaW5lcywgZGlmZlRyaW1tZWRMaW5lc30gZnJvbSAnLi9kaWZmL2xpbmUnO1xuaW1wb3J0IHtkaWZmU2VudGVuY2VzfSBmcm9tICcuL2RpZmYvc2VudGVuY2UnO1xuXG5pbXBvcnQge2RpZmZDc3N9IGZyb20gJy4vZGlmZi9jc3MnO1xuaW1wb3J0IHtkaWZmSnNvbiwgY2Fub25pY2FsaXplfSBmcm9tICcuL2RpZmYvanNvbic7XG5cbmltcG9ydCB7ZGlmZkFycmF5c30gZnJvbSAnLi9kaWZmL2FycmF5JztcblxuaW1wb3J0IHthcHBseVBhdGNoLCBhcHBseVBhdGNoZXN9IGZyb20gJy4vcGF0Y2gvYXBwbHknO1xuaW1wb3J0IHtwYXJzZVBhdGNofSBmcm9tICcuL3BhdGNoL3BhcnNlJztcbmltcG9ydCB7bWVyZ2V9IGZyb20gJy4vcGF0Y2gvbWVyZ2UnO1xuaW1wb3J0IHtzdHJ1Y3R1cmVkUGF0Y2gsIGNyZWF0ZVR3b0ZpbGVzUGF0Y2gsIGNyZWF0ZVBhdGNofSBmcm9tICcuL3BhdGNoL2NyZWF0ZSc7XG5cbmltcG9ydCB7Y29udmVydENoYW5nZXNUb0RNUH0gZnJvbSAnLi9jb252ZXJ0L2RtcCc7XG5pbXBvcnQge2NvbnZlcnRDaGFuZ2VzVG9YTUx9IGZyb20gJy4vY29udmVydC94bWwnO1xuXG5leHBvcnQge1xuICBEaWZmLFxuXG4gIGRpZmZDaGFycyxcbiAgZGlmZldvcmRzLFxuICBkaWZmV29yZHNXaXRoU3BhY2UsXG4gIGRpZmZMaW5lcyxcbiAgZGlmZlRyaW1tZWRMaW5lcyxcbiAgZGlmZlNlbnRlbmNlcyxcblxuICBkaWZmQ3NzLFxuICBkaWZmSnNvbixcblxuICBkaWZmQXJyYXlzLFxuXG4gIHN0cnVjdHVyZWRQYXRjaCxcbiAgY3JlYXRlVHdvRmlsZXNQYXRjaCxcbiAgY3JlYXRlUGF0Y2gsXG4gIGFwcGx5UGF0Y2gsXG4gIGFwcGx5UGF0Y2hlcyxcbiAgcGFyc2VQYXRjaCxcbiAgbWVyZ2UsXG4gIGNvbnZlcnRDaGFuZ2VzVG9ETVAsXG4gIGNvbnZlcnRDaGFuZ2VzVG9YTUwsXG4gIGNhbm9uaWNhbGl6ZVxufTtcbiJdfQ==
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfYmFzZSIsIl9pbnRlcm9wUmVxdWlyZURlZmF1bHQiLCJyZXF1aXJlIiwiX2NoYXJhY3RlciIsIl93b3JkIiwiX2xpbmUiLCJfc2VudGVuY2UiLCJfY3NzIiwiX2pzb24iLCJfYXJyYXkiLCJfYXBwbHkiLCJfcGFyc2UiLCJfbWVyZ2UiLCJfcmV2ZXJzZSIsIl9jcmVhdGUiLCJfZG1wIiwiX3htbCIsIm9iaiIsIl9fZXNNb2R1bGUiXSwic291cmNlcyI6WyIuLi9zcmMvaW5kZXguanMiXSwic291cmNlc0NvbnRlbnQiOlsiLyogU2VlIExJQ0VOU0UgZmlsZSBmb3IgdGVybXMgb2YgdXNlICovXG5cbi8qXG4gKiBUZXh0IGRpZmYgaW1wbGVtZW50YXRpb24uXG4gKlxuICogVGhpcyBsaWJyYXJ5IHN1cHBvcnRzIHRoZSBmb2xsb3dpbmcgQVBJczpcbiAqIERpZmYuZGlmZkNoYXJzOiBDaGFyYWN0ZXIgYnkgY2hhcmFjdGVyIGRpZmZcbiAqIERpZmYuZGlmZldvcmRzOiBXb3JkIChhcyBkZWZpbmVkIGJ5IFxcYiByZWdleCkgZGlmZiB3aGljaCBpZ25vcmVzIHdoaXRlc3BhY2VcbiAqIERpZmYuZGlmZkxpbmVzOiBMaW5lIGJhc2VkIGRpZmZcbiAqXG4gKiBEaWZmLmRpZmZDc3M6IERpZmYgdGFyZ2V0ZWQgYXQgQ1NTIGNvbnRlbnRcbiAqXG4gKiBUaGVzZSBtZXRob2RzIGFyZSBiYXNlZCBvbiB0aGUgaW1wbGVtZW50YXRpb24gcHJvcG9zZWQgaW5cbiAqIFwiQW4gTyhORCkgRGlmZmVyZW5jZSBBbGdvcml0aG0gYW5kIGl0cyBWYXJpYXRpb25zXCIgKE15ZXJzLCAxOTg2KS5cbiAqIGh0dHA6Ly9jaXRlc2VlcnguaXN0LnBzdS5lZHUvdmlld2RvYy9zdW1tYXJ5P2RvaT0xMC4xLjEuNC42OTI3XG4gKi9cbmltcG9ydCBEaWZmIGZyb20gJy4vZGlmZi9iYXNlJztcbmltcG9ydCB7ZGlmZkNoYXJzfSBmcm9tICcuL2RpZmYvY2hhcmFjdGVyJztcbmltcG9ydCB7ZGlmZldvcmRzLCBkaWZmV29yZHNXaXRoU3BhY2V9IGZyb20gJy4vZGlmZi93b3JkJztcbmltcG9ydCB7ZGlmZkxpbmVzLCBkaWZmVHJpbW1lZExpbmVzfSBmcm9tICcuL2RpZmYvbGluZSc7XG5pbXBvcnQge2RpZmZTZW50ZW5jZXN9IGZyb20gJy4vZGlmZi9zZW50ZW5jZSc7XG5cbmltcG9ydCB7ZGlmZkNzc30gZnJvbSAnLi9kaWZmL2Nzcyc7XG5pbXBvcnQge2RpZmZKc29uLCBjYW5vbmljYWxpemV9IGZyb20gJy4vZGlmZi9qc29uJztcblxuaW1wb3J0IHtkaWZmQXJyYXlzfSBmcm9tICcuL2RpZmYvYXJyYXknO1xuXG5pbXBvcnQge2FwcGx5UGF0Y2gsIGFwcGx5UGF0Y2hlc30gZnJvbSAnLi9wYXRjaC9hcHBseSc7XG5pbXBvcnQge3BhcnNlUGF0Y2h9IGZyb20gJy4vcGF0Y2gvcGFyc2UnO1xuaW1wb3J0IHttZXJnZX0gZnJvbSAnLi9wYXRjaC9tZXJnZSc7XG5pbXBvcnQge3JldmVyc2VQYXRjaH0gZnJvbSAnLi9wYXRjaC9yZXZlcnNlJztcbmltcG9ydCB7c3RydWN0dXJlZFBhdGNoLCBjcmVhdGVUd29GaWxlc1BhdGNoLCBjcmVhdGVQYXRjaCwgZm9ybWF0UGF0Y2h9IGZyb20gJy4vcGF0Y2gvY3JlYXRlJztcblxuaW1wb3J0IHtjb252ZXJ0Q2hhbmdlc1RvRE1QfSBmcm9tICcuL2NvbnZlcnQvZG1wJztcbmltcG9ydCB7Y29udmVydENoYW5nZXNUb1hNTH0gZnJvbSAnLi9jb252ZXJ0L3htbCc7XG5cbmV4cG9ydCB7XG4gIERpZmYsXG5cbiAgZGlmZkNoYXJzLFxuICBkaWZmV29yZHMsXG4gIGRpZmZXb3Jkc1dpdGhTcGFjZSxcbiAgZGlmZkxpbmVzLFxuICBkaWZmVHJpbW1lZExpbmVzLFxuICBkaWZmU2VudGVuY2VzLFxuXG4gIGRpZmZDc3MsXG4gIGRpZmZKc29uLFxuXG4gIGRpZmZBcnJheXMsXG5cbiAgc3RydWN0dXJlZFBhdGNoLFxuICBjcmVhdGVUd29GaWxlc1BhdGNoLFxuICBjcmVhdGVQYXRjaCxcbiAgZm9ybWF0UGF0Y2gsXG4gIGFwcGx5UGF0Y2gsXG4gIGFwcGx5UGF0Y2hlcyxcbiAgcGFyc2VQYXRjaCxcbiAgbWVyZ2UsXG4gIHJldmVyc2VQYXRjaCxcbiAgY29udmVydENoYW5nZXNUb0RNUCxcbiAgY29udmVydENoYW5nZXNUb1hNTCxcbiAgY2Fub25pY2FsaXplXG59O1xuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBZ0JBO0FBQUE7QUFBQUEsS0FBQSxHQUFBQyxzQkFBQSxDQUFBQyxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQUMsVUFBQSxHQUFBRCxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQUUsS0FBQSxHQUFBRixPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQUcsS0FBQSxHQUFBSCxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQUksU0FBQSxHQUFBSixPQUFBO0FBQUE7QUFBQTtBQUVBO0FBQUE7QUFBQUssSUFBQSxHQUFBTCxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQU0sS0FBQSxHQUFBTixPQUFBO0FBQUE7QUFBQTtBQUVBO0FBQUE7QUFBQU8sTUFBQSxHQUFBUCxPQUFBO0FBQUE7QUFBQTtBQUVBO0FBQUE7QUFBQVEsTUFBQSxHQUFBUixPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQVMsTUFBQSxHQUFBVCxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQVUsTUFBQSxHQUFBVixPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQVcsUUFBQSxHQUFBWCxPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQVksT0FBQSxHQUFBWixPQUFBO0FBQUE7QUFBQTtBQUVBO0FBQUE7QUFBQWEsSUFBQSxHQUFBYixPQUFBO0FBQUE7QUFBQTtBQUNBO0FBQUE7QUFBQWMsSUFBQSxHQUFBZCxPQUFBO0FBQUE7QUFBQTtBQUFrRCxtQ0FBQUQsdUJBQUFnQixHQUFBLFdBQUFBLEdBQUEsSUFBQUEsR0FBQSxDQUFBQyxVQUFBLEdBQUFELEdBQUEsZ0JBQUFBLEdBQUE7QUFBQSIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/patch/apply.js":
+/***/ "./node_modules/diff/lib/patch/apply.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/patch/apply.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -14212,35 +13875,39 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.applyPatch = applyPatch;
 exports.applyPatches = applyPatches;
-
 /*istanbul ignore end*/
+var
+/*istanbul ignore start*/
+_string = __webpack_require__(/*! ../util/string */ "./node_modules/diff/lib/util/string.js")
+/*istanbul ignore end*/
+;
+var
+/*istanbul ignore start*/
+_lineEndings = __webpack_require__(/*! ./line-endings */ "./node_modules/diff/lib/patch/line-endings.js")
+/*istanbul ignore end*/
+;
 var
 /*istanbul ignore start*/
 _parse = __webpack_require__(/*! ./parse */ "./node_modules/diff/lib/patch/parse.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _distanceIterator = _interopRequireDefault(__webpack_require__(/*! ../util/distance-iterator */ "./node_modules/diff/lib/util/distance-iterator.js"))
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 /*istanbul ignore end*/
 function applyPatch(source, uniDiff) {
   /*istanbul ignore start*/
   var
   /*istanbul ignore end*/
   options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
   if (typeof uniDiff === 'string') {
     uniDiff =
     /*istanbul ignore start*/
     (0,
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     _parse
     /*istanbul ignore end*/
@@ -14250,160 +13917,318 @@ function applyPatch(source, uniDiff) {
     /*istanbul ignore end*/
     (uniDiff);
   }
-
   if (Array.isArray(uniDiff)) {
     if (uniDiff.length > 1) {
       throw new Error('applyPatch only works with a single input.');
     }
-
     uniDiff = uniDiff[0];
-  } // Apply the diff to the input
-
-
-  var lines = source.split(/\r\n|[\n\v\f\r\x85]/),
-      delimiters = source.match(/\r\n|[\n\v\f\r\x85]/g) || [],
-      hunks = uniDiff.hunks,
-      compareLine = options.compareLine || function (lineNumber, line, operation, patchContent)
-  /*istanbul ignore start*/
-  {
-    return (
-      /*istanbul ignore end*/
-      line === patchContent
-    );
-  },
-      errorCount = 0,
-      fuzzFactor = options.fuzzFactor || 0,
-      minLine = 0,
-      offset = 0,
-      removeEOFNL,
-      addEOFNL;
-  /**
-   * Checks if the hunk exactly fits on the provided location
-   */
-
-
-  function hunkFits(hunk, toPos) {
-    for (var j = 0; j < hunk.lines.length; j++) {
-      var line = hunk.lines[j],
-          operation = line.length > 0 ? line[0] : ' ',
-          content = line.length > 0 ? line.substr(1) : line;
-
-      if (operation === ' ' || operation === '-') {
-        // Context sanity check
-        if (!compareLine(toPos + 1, lines[toPos], operation, content)) {
-          errorCount++;
-
-          if (errorCount > fuzzFactor) {
-            return false;
-          }
-        }
-
-        toPos++;
-      }
-    }
-
-    return true;
-  } // Search best fit offsets for each hunk based on the previous ones
-
-
-  for (var i = 0; i < hunks.length; i++) {
-    var hunk = hunks[i],
-        maxLine = lines.length - hunk.oldLines,
-        localOffset = 0,
-        toPos = offset + hunk.oldStart - 1;
-    var iterator =
+  }
+  if (options.autoConvertLineEndings || options.autoConvertLineEndings == null) {
+    if (
     /*istanbul ignore start*/
     (0,
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
-    _distanceIterator
+    _string
     /*istanbul ignore end*/
-    [
+    .
     /*istanbul ignore start*/
-    "default"
+    hasOnlyWinLineEndings)
     /*istanbul ignore end*/
-    ])(toPos, minLine, maxLine);
+    (source) &&
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _lineEndings
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    isUnix)
+    /*istanbul ignore end*/
+    (uniDiff)) {
+      uniDiff =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _lineEndings
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      unixToWin)
+      /*istanbul ignore end*/
+      (uniDiff);
+    } else if (
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _string
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    hasOnlyUnixLineEndings)
+    /*istanbul ignore end*/
+    (source) &&
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _lineEndings
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    isWin)
+    /*istanbul ignore end*/
+    (uniDiff)) {
+      uniDiff =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _lineEndings
+      /*istanbul ignore end*/
+      .
+      /*istanbul ignore start*/
+      winToUnix)
+      /*istanbul ignore end*/
+      (uniDiff);
+    }
+  }
 
-    for (; localOffset !== undefined; localOffset = iterator()) {
-      if (hunkFits(hunk, toPos + localOffset)) {
-        hunk.offset = offset += localOffset;
-        break;
+  // Apply the diff to the input
+  var lines = source.split('\n'),
+    hunks = uniDiff.hunks,
+    compareLine = options.compareLine || function (lineNumber, line, operation, patchContent)
+    /*istanbul ignore start*/
+    {
+      return (
+        /*istanbul ignore end*/
+        line === patchContent
+      );
+    },
+    fuzzFactor = options.fuzzFactor || 0,
+    minLine = 0;
+  if (fuzzFactor < 0 || !Number.isInteger(fuzzFactor)) {
+    throw new Error('fuzzFactor must be a non-negative integer');
+  }
+
+  // Special case for empty patch.
+  if (!hunks.length) {
+    return source;
+  }
+
+  // Before anything else, handle EOFNL insertion/removal. If the patch tells us to make a change
+  // to the EOFNL that is redundant/impossible - i.e. to remove a newline that's not there, or add a
+  // newline that already exists - then we either return false and fail to apply the patch (if
+  // fuzzFactor is 0) or simply ignore the problem and do nothing (if fuzzFactor is >0).
+  // If we do need to remove/add a newline at EOF, this will always be in the final hunk:
+  var prevLine = '',
+    removeEOFNL = false,
+    addEOFNL = false;
+  for (var i = 0; i < hunks[hunks.length - 1].lines.length; i++) {
+    var line = hunks[hunks.length - 1].lines[i];
+    if (line[0] == '\\') {
+      if (prevLine[0] == '+') {
+        removeEOFNL = true;
+      } else if (prevLine[0] == '-') {
+        addEOFNL = true;
       }
     }
-
-    if (localOffset === undefined) {
+    prevLine = line;
+  }
+  if (removeEOFNL) {
+    if (addEOFNL) {
+      // This means the final line gets changed but doesn't have a trailing newline in either the
+      // original or patched version. In that case, we do nothing if fuzzFactor > 0, and if
+      // fuzzFactor is 0, we simply validate that the source file has no trailing newline.
+      if (!fuzzFactor && lines[lines.length - 1] == '') {
+        return false;
+      }
+    } else if (lines[lines.length - 1] == '') {
+      lines.pop();
+    } else if (!fuzzFactor) {
       return false;
-    } // Set lower text limit to end of the current hunk, so next ones don't try
-    // to fit over already patched text
+    }
+  } else if (addEOFNL) {
+    if (lines[lines.length - 1] != '') {
+      lines.push('');
+    } else if (!fuzzFactor) {
+      return false;
+    }
+  }
 
-
-    minLine = hunk.offset + hunk.oldStart + hunk.oldLines;
-  } // Apply patch hunks
-
-
-  var diffOffset = 0;
-
-  for (var _i = 0; _i < hunks.length; _i++) {
-    var _hunk = hunks[_i],
-        _toPos = _hunk.oldStart + _hunk.offset + diffOffset - 1;
-
-    diffOffset += _hunk.newLines - _hunk.oldLines;
-
-    for (var j = 0; j < _hunk.lines.length; j++) {
-      var line = _hunk.lines[j],
-          operation = line.length > 0 ? line[0] : ' ',
-          content = line.length > 0 ? line.substr(1) : line,
-          delimiter = _hunk.linedelimiters[j];
-
+  /**
+   * Checks if the hunk can be made to fit at the provided location with at most `maxErrors`
+   * insertions, substitutions, or deletions, while ensuring also that:
+   * - lines deleted in the hunk match exactly, and
+   * - wherever an insertion operation or block of insertion operations appears in the hunk, the
+   *   immediately preceding and following lines of context match exactly
+   *
+   * `toPos` should be set such that lines[toPos] is meant to match hunkLines[0].
+   *
+   * If the hunk can be applied, returns an object with properties `oldLineLastI` and
+   * `replacementLines`. Otherwise, returns null.
+   */
+  function applyHunk(hunkLines, toPos, maxErrors) {
+    /*istanbul ignore start*/
+    var
+    /*istanbul ignore end*/
+    hunkLinesI = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+    /*istanbul ignore start*/
+    var
+    /*istanbul ignore end*/
+    lastContextLineMatched = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+    /*istanbul ignore start*/
+    var
+    /*istanbul ignore end*/
+    patchedLines = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : [];
+    /*istanbul ignore start*/
+    var
+    /*istanbul ignore end*/
+    patchedLinesLength = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 0;
+    var nConsecutiveOldContextLines = 0;
+    var nextContextLineMustMatch = false;
+    for (; hunkLinesI < hunkLines.length; hunkLinesI++) {
+      var hunkLine = hunkLines[hunkLinesI],
+        operation = hunkLine.length > 0 ? hunkLine[0] : ' ',
+        content = hunkLine.length > 0 ? hunkLine.substr(1) : hunkLine;
+      if (operation === '-') {
+        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
+          toPos++;
+          nConsecutiveOldContextLines = 0;
+        } else {
+          if (!maxErrors || lines[toPos] == null) {
+            return null;
+          }
+          patchedLines[patchedLinesLength] = lines[toPos];
+          return applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1);
+        }
+      }
+      if (operation === '+') {
+        if (!lastContextLineMatched) {
+          return null;
+        }
+        patchedLines[patchedLinesLength] = content;
+        patchedLinesLength++;
+        nConsecutiveOldContextLines = 0;
+        nextContextLineMustMatch = true;
+      }
       if (operation === ' ') {
-        _toPos++;
-      } else if (operation === '-') {
-        lines.splice(_toPos, 1);
-        delimiters.splice(_toPos, 1);
-        /* istanbul ignore else */
-      } else if (operation === '+') {
-        lines.splice(_toPos, 0, content);
-        delimiters.splice(_toPos, 0, delimiter);
-        _toPos++;
-      } else if (operation === '\\') {
-        var previousOperation = _hunk.lines[j - 1] ? _hunk.lines[j - 1][0] : null;
+        nConsecutiveOldContextLines++;
+        patchedLines[patchedLinesLength] = lines[toPos];
+        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
+          patchedLinesLength++;
+          lastContextLineMatched = true;
+          nextContextLineMustMatch = false;
+          toPos++;
+        } else {
+          if (nextContextLineMustMatch || !maxErrors) {
+            return null;
+          }
 
-        if (previousOperation === '+') {
-          removeEOFNL = true;
-        } else if (previousOperation === '-') {
-          addEOFNL = true;
+          // Consider 3 possibilities in sequence:
+          // 1. lines contains a *substitution* not included in the patch context, or
+          // 2. lines contains an *insertion* not included in the patch context, or
+          // 3. lines contains a *deletion* not included in the patch context
+          // The first two options are of course only possible if the line from lines is non-null -
+          // i.e. only option 3 is possible if we've overrun the end of the old file.
+          return lines[toPos] && (applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength + 1) || applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1)) || applyHunk(hunkLines, toPos, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength);
         }
       }
     }
-  } // Handle EOFNL insertion/removal
 
+    // Before returning, trim any unmodified context lines off the end of patchedLines and reduce
+    // toPos (and thus oldLineLastI) accordingly. This allows later hunks to be applied to a region
+    // that starts in this hunk's trailing context.
+    patchedLinesLength -= nConsecutiveOldContextLines;
+    toPos -= nConsecutiveOldContextLines;
+    patchedLines.length = patchedLinesLength;
+    return {
+      patchedLines: patchedLines,
+      oldLineLastI: toPos - 1
+    };
+  }
+  var resultLines = [];
 
-  if (removeEOFNL) {
-    while (!lines[lines.length - 1]) {
-      lines.pop();
-      delimiters.pop();
+  // Search best fit offsets for each hunk based on the previous ones
+  var prevHunkOffset = 0;
+  for (var _i = 0; _i < hunks.length; _i++) {
+    var hunk = hunks[_i];
+    var hunkResult =
+    /*istanbul ignore start*/
+    void 0
+    /*istanbul ignore end*/
+    ;
+    var maxLine = lines.length - hunk.oldLines + fuzzFactor;
+    var toPos =
+    /*istanbul ignore start*/
+    void 0
+    /*istanbul ignore end*/
+    ;
+    for (var maxErrors = 0; maxErrors <= fuzzFactor; maxErrors++) {
+      toPos = hunk.oldStart + prevHunkOffset - 1;
+      var iterator =
+      /*istanbul ignore start*/
+      (0,
+      /*istanbul ignore end*/
+      /*istanbul ignore start*/
+      _distanceIterator
+      /*istanbul ignore end*/
+      [
+      /*istanbul ignore start*/
+      "default"
+      /*istanbul ignore end*/
+      ])(toPos, minLine, maxLine);
+      for (; toPos !== undefined; toPos = iterator()) {
+        hunkResult = applyHunk(hunk.lines, toPos, maxErrors);
+        if (hunkResult) {
+          break;
+        }
+      }
+      if (hunkResult) {
+        break;
+      }
     }
-  } else if (addEOFNL) {
-    lines.push('');
-    delimiters.push('\n');
+    if (!hunkResult) {
+      return false;
+    }
+
+    // Copy everything from the end of where we applied the last hunk to the start of this hunk
+    for (var _i2 = minLine; _i2 < toPos; _i2++) {
+      resultLines.push(lines[_i2]);
+    }
+
+    // Add the lines produced by applying the hunk:
+    for (var _i3 = 0; _i3 < hunkResult.patchedLines.length; _i3++) {
+      var _line = hunkResult.patchedLines[_i3];
+      resultLines.push(_line);
+    }
+
+    // Set lower text limit to end of the current hunk, so next ones don't try
+    // to fit over already patched text
+    minLine = hunkResult.oldLineLastI + 1;
+
+    // Note the offset between where the patch said the hunk should've applied and where we
+    // applied it, so we can adjust future hunks accordingly:
+    prevHunkOffset = toPos + 1 - hunk.oldStart;
   }
 
-  for (var _k = 0; _k < lines.length - 1; _k++) {
-    lines[_k] = lines[_k] + delimiters[_k];
+  // Copy over the rest of the lines from the old text
+  for (var _i4 = minLine; _i4 < lines.length; _i4++) {
+    resultLines.push(lines[_i4]);
   }
+  return resultLines.join('\n');
+}
 
-  return lines.join('');
-} // Wrapper that supports multiple file patches via callbacks.
-
-
+// Wrapper that supports multiple file patches via callbacks.
 function applyPatches(uniDiff, options) {
   if (typeof uniDiff === 'string') {
     uniDiff =
     /*istanbul ignore start*/
     (0,
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     _parse
     /*istanbul ignore end*/
@@ -14413,44 +14238,37 @@ function applyPatches(uniDiff, options) {
     /*istanbul ignore end*/
     (uniDiff);
   }
-
   var currentIndex = 0;
-
   function processIndex() {
     var index = uniDiff[currentIndex++];
-
     if (!index) {
       return options.complete();
     }
-
     options.loadFile(index, function (err, data) {
       if (err) {
         return options.complete(err);
       }
-
       var updatedContent = applyPatch(data, index, options);
       options.patched(index, updatedContent, function (err) {
         if (err) {
           return options.complete(err);
         }
-
         processIndex();
       });
     });
   }
-
   processIndex();
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9hcHBseS5qcyJdLCJuYW1lcyI6WyJhcHBseVBhdGNoIiwic291cmNlIiwidW5pRGlmZiIsIm9wdGlvbnMiLCJwYXJzZVBhdGNoIiwiQXJyYXkiLCJpc0FycmF5IiwibGVuZ3RoIiwiRXJyb3IiLCJsaW5lcyIsInNwbGl0IiwiZGVsaW1pdGVycyIsIm1hdGNoIiwiaHVua3MiLCJjb21wYXJlTGluZSIsImxpbmVOdW1iZXIiLCJsaW5lIiwib3BlcmF0aW9uIiwicGF0Y2hDb250ZW50IiwiZXJyb3JDb3VudCIsImZ1enpGYWN0b3IiLCJtaW5MaW5lIiwib2Zmc2V0IiwicmVtb3ZlRU9GTkwiLCJhZGRFT0ZOTCIsImh1bmtGaXRzIiwiaHVuayIsInRvUG9zIiwiaiIsImNvbnRlbnQiLCJzdWJzdHIiLCJpIiwibWF4TGluZSIsIm9sZExpbmVzIiwibG9jYWxPZmZzZXQiLCJvbGRTdGFydCIsIml0ZXJhdG9yIiwiZGlzdGFuY2VJdGVyYXRvciIsInVuZGVmaW5lZCIsImRpZmZPZmZzZXQiLCJuZXdMaW5lcyIsImRlbGltaXRlciIsImxpbmVkZWxpbWl0ZXJzIiwic3BsaWNlIiwicHJldmlvdXNPcGVyYXRpb24iLCJwb3AiLCJwdXNoIiwiX2siLCJqb2luIiwiYXBwbHlQYXRjaGVzIiwiY3VycmVudEluZGV4IiwicHJvY2Vzc0luZGV4IiwiaW5kZXgiLCJjb21wbGV0ZSIsImxvYWRGaWxlIiwiZXJyIiwiZGF0YSIsInVwZGF0ZWRDb250ZW50IiwicGF0Y2hlZCJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7OztBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQ0E7QUFBQTtBQUFBO0FBQUE7QUFBQTs7Ozs7QUFFTyxTQUFTQSxVQUFULENBQW9CQyxNQUFwQixFQUE0QkMsT0FBNUIsRUFBbUQ7QUFBQTtBQUFBO0FBQUE7QUFBZEMsRUFBQUEsT0FBYyx1RUFBSixFQUFJOztBQUN4RCxNQUFJLE9BQU9ELE9BQVAsS0FBbUIsUUFBdkIsRUFBaUM7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QUNEOztBQUVELE1BQUlnRCxZQUFZLEdBQUcsQ0FBbkI7O0FBQ0EsV0FBU0MsWUFBVCxHQUF3QjtBQUN0QixRQUFJQyxLQUFLLEdBQUdsRCxPQUFPLENBQUNnRCxZQUFZLEVBQWIsQ0FBbkI7O0FBQ0EsUUFBSSxDQUFDRSxLQUFMLEVBQVk7QUFDVixhQUFPakQsT0FBTyxDQUFDa0QsUUFBUixFQUFQO0FBQ0Q7O0FBRURsRCxJQUFBQSxPQUFPLENBQUNtRCxRQUFSLENBQWlCRixLQUFqQixFQUF3QixVQUFTRyxHQUFULEVBQWNDLElBQWQsRUFBb0I7QUFDMUMsVUFBSUQsR0FBSixFQUFTO0FBQ1AsZUFBT3BELE9BQU8sQ0FBQ2tELFFBQVIsQ0FBaUJFLEdBQWpCLENBQVA7QUFDRDs7QUFFRCxVQUFJRSxjQUFjLEdBQUd6RCxVQUFVLENBQUN3RCxJQUFELEVBQU9KLEtBQVAsRUFBY2pELE9BQWQsQ0FBL0I7QUFDQUEsTUFBQUEsT0FBTyxDQUFDdUQsT0FBUixDQUFnQk4sS0FBaEIsRUFBdUJLLGNBQXZCLEVBQXVDLFVBQVNGLEdBQVQsRUFBYztBQUNuRCxZQUFJQSxHQUFKLEVBQVM7QUFDUCxpQkFBT3BELE9BQU8sQ0FBQ2tELFFBQVIsQ0FBaUJFLEdBQWpCLENBQVA7QUFDRDs7QUFFREosUUFBQUEsWUFBWTtBQUNiLE9BTkQ7QUFPRCxLQWJEO0FBY0Q7O0FBQ0RBLEVBQUFBLFlBQVk7QUFDYiIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7cGFyc2VQYXRjaH0gZnJvbSAnLi9wYXJzZSc7XG5pbXBvcnQgZGlzdGFuY2VJdGVyYXRvciBmcm9tICcuLi91dGlsL2Rpc3RhbmNlLWl0ZXJhdG9yJztcblxuZXhwb3J0IGZ1bmN0aW9uIGFwcGx5UGF0Y2goc291cmNlLCB1bmlEaWZmLCBvcHRpb25zID0ge30pIHtcbiAgaWYgKHR5cGVvZiB1bmlEaWZmID09PSAnc3RyaW5nJykge1xuICAgIHVuaURpZmYgPSBwYXJzZVBhdGNoKHVuaURpZmYpO1xuICB9XG5cbiAgaWYgKEFycmF5LmlzQXJyYXkodW5pRGlmZikpIHtcbiAgICBpZiAodW5pRGlmZi5sZW5ndGggPiAxKSB7XG4gICAgICB0aHJvdyBuZXcgRXJyb3IoJ2FwcGx5UGF0Y2ggb25seSB3b3JrcyB3aXRoIGEgc2luZ2xlIGlucHV0LicpO1xuICAgIH1cblxuICAgIHVuaURpZmYgPSB1bmlEaWZmWzBdO1xuICB9XG5cbiAgLy8gQXBwbHkgdGhlIGRpZmYgdG8gdGhlIGlucHV0XG4gIGxldCBsaW5lcyA9IHNvdXJjZS5zcGxpdCgvXFxyXFxufFtcXG5cXHZcXGZcXHJcXHg4NV0vKSxcbiAgICAgIGRlbGltaXRlcnMgPSBzb3VyY2UubWF0Y2goL1xcclxcbnxbXFxuXFx2XFxmXFxyXFx4ODVdL2cpIHx8IFtdLFxuICAgICAgaHVua3MgPSB1bmlEaWZmLmh1bmtzLFxuXG4gICAgICBjb21wYXJlTGluZSA9IG9wdGlvbnMuY29tcGFyZUxpbmUgfHwgKChsaW5lTnVtYmVyLCBsaW5lLCBvcGVyYXRpb24sIHBhdGNoQ29udGVudCkgPT4gbGluZSA9PT0gcGF0Y2hDb250ZW50KSxcbiAgICAgIGVycm9yQ291bnQgPSAwLFxuICAgICAgZnV6ekZhY3RvciA9IG9wdGlvbnMuZnV6ekZhY3RvciB8fCAwLFxuICAgICAgbWluTGluZSA9IDAsXG4gICAgICBvZmZzZXQgPSAwLFxuXG4gICAgICByZW1vdmVFT0ZOTCxcbiAgICAgIGFkZEVPRk5MO1xuXG4gIC8qKlxuICAgKiBDaGVja3MgaWYgdGhlIGh1bmsgZXhhY3RseSBmaXRzIG9uIHRoZSBwcm92aWRlZCBsb2NhdGlvblxuICAgKi9cbiAgZnVuY3Rpb24gaHVua0ZpdHMoaHVuaywgdG9Qb3MpIHtcbiAgICBmb3IgKGxldCBqID0gMDsgaiA8IGh1bmsubGluZXMubGVuZ3RoOyBqKyspIHtcbiAgICAgIGxldCBsaW5lID0gaHVuay5saW5lc1tqXSxcbiAgICAgICAgICBvcGVyYXRpb24gPSAobGluZS5sZW5ndGggPiAwID8gbGluZVswXSA6ICcgJyksXG4gICAgICAgICAgY29udGVudCA9IChsaW5lLmxlbmd0aCA+IDAgPyBsaW5lLnN1YnN0cigxKSA6IGxpbmUpO1xuXG4gICAgICBpZiAob3BlcmF0aW9uID09PSAnICcgfHwgb3BlcmF0aW9uID09PSAnLScpIHtcbiAgICAgICAgLy8gQ29udGV4dCBzYW5pdHkgY2hlY2tcbiAgICAgICAgaWYgKCFjb21wYXJlTGluZSh0b1BvcyArIDEsIGxpbmVzW3RvUG9zXSwgb3BlcmF0aW9uLCBjb250ZW50KSkge1xuICAgICAgICAgIGVycm9yQ291bnQrKztcblxuICAgICAgICAgIGlmIChlcnJvckNvdW50ID4gZnV6ekZhY3Rvcikge1xuICAgICAgICAgICAgcmV0dXJuIGZhbHNlO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgICB0b1BvcysrO1xuICAgICAgfVxuICAgIH1cblxuICAgIHJldHVybiB0cnVlO1xuICB9XG5cbiAgLy8gU2VhcmNoIGJlc3QgZml0IG9mZnNldHMgZm9yIGVhY2ggaHVuayBiYXNlZCBvbiB0aGUgcHJldmlvdXMgb25lc1xuICBmb3IgKGxldCBpID0gMDsgaSA8IGh1bmtzLmxlbmd0aDsgaSsrKSB7XG4gICAgbGV0IGh1bmsgPSBodW5rc1tpXSxcbiAgICAgICAgbWF4TGluZSA9IGxpbmVzLmxlbmd0aCAtIGh1bmsub2xkTGluZXMsXG4gICAgICAgIGxvY2FsT2Zmc2V0ID0gMCxcbiAgICAgICAgdG9Qb3MgPSBvZmZzZXQgKyBodW5rLm9sZFN0YXJ0IC0gMTtcblxuICAgIGxldCBpdGVyYXRvciA9IGRpc3RhbmNlSXRlcmF0b3IodG9Qb3MsIG1pbkxpbmUsIG1heExpbmUpO1xuXG4gICAgZm9yICg7IGxvY2FsT2Zmc2V0ICE9PSB1bmRlZmluZWQ7IGxvY2FsT2Zmc2V0ID0gaXRlcmF0b3IoKSkge1xuICAgICAgaWYgKGh1bmtGaXRzKGh1bmssIHRvUG9zICsgbG9jYWxPZmZzZXQpKSB7XG4gICAgICAgIGh1bmsub2Zmc2V0ID0gb2Zmc2V0ICs9IGxvY2FsT2Zmc2V0O1xuICAgICAgICBicmVhaztcbiAgICAgIH1cbiAgICB9XG5cbiAgICBpZiAobG9jYWxPZmZzZXQgPT09IHVuZGVmaW5lZCkge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cblxuICAgIC8vIFNldCBsb3dlciB0ZXh0IGxpbWl0IHRvIGVuZCBvZiB0aGUgY3VycmVudCBodW5rLCBzbyBuZXh0IG9uZXMgZG9uJ3QgdHJ5XG4gICAgLy8gdG8gZml0IG92ZXIgYWxyZWFkeSBwYXRjaGVkIHRleHRcbiAgICBtaW5MaW5lID0gaHVuay5vZmZzZXQgKyBodW5rLm9sZFN0YXJ0ICsgaHVuay5vbGRMaW5lcztcbiAgfVxuXG4gIC8vIEFwcGx5IHBhdGNoIGh1bmtzXG4gIGxldCBkaWZmT2Zmc2V0ID0gMDtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBodW5rcy5sZW5ndGg7IGkrKykge1xuICAgIGxldCBodW5rID0gaHVua3NbaV0sXG4gICAgICAgIHRvUG9zID0gaHVuay5vbGRTdGFydCArIGh1bmsub2Zmc2V0ICsgZGlmZk9mZnNldCAtIDE7XG4gICAgZGlmZk9mZnNldCArPSBodW5rLm5ld0xpbmVzIC0gaHVuay5vbGRMaW5lcztcblxuICAgIGZvciAobGV0IGogPSAwOyBqIDwgaHVuay5saW5lcy5sZW5ndGg7IGorKykge1xuICAgICAgbGV0IGxpbmUgPSBodW5rLmxpbmVzW2pdLFxuICAgICAgICAgIG9wZXJhdGlvbiA9IChsaW5lLmxlbmd0aCA+IDAgPyBsaW5lWzBdIDogJyAnKSxcbiAgICAgICAgICBjb250ZW50ID0gKGxpbmUubGVuZ3RoID4gMCA/IGxpbmUuc3Vic3RyKDEpIDogbGluZSksXG4gICAgICAgICAgZGVsaW1pdGVyID0gaHVuay5saW5lZGVsaW1pdGVyc1tqXTtcblxuICAgICAgaWYgKG9wZXJhdGlvbiA9PT0gJyAnKSB7XG4gICAgICAgIHRvUG9zKys7XG4gICAgICB9IGVsc2UgaWYgKG9wZXJhdGlvbiA9PT0gJy0nKSB7XG4gICAgICAgIGxpbmVzLnNwbGljZSh0b1BvcywgMSk7XG4gICAgICAgIGRlbGltaXRlcnMuc3BsaWNlKHRvUG9zLCAxKTtcbiAgICAgIC8qIGlzdGFuYnVsIGlnbm9yZSBlbHNlICovXG4gICAgICB9IGVsc2UgaWYgKG9wZXJhdGlvbiA9PT0gJysnKSB7XG4gICAgICAgIGxpbmVzLnNwbGljZSh0b1BvcywgMCwgY29udGVudCk7XG4gICAgICAgIGRlbGltaXRlcnMuc3BsaWNlKHRvUG9zLCAwLCBkZWxpbWl0ZXIpO1xuICAgICAgICB0b1BvcysrO1xuICAgICAgfSBlbHNlIGlmIChvcGVyYXRpb24gPT09ICdcXFxcJykge1xuICAgICAgICBsZXQgcHJldmlvdXNPcGVyYXRpb24gPSBodW5rLmxpbmVzW2ogLSAxXSA/IGh1bmsubGluZXNbaiAtIDFdWzBdIDogbnVsbDtcbiAgICAgICAgaWYgKHByZXZpb3VzT3BlcmF0aW9uID09PSAnKycpIHtcbiAgICAgICAgICByZW1vdmVFT0ZOTCA9IHRydWU7XG4gICAgICAgIH0gZWxzZSBpZiAocHJldmlvdXNPcGVyYXRpb24gPT09ICctJykge1xuICAgICAgICAgIGFkZEVPRk5MID0gdHJ1ZTtcbiAgICAgICAgfVxuICAgICAgfVxuICAgIH1cbiAgfVxuXG4gIC8vIEhhbmRsZSBFT0ZOTCBpbnNlcnRpb24vcmVtb3ZhbFxuICBpZiAocmVtb3ZlRU9GTkwpIHtcbiAgICB3aGlsZSAoIWxpbmVzW2xpbmVzLmxlbmd0aCAtIDFdKSB7XG4gICAgICBsaW5lcy5wb3AoKTtcbiAgICAgIGRlbGltaXRlcnMucG9wKCk7XG4gICAgfVxuICB9IGVsc2UgaWYgKGFkZEVPRk5MKSB7XG4gICAgbGluZXMucHVzaCgnJyk7XG4gICAgZGVsaW1pdGVycy5wdXNoKCdcXG4nKTtcbiAgfVxuICBmb3IgKGxldCBfayA9IDA7IF9rIDwgbGluZXMubGVuZ3RoIC0gMTsgX2srKykge1xuICAgIGxpbmVzW19rXSA9IGxpbmVzW19rXSArIGRlbGltaXRlcnNbX2tdO1xuICB9XG4gIHJldHVybiBsaW5lcy5qb2luKCcnKTtcbn1cblxuLy8gV3JhcHBlciB0aGF0IHN1cHBvcnRzIG11bHRpcGxlIGZpbGUgcGF0Y2hlcyB2aWEgY2FsbGJhY2tzLlxuZXhwb3J0IGZ1bmN0aW9uIGFwcGx5UGF0Y2hlcyh1bmlEaWZmLCBvcHRpb25zKSB7XG4gIGlmICh0eXBlb2YgdW5pRGlmZiA9PT0gJ3N0cmluZycpIHtcbiAgICB1bmlEaWZmID0gcGFyc2VQYXRjaCh1bmlEaWZmKTtcbiAgfVxuXG4gIGxldCBjdXJyZW50SW5kZXggPSAwO1xuICBmdW5jdGlvbiBwcm9jZXNzSW5kZXgoKSB7XG4gICAgbGV0IGluZGV4ID0gdW5pRGlmZltjdXJyZW50SW5kZXgrK107XG4gICAgaWYgKCFpbmRleCkge1xuICAgICAgcmV0dXJuIG9wdGlvbnMuY29tcGxldGUoKTtcbiAgICB9XG5cbiAgICBvcHRpb25zLmxvYWRGaWxlKGluZGV4LCBmdW5jdGlvbihlcnIsIGRhdGEpIHtcbiAgICAgIGlmIChlcnIpIHtcbiAgICAgICAgcmV0dXJuIG9wdGlvbnMuY29tcGxldGUoZXJyKTtcbiAgICAgIH1cblxuICAgICAgbGV0IHVwZGF0ZWRDb250ZW50ID0gYXBwbHlQYXRjaChkYXRhLCBpbmRleCwgb3B0aW9ucyk7XG4gICAgICBvcHRpb25zLnBhdGNoZWQoaW5kZXgsIHVwZGF0ZWRDb250ZW50LCBmdW5jdGlvbihlcnIpIHtcbiAgICAgICAgaWYgKGVycikge1xuICAgICAgICAgIHJldHVybiBvcHRpb25zLmNvbXBsZXRlKGVycik7XG4gICAgICAgIH1cblxuICAgICAgICBwcm9jZXNzSW5kZXgoKTtcbiAgICAgIH0pO1xuICAgIH0pO1xuICB9XG4gIHByb2Nlc3NJbmRleCgpO1xufVxuIl19
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfc3RyaW5nIiwicmVxdWlyZSIsIl9saW5lRW5kaW5ncyIsIl9wYXJzZSIsIl9kaXN0YW5jZUl0ZXJhdG9yIiwiX2ludGVyb3BSZXF1aXJlRGVmYXVsdCIsIm9iaiIsIl9fZXNNb2R1bGUiLCJhcHBseVBhdGNoIiwic291cmNlIiwidW5pRGlmZiIsIm9wdGlvbnMiLCJhcmd1bWVudHMiLCJsZW5ndGgiLCJ1bmRlZmluZWQiLCJwYXJzZVBhdGNoIiwiQXJyYXkiLCJpc0FycmF5IiwiRXJyb3IiLCJhdXRvQ29udmVydExpbmVFbmRpbmdzIiwiaGFzT25seVdpbkxpbmVFbmRpbmdzIiwiaXNVbml4IiwidW5peFRvV2luIiwiaGFzT25seVVuaXhMaW5lRW5kaW5ncyIsImlzV2luIiwid2luVG9Vbml4IiwibGluZXMiLCJzcGxpdCIsImh1bmtzIiwiY29tcGFyZUxpbmUiLCJsaW5lTnVtYmVyIiwibGluZSIsIm9wZXJhdGlvbiIsInBhdGNoQ29udGVudCIsImZ1enpGYWN0b3IiLCJtaW5MaW5lIiwiTnVtYmVyIiwiaXNJbnRlZ2VyIiwicHJldkxpbmUiLCJyZW1vdmVFT0ZOTCIsImFkZEVPRk5MIiwiaSIsInBvcCIsInB1c2giLCJhcHBseUh1bmsiLCJodW5rTGluZXMiLCJ0b1BvcyIsIm1heEVycm9ycyIsImh1bmtMaW5lc0kiLCJsYXN0Q29udGV4dExpbmVNYXRjaGVkIiwicGF0Y2hlZExpbmVzIiwicGF0Y2hlZExpbmVzTGVuZ3RoIiwibkNvbnNlY3V0aXZlT2xkQ29udGV4dExpbmVzIiwibmV4dENvbnRleHRMaW5lTXVzdE1hdGNoIiwiaHVua0xpbmUiLCJjb250ZW50Iiwic3Vic3RyIiwib2xkTGluZUxhc3RJIiwicmVzdWx0TGluZXMiLCJwcmV2SHVua09mZnNldCIsImh1bmsiLCJodW5rUmVzdWx0IiwibWF4TGluZSIsIm9sZExpbmVzIiwib2xkU3RhcnQiLCJpdGVyYXRvciIsImRpc3RhbmNlSXRlcmF0b3IiLCJqb2luIiwiYXBwbHlQYXRjaGVzIiwiY3VycmVudEluZGV4IiwicHJvY2Vzc0luZGV4IiwiaW5kZXgiLCJjb21wbGV0ZSIsImxvYWRGaWxlIiwiZXJyIiwiZGF0YSIsInVwZGF0ZWRDb250ZW50IiwicGF0Y2hlZCJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9hcHBseS5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge2hhc09ubHlXaW5MaW5lRW5kaW5ncywgaGFzT25seVVuaXhMaW5lRW5kaW5nc30gZnJvbSAnLi4vdXRpbC9zdHJpbmcnO1xuaW1wb3J0IHtpc1dpbiwgaXNVbml4LCB1bml4VG9XaW4sIHdpblRvVW5peH0gZnJvbSAnLi9saW5lLWVuZGluZ3MnO1xuaW1wb3J0IHtwYXJzZVBhdGNofSBmcm9tICcuL3BhcnNlJztcbmltcG9ydCBkaXN0YW5jZUl0ZXJhdG9yIGZyb20gJy4uL3V0aWwvZGlzdGFuY2UtaXRlcmF0b3InO1xuXG5leHBvcnQgZnVuY3Rpb24gYXBwbHlQYXRjaChzb3VyY2UsIHVuaURpZmYsIG9wdGlvbnMgPSB7fSkge1xuICBpZiAodHlwZW9mIHVuaURpZmYgPT09ICdzdHJpbmcnKSB7XG4gICAgdW5pRGlmZiA9IHBhcnNlUGF0Y2godW5pRGlmZik7XG4gIH1cblxuICBpZiAoQXJyYXkuaXNBcnJheSh1bmlEaWZmKSkge1xuICAgIGlmICh1bmlEaWZmLmxlbmd0aCA+IDEpIHtcbiAgICAgIHRocm93IG5ldyBFcnJvcignYXBwbHlQYXRjaCBvbmx5IHdvcmtzIHdpdGggYSBzaW5nbGUgaW5wdXQuJyk7XG4gICAgfVxuXG4gICAgdW5pRGlmZiA9IHVuaURpZmZbMF07XG4gIH1cblxuICBpZiAob3B0aW9ucy5hdXRvQ29udmVydExpbmVFbmRpbmdzIHx8IG9wdGlvbnMuYXV0b0NvbnZlcnRMaW5lRW5kaW5ncyA9PSBudWxsKSB7XG4gICAgaWYgKGhhc09ubHlXaW5MaW5lRW5kaW5ncyhzb3VyY2UpICYmIGlzVW5peCh1bmlEaWZmKSkge1xuICAgICAgdW5pRGlmZiA9IHVuaXhUb1dpbih1bmlEaWZmKTtcbiAgICB9IGVsc2UgaWYgKGhhc09ubHlVbml4TGluZUVuZGluZ3Moc291cmNlKSAmJiBpc1dpbih1bmlEaWZmKSkge1xuICAgICAgdW5pRGlmZiA9IHdpblRvVW5peCh1bmlEaWZmKTtcbiAgICB9XG4gIH1cblxuICAvLyBBcHBseSB0aGUgZGlmZiB0byB0aGUgaW5wdXRcbiAgbGV0IGxpbmVzID0gc291cmNlLnNwbGl0KCdcXG4nKSxcbiAgICAgIGh1bmtzID0gdW5pRGlmZi5odW5rcyxcblxuICAgICAgY29tcGFyZUxpbmUgPSBvcHRpb25zLmNvbXBhcmVMaW5lIHx8ICgobGluZU51bWJlciwgbGluZSwgb3BlcmF0aW9uLCBwYXRjaENvbnRlbnQpID0+IGxpbmUgPT09IHBhdGNoQ29udGVudCksXG4gICAgICBmdXp6RmFjdG9yID0gb3B0aW9ucy5mdXp6RmFjdG9yIHx8IDAsXG4gICAgICBtaW5MaW5lID0gMDtcblxuICBpZiAoZnV6ekZhY3RvciA8IDAgfHwgIU51bWJlci5pc0ludGVnZXIoZnV6ekZhY3RvcikpIHtcbiAgICB0aHJvdyBuZXcgRXJyb3IoJ2Z1enpGYWN0b3IgbXVzdCBiZSBhIG5vbi1uZWdhdGl2ZSBpbnRlZ2VyJyk7XG4gIH1cblxuICAvLyBTcGVjaWFsIGNhc2UgZm9yIGVtcHR5IHBhdGNoLlxuICBpZiAoIWh1bmtzLmxlbmd0aCkge1xuICAgIHJldHVybiBzb3VyY2U7XG4gIH1cblxuICAvLyBCZWZvcmUgYW55dGhpbmcgZWxzZSwgaGFuZGxlIEVPRk5MIGluc2VydGlvbi9yZW1vdmFsLiBJZiB0aGUgcGF0Y2ggdGVsbHMgdXMgdG8gbWFrZSBhIGNoYW5nZVxuICAvLyB0byB0aGUgRU9GTkwgdGhhdCBpcyByZWR1bmRhbnQvaW1wb3NzaWJsZSAtIGkuZS4gdG8gcmVtb3ZlIGEgbmV3bGluZSB0aGF0J3Mgbm90IHRoZXJlLCBvciBhZGQgYVxuICAvLyBuZXdsaW5lIHRoYXQgYWxyZWFkeSBleGlzdHMgLSB0aGVuIHdlIGVpdGhlciByZXR1cm4gZmFsc2UgYW5kIGZhaWwgdG8gYXBwbHkgdGhlIHBhdGNoIChpZlxuICAvLyBmdXp6RmFjdG9yIGlzIDApIG9yIHNpbXBseSBpZ25vcmUgdGhlIHByb2JsZW0gYW5kIGRvIG5vdGhpbmcgKGlmIGZ1enpGYWN0b3IgaXMgPjApLlxuICAvLyBJZiB3ZSBkbyBuZWVkIHRvIHJlbW92ZS9hZGQgYSBuZXdsaW5lIGF0IEVPRiwgdGhpcyB3aWxsIGFsd2F5cyBiZSBpbiB0aGUgZmluYWwgaHVuazpcbiAgbGV0IHByZXZMaW5lID0gJycsXG4gICAgICByZW1vdmVFT0ZOTCA9IGZhbHNlLFxuICAgICAgYWRkRU9GTkwgPSBmYWxzZTtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBodW5rc1todW5rcy5sZW5ndGggLSAxXS5saW5lcy5sZW5ndGg7IGkrKykge1xuICAgIGNvbnN0IGxpbmUgPSBodW5rc1todW5rcy5sZW5ndGggLSAxXS5saW5lc1tpXTtcbiAgICBpZiAobGluZVswXSA9PSAnXFxcXCcpIHtcbiAgICAgIGlmIChwcmV2TGluZVswXSA9PSAnKycpIHtcbiAgICAgICAgcmVtb3ZlRU9GTkwgPSB0cnVlO1xuICAgICAgfSBlbHNlIGlmIChwcmV2TGluZVswXSA9PSAnLScpIHtcbiAgICAgICAgYWRkRU9GTkwgPSB0cnVlO1xuICAgICAgfVxuICAgIH1cbiAgICBwcmV2TGluZSA9IGxpbmU7XG4gIH1cbiAgaWYgKHJlbW92ZUVPRk5MKSB7XG4gICAgaWYgKGFkZEVPRk5MKSB7XG4gICAgICAvLyBUaGlzIG1lYW5zIHRoZSBmaW5hbCBsaW5lIGdldHMgY2hhbmdlZCBidXQgZG9lc24ndCBoYXZlIGEgdHJhaWxpbmcgbmV3bGluZSBpbiBlaXRoZXIgdGhlXG4gICAgICAvLyBvcmlnaW5hbCBvciBwYXRjaGVkIHZlcnNpb24uIEluIHRoYXQgY2FzZSwgd2UgZG8gbm90aGluZyBpZiBmdXp6RmFjdG9yID4gMCwgYW5kIGlmXG4gICAgICAvLyBmdXp6RmFjdG9yIGlzIDAsIHdlIHNpbXBseSB2YWxpZGF0ZSB0aGF0IHRoZSBzb3VyY2UgZmlsZSBoYXMgbm8gdHJhaWxpbmcgbmV3bGluZS5cbiAgICAgIGlmICghZnV6ekZhY3RvciAmJiBsaW5lc1tsaW5lcy5sZW5ndGggLSAxXSA9PSAnJykge1xuICAgICAgICByZXR1cm4gZmFsc2U7XG4gICAgICB9XG4gICAgfSBlbHNlIGlmIChsaW5lc1tsaW5lcy5sZW5ndGggLSAxXSA9PSAnJykge1xuICAgICAgbGluZXMucG9wKCk7XG4gICAgfSBlbHNlIGlmICghZnV6ekZhY3Rvcikge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cbiAgfSBlbHNlIGlmIChhZGRFT0ZOTCkge1xuICAgIGlmIChsaW5lc1tsaW5lcy5sZW5ndGggLSAxXSAhPSAnJykge1xuICAgICAgbGluZXMucHVzaCgnJyk7XG4gICAgfSBlbHNlIGlmICghZnV6ekZhY3Rvcikge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cbiAgfVxuXG4gIC8qKlxuICAgKiBDaGVja3MgaWYgdGhlIGh1bmsgY2FuIGJlIG1hZGUgdG8gZml0IGF0IHRoZSBwcm92aWRlZCBsb2NhdGlvbiB3aXRoIGF0IG1vc3QgYG1heEVycm9yc2BcbiAgICogaW5zZXJ0aW9ucywgc3Vic3RpdHV0aW9ucywgb3IgZGVsZXRpb25zLCB3aGlsZSBlbnN1cmluZyBhbHNvIHRoYXQ6XG4gICAqIC0gbGluZXMgZGVsZXRlZCBpbiB0aGUgaHVuayBtYXRjaCBleGFjdGx5LCBhbmRcbiAgICogLSB3aGVyZXZlciBhbiBpbnNlcnRpb24gb3BlcmF0aW9uIG9yIGJsb2NrIG9mIGluc2VydGlvbiBvcGVyYXRpb25zIGFwcGVhcnMgaW4gdGhlIGh1bmssIHRoZVxuICAgKiAgIGltbWVkaWF0ZWx5IHByZWNlZGluZyBhbmQgZm9sbG93aW5nIGxpbmVzIG9mIGNvbnRleHQgbWF0Y2ggZXhhY3RseVxuICAgKlxuICAgKiBgdG9Qb3NgIHNob3VsZCBiZSBzZXQgc3VjaCB0aGF0IGxpbmVzW3RvUG9zXSBpcyBtZWFudCB0byBtYXRjaCBodW5rTGluZXNbMF0uXG4gICAqXG4gICAqIElmIHRoZSBodW5rIGNhbiBiZSBhcHBsaWVkLCByZXR1cm5zIGFuIG9iamVjdCB3aXRoIHByb3BlcnRpZXMgYG9sZExpbmVMYXN0SWAgYW5kXG4gICAqIGByZXBsYWNlbWVudExpbmVzYC4gT3RoZXJ3aXNlLCByZXR1cm5zIG51bGwuXG4gICAqL1xuICBmdW5jdGlvbiBhcHBseUh1bmsoXG4gICAgaHVua0xpbmVzLFxuICAgIHRvUG9zLFxuICAgIG1heEVycm9ycyxcbiAgICBodW5rTGluZXNJID0gMCxcbiAgICBsYXN0Q29udGV4dExpbmVNYXRjaGVkID0gdHJ1ZSxcbiAgICBwYXRjaGVkTGluZXMgPSBbXSxcbiAgICBwYXRjaGVkTGluZXNMZW5ndGggPSAwLFxuICApIHtcbiAgICBsZXQgbkNvbnNlY3V0aXZlT2xkQ29udGV4dExpbmVzID0gMDtcbiAgICBsZXQgbmV4dENvbnRleHRMaW5lTXVzdE1hdGNoID0gZmFsc2U7XG4gICAgZm9yICg7IGh1bmtMaW5lc0kgPCBodW5rTGluZXMubGVuZ3RoOyBodW5rTGluZXNJKyspIHtcbiAgICAgIGxldCBodW5rTGluZSA9IGh1bmtMaW5lc1todW5rTGluZXNJXSxcbiAgICAgICAgICBvcGVyYXRpb24gPSAoaHVua0xpbmUubGVuZ3RoID4gMCA/IGh1bmtMaW5lWzBdIDogJyAnKSxcbiAgICAgICAgICBjb250ZW50ID0gKGh1bmtMaW5lLmxlbmd0aCA+IDAgPyBodW5rTGluZS5zdWJzdHIoMSkgOiBodW5rTGluZSk7XG5cbiAgICAgIGlmIChvcGVyYXRpb24gPT09ICctJykge1xuICAgICAgICBpZiAoY29tcGFyZUxpbmUodG9Qb3MgKyAxLCBsaW5lc1t0b1Bvc10sIG9wZXJhdGlvbiwgY29udGVudCkpIHtcbiAgICAgICAgICB0b1BvcysrO1xuICAgICAgICAgIG5Db25zZWN1dGl2ZU9sZENvbnRleHRMaW5lcyA9IDA7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgaWYgKCFtYXhFcnJvcnMgfHwgbGluZXNbdG9Qb3NdID09IG51bGwpIHtcbiAgICAgICAgICAgIHJldHVybiBudWxsO1xuICAgICAgICAgIH1cbiAgICAgICAgICBwYXRjaGVkTGluZXNbcGF0Y2hlZExpbmVzTGVuZ3RoXSA9IGxpbmVzW3RvUG9zXTtcbiAgICAgICAgICByZXR1cm4gYXBwbHlIdW5rKFxuICAgICAgICAgICAgaHVua0xpbmVzLFxuICAgICAgICAgICAgdG9Qb3MgKyAxLFxuICAgICAgICAgICAgbWF4RXJyb3JzIC0gMSxcbiAgICAgICAgICAgIGh1bmtMaW5lc0ksXG4gICAgICAgICAgICBmYWxzZSxcbiAgICAgICAgICAgIHBhdGNoZWRMaW5lcyxcbiAgICAgICAgICAgIHBhdGNoZWRMaW5lc0xlbmd0aCArIDEsXG4gICAgICAgICAgKTtcbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICBpZiAob3BlcmF0aW9uID09PSAnKycpIHtcbiAgICAgICAgaWYgKCFsYXN0Q29udGV4dExpbmVNYXRjaGVkKSB7XG4gICAgICAgICAgcmV0dXJuIG51bGw7XG4gICAgICAgIH1cbiAgICAgICAgcGF0Y2hlZExpbmVzW3BhdGNoZWRMaW5lc0xlbmd0aF0gPSBjb250ZW50O1xuICAgICAgICBwYXRjaGVkTGluZXNMZW5ndGgrKztcbiAgICAgICAgbkNvbnNlY3V0aXZlT2xkQ29udGV4dExpbmVzID0gMDtcbiAgICAgICAgbmV4dENvbnRleHRMaW5lTXVzdE1hdGNoID0gdHJ1ZTtcbiAgICAgIH1cblxuICAgICAgaWYgKG9wZXJhdGlvbiA9PT0gJyAnKSB7XG4gICAgICAgIG5Db25zZWN1dGl2ZU9sZENvbnRleHRMaW5lcysrO1xuICAgICAgICBwYXRjaGVkTGluZXNbcGF0Y2hlZExpbmVzTGVuZ3RoXSA9IGxpbmVzW3RvUG9zXTtcbiAgICAgICAgaWYgKGNvbXBhcmVMaW5lKHRvUG9zICsgMSwgbGluZXNbdG9Qb3NdLCBvcGVyYXRpb24sIGNvbnRlbnQpKSB7XG4gICAgICAgICAgcGF0Y2hlZExpbmVzTGVuZ3RoKys7XG4gICAgICAgICAgbGFzdENvbnRleHRMaW5lTWF0Y2hlZCA9IHRydWU7XG4gICAgICAgICAgbmV4dENvbnRleHRMaW5lTXVzdE1hdGNoID0gZmFsc2U7XG4gICAgICAgICAgdG9Qb3MrKztcbiAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICBpZiAobmV4dENvbnRleHRMaW5lTXVzdE1hdGNoIHx8ICFtYXhFcnJvcnMpIHtcbiAgICAgICAgICAgIHJldHVybiBudWxsO1xuICAgICAgICAgIH1cblxuICAgICAgICAgIC8vIENvbnNpZGVyIDMgcG9zc2liaWxpdGllcyBpbiBzZXF1ZW5jZTpcbiAgICAgICAgICAvLyAxLiBsaW5lcyBjb250YWlucyBhICpzdWJzdGl0dXRpb24qIG5vdCBpbmNsdWRlZCBpbiB0aGUgcGF0Y2ggY29udGV4dCwgb3JcbiAgICAgICAgICAvLyAyLiBsaW5lcyBjb250YWlucyBhbiAqaW5zZXJ0aW9uKiBub3QgaW5jbHVkZWQgaW4gdGhlIHBhdGNoIGNvbnRleHQsIG9yXG4gICAgICAgICAgLy8gMy4gbGluZXMgY29udGFpbnMgYSAqZGVsZXRpb24qIG5vdCBpbmNsdWRlZCBpbiB0aGUgcGF0Y2ggY29udGV4dFxuICAgICAgICAgIC8vIFRoZSBmaXJzdCB0d28gb3B0aW9ucyBhcmUgb2YgY291cnNlIG9ubHkgcG9zc2libGUgaWYgdGhlIGxpbmUgZnJvbSBsaW5lcyBpcyBub24tbnVsbCAtXG4gICAgICAgICAgLy8gaS5lLiBvbmx5IG9wdGlvbiAzIGlzIHBvc3NpYmxlIGlmIHdlJ3ZlIG92ZXJydW4gdGhlIGVuZCBvZiB0aGUgb2xkIGZpbGUuXG4gICAgICAgICAgcmV0dXJuIChcbiAgICAgICAgICAgIGxpbmVzW3RvUG9zXSAmJiAoXG4gICAgICAgICAgICAgIGFwcGx5SHVuayhcbiAgICAgICAgICAgICAgICBodW5rTGluZXMsXG4gICAgICAgICAgICAgICAgdG9Qb3MgKyAxLFxuICAgICAgICAgICAgICAgIG1heEVycm9ycyAtIDEsXG4gICAgICAgICAgICAgICAgaHVua0xpbmVzSSArIDEsXG4gICAgICAgICAgICAgICAgZmFsc2UsXG4gICAgICAgICAgICAgICAgcGF0Y2hlZExpbmVzLFxuICAgICAgICAgICAgICAgIHBhdGNoZWRMaW5lc0xlbmd0aCArIDFcbiAgICAgICAgICAgICAgKSB8fCBhcHBseUh1bmsoXG4gICAgICAgICAgICAgICAgaHVua0xpbmVzLFxuICAgICAgICAgICAgICAgIHRvUG9zICsgMSxcbiAgICAgICAgICAgICAgICBtYXhFcnJvcnMgLSAxLFxuICAgICAgICAgICAgICAgIGh1bmtMaW5lc0ksXG4gICAgICAgICAgICAgICAgZmFsc2UsXG4gICAgICAgICAgICAgICAgcGF0Y2hlZExpbmVzLFxuICAgICAgICAgICAgICAgIHBhdGNoZWRMaW5lc0xlbmd0aCArIDFcbiAgICAgICAgICAgICAgKVxuICAgICAgICAgICAgKSB8fCBhcHBseUh1bmsoXG4gICAgICAgICAgICAgIGh1bmtMaW5lcyxcbiAgICAgICAgICAgICAgdG9Qb3MsXG4gICAgICAgICAgICAgIG1heEVycm9ycyAtIDEsXG4gICAgICAgICAgICAgIGh1bmtMaW5lc0kgKyAxLFxuICAgICAgICAgICAgICBmYWxzZSxcbiAgICAgICAgICAgICAgcGF0Y2hlZExpbmVzLFxuICAgICAgICAgICAgICBwYXRjaGVkTGluZXNMZW5ndGhcbiAgICAgICAgICAgIClcbiAgICAgICAgICApO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgfVxuXG4gICAgLy8gQmVmb3JlIHJldHVybmluZywgdHJpbSBhbnkgdW5tb2RpZmllZCBjb250ZXh0IGxpbmVzIG9mZiB0aGUgZW5kIG9mIHBhdGNoZWRMaW5lcyBhbmQgcmVkdWNlXG4gICAgLy8gdG9Qb3MgKGFuZCB0aHVzIG9sZExpbmVMYXN0SSkgYWNjb3JkaW5nbHkuIFRoaXMgYWxsb3dzIGxhdGVyIGh1bmtzIHRvIGJlIGFwcGxpZWQgdG8gYSByZWdpb25cbiAgICAvLyB0aGF0IHN0YXJ0cyBpbiB0aGlzIGh1bmsncyB0cmFpbGluZyBjb250ZXh0LlxuICAgIHBhdGNoZWRMaW5lc0xlbmd0aCAtPSBuQ29uc2VjdXRpdmVPbGRDb250ZXh0TGluZXM7XG4gICAgdG9Qb3MgLT0gbkNvbnNlY3V0aXZlT2xkQ29udGV4dExpbmVzO1xuICAgIHBhdGNoZWRMaW5lcy5sZW5ndGggPSBwYXRjaGVkTGluZXNMZW5ndGg7XG4gICAgcmV0dXJuIHtcbiAgICAgIHBhdGNoZWRMaW5lcyxcbiAgICAgIG9sZExpbmVMYXN0STogdG9Qb3MgLSAxXG4gICAgfTtcbiAgfVxuXG4gIGNvbnN0IHJlc3VsdExpbmVzID0gW107XG5cbiAgLy8gU2VhcmNoIGJlc3QgZml0IG9mZnNldHMgZm9yIGVhY2ggaHVuayBiYXNlZCBvbiB0aGUgcHJldmlvdXMgb25lc1xuICBsZXQgcHJldkh1bmtPZmZzZXQgPSAwO1xuICBmb3IgKGxldCBpID0gMDsgaSA8IGh1bmtzLmxlbmd0aDsgaSsrKSB7XG4gICAgY29uc3QgaHVuayA9IGh1bmtzW2ldO1xuICAgIGxldCBodW5rUmVzdWx0O1xuICAgIGxldCBtYXhMaW5lID0gbGluZXMubGVuZ3RoIC0gaHVuay5vbGRMaW5lcyArIGZ1enpGYWN0b3I7XG4gICAgbGV0IHRvUG9zO1xuICAgIGZvciAobGV0IG1heEVycm9ycyA9IDA7IG1heEVycm9ycyA8PSBmdXp6RmFjdG9yOyBtYXhFcnJvcnMrKykge1xuICAgICAgdG9Qb3MgPSBodW5rLm9sZFN0YXJ0ICsgcHJldkh1bmtPZmZzZXQgLSAxO1xuICAgICAgbGV0IGl0ZXJhdG9yID0gZGlzdGFuY2VJdGVyYXRvcih0b1BvcywgbWluTGluZSwgbWF4TGluZSk7XG4gICAgICBmb3IgKDsgdG9Qb3MgIT09IHVuZGVmaW5lZDsgdG9Qb3MgPSBpdGVyYXRvcigpKSB7XG4gICAgICAgIGh1bmtSZXN1bHQgPSBhcHBseUh1bmsoaHVuay5saW5lcywgdG9Qb3MsIG1heEVycm9ycyk7XG4gICAgICAgIGlmIChodW5rUmVzdWx0KSB7XG4gICAgICAgICAgYnJlYWs7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIGlmIChodW5rUmVzdWx0KSB7XG4gICAgICAgIGJyZWFrO1xuICAgICAgfVxuICAgIH1cblxuICAgIGlmICghaHVua1Jlc3VsdCkge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cblxuICAgIC8vIENvcHkgZXZlcnl0aGluZyBmcm9tIHRoZSBlbmQgb2Ygd2hlcmUgd2UgYXBwbGllZCB0aGUgbGFzdCBodW5rIHRvIHRoZSBzdGFydCBvZiB0aGlzIGh1bmtcbiAgICBmb3IgKGxldCBpID0gbWluTGluZTsgaSA8IHRvUG9zOyBpKyspIHtcbiAgICAgIHJlc3VsdExpbmVzLnB1c2gobGluZXNbaV0pO1xuICAgIH1cblxuICAgIC8vIEFkZCB0aGUgbGluZXMgcHJvZHVjZWQgYnkgYXBwbHlpbmcgdGhlIGh1bms6XG4gICAgZm9yIChsZXQgaSA9IDA7IGkgPCBodW5rUmVzdWx0LnBhdGNoZWRMaW5lcy5sZW5ndGg7IGkrKykge1xuICAgICAgY29uc3QgbGluZSA9IGh1bmtSZXN1bHQucGF0Y2hlZExpbmVzW2ldO1xuICAgICAgcmVzdWx0TGluZXMucHVzaChsaW5lKTtcbiAgICB9XG5cbiAgICAvLyBTZXQgbG93ZXIgdGV4dCBsaW1pdCB0byBlbmQgb2YgdGhlIGN1cnJlbnQgaHVuaywgc28gbmV4dCBvbmVzIGRvbid0IHRyeVxuICAgIC8vIHRvIGZpdCBvdmVyIGFscmVhZHkgcGF0Y2hlZCB0ZXh0XG4gICAgbWluTGluZSA9IGh1bmtSZXN1bHQub2xkTGluZUxhc3RJICsgMTtcblxuICAgIC8vIE5vdGUgdGhlIG9mZnNldCBiZXR3ZWVuIHdoZXJlIHRoZSBwYXRjaCBzYWlkIHRoZSBodW5rIHNob3VsZCd2ZSBhcHBsaWVkIGFuZCB3aGVyZSB3ZVxuICAgIC8vIGFwcGxpZWQgaXQsIHNvIHdlIGNhbiBhZGp1c3QgZnV0dXJlIGh1bmtzIGFjY29yZGluZ2x5OlxuICAgIHByZXZIdW5rT2Zmc2V0ID0gdG9Qb3MgKyAxIC0gaHVuay5vbGRTdGFydDtcbiAgfVxuXG4gIC8vIENvcHkgb3ZlciB0aGUgcmVzdCBvZiB0aGUgbGluZXMgZnJvbSB0aGUgb2xkIHRleHRcbiAgZm9yIChsZXQgaSA9IG1pbkxpbmU7IGkgPCBsaW5lcy5sZW5ndGg7IGkrKykge1xuICAgIHJlc3VsdExpbmVzLnB1c2gobGluZXNbaV0pO1xuICB9XG5cbiAgcmV0dXJuIHJlc3VsdExpbmVzLmpvaW4oJ1xcbicpO1xufVxuXG4vLyBXcmFwcGVyIHRoYXQgc3VwcG9ydHMgbXVsdGlwbGUgZmlsZSBwYXRjaGVzIHZpYSBjYWxsYmFja3MuXG5leHBvcnQgZnVuY3Rpb24gYXBwbHlQYXRjaGVzKHVuaURpZmYsIG9wdGlvbnMpIHtcbiAgaWYgKHR5cGVvZiB1bmlEaWZmID09PSAnc3RyaW5nJykge1xuICAgIHVuaURpZmYgPSBwYXJzZVBhdGNoKHVuaURpZmYpO1xuICB9XG5cbiAgbGV0IGN1cnJlbnRJbmRleCA9IDA7XG4gIGZ1bmN0aW9uIHByb2Nlc3NJbmRleCgpIHtcbiAgICBsZXQgaW5kZXggPSB1bmlEaWZmW2N1cnJlbnRJbmRleCsrXTtcbiAgICBpZiAoIWluZGV4KSB7XG4gICAgICByZXR1cm4gb3B0aW9ucy5jb21wbGV0ZSgpO1xuICAgIH1cblxuICAgIG9wdGlvbnMubG9hZEZpbGUoaW5kZXgsIGZ1bmN0aW9uKGVyciwgZGF0YSkge1xuICAgICAgaWYgKGVycikge1xuICAgICAgICByZXR1cm4gb3B0aW9ucy5jb21wbGV0ZShlcnIpO1xuICAgICAgfVxuXG4gICAgICBsZXQgdXBkYXRlZENvbnRlbnQgPSBhcHBseVBhdGNoKGRhdGEsIGluZGV4LCBvcHRpb25zKTtcbiAgICAgIG9wdGlvbnMucGF0Y2hlZChpbmRleCwgdXBkYXRlZENvbnRlbnQsIGZ1bmN0aW9uKGVycikge1xuICAgICAgICBpZiAoZXJyKSB7XG4gICAgICAgICAgcmV0dXJuIG9wdGlvbnMuY29tcGxldGUoZXJyKTtcbiAgICAgICAgfVxuXG4gICAgICAgIHByb2Nlc3NJbmRleCgpO1xuICAgICAgfSk7XG4gICAgfSk7XG4gIH1cbiAgcHJvY2Vzc0luZGV4KCk7XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztB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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/patch/create.js":
+/***/ "./node_modules/diff/lib/patch/create.js"
 /*!***********************************************!*\
   !*** ./node_modules/diff/lib/patch/create.js ***!
   \***********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -14458,276 +14276,564 @@ function applyPatches(uniDiff, options) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.structuredPatch = structuredPatch;
-exports.formatPatch = formatPatch;
-exports.createTwoFilesPatch = createTwoFilesPatch;
 exports.createPatch = createPatch;
-
+exports.createTwoFilesPatch = createTwoFilesPatch;
+exports.formatPatch = formatPatch;
+exports.structuredPatch = structuredPatch;
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _line = __webpack_require__(/*! ../diff/line */ "./node_modules/diff/lib/diff/line.js")
 /*istanbul ignore end*/
 ;
-
-/*istanbul ignore start*/ function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
-
+/*istanbul ignore start*/ function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
-
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /*istanbul ignore end*/
 function structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
   if (!options) {
     options = {};
   }
-
+  if (typeof options === 'function') {
+    options = {
+      callback: options
+    };
+  }
   if (typeof options.context === 'undefined') {
     options.context = 4;
   }
-
-  var diff =
-  /*istanbul ignore start*/
-  (0,
-  /*istanbul ignore end*/
-
-  /*istanbul ignore start*/
-  _line
-  /*istanbul ignore end*/
-  .
-  /*istanbul ignore start*/
-  diffLines)
-  /*istanbul ignore end*/
-  (oldStr, newStr, options);
-  diff.push({
-    value: '',
-    lines: []
-  }); // Append an empty value to make cleanup easier
-
-  function contextLines(lines) {
-    return lines.map(function (entry) {
-      return ' ' + entry;
-    });
+  if (options.newlineIsToken) {
+    throw new Error('newlineIsToken may not be used with patch-generation functions, only with diffing functions');
   }
+  if (!options.callback) {
+    return diffLinesResultToPatch(
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _line
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    diffLines)
+    /*istanbul ignore end*/
+    (oldStr, newStr, options));
+  } else {
+    var
+      /*istanbul ignore start*/
+      _options =
+      /*istanbul ignore end*/
+      options,
+      /*istanbul ignore start*/
+      /*istanbul ignore end*/
+      _callback = _options.callback;
+    /*istanbul ignore start*/
+    (0,
+    /*istanbul ignore end*/
+    /*istanbul ignore start*/
+    _line
+    /*istanbul ignore end*/
+    .
+    /*istanbul ignore start*/
+    diffLines)
+    /*istanbul ignore end*/
+    (oldStr, newStr,
+    /*istanbul ignore start*/
+    _objectSpread(_objectSpread({},
+    /*istanbul ignore end*/
+    options), {}, {
+      callback: function
+      /*istanbul ignore start*/
+      callback
+      /*istanbul ignore end*/
+      (diff) {
+        var patch = diffLinesResultToPatch(diff);
+        _callback(patch);
+      }
+    }));
+  }
+  function diffLinesResultToPatch(diff) {
+    // STEP 1: Build up the patch with no "\ No newline at end of file" lines and with the arrays
+    //         of lines containing trailing newline characters. We'll tidy up later...
 
-  var hunks = [];
-  var oldRangeStart = 0,
+    if (!diff) {
+      return;
+    }
+    diff.push({
+      value: '',
+      lines: []
+    }); // Append an empty value to make cleanup easier
+
+    function contextLines(lines) {
+      return lines.map(function (entry) {
+        return ' ' + entry;
+      });
+    }
+    var hunks = [];
+    var oldRangeStart = 0,
       newRangeStart = 0,
       curRange = [],
       oldLine = 1,
       newLine = 1;
-
-  /*istanbul ignore start*/
-  var _loop = function _loop(
-  /*istanbul ignore end*/
-  i) {
-    var current = diff[i],
-        lines = current.lines || current.value.replace(/\n$/, '').split('\n');
-    current.lines = lines;
-
-    if (current.added || current.removed) {
-      /*istanbul ignore start*/
-      var _curRange;
-
-      /*istanbul ignore end*/
-      // If we have previous context, start with that
-      if (!oldRangeStart) {
-        var prev = diff[i - 1];
-        oldRangeStart = oldLine;
-        newRangeStart = newLine;
-
-        if (prev) {
-          curRange = options.context > 0 ? contextLines(prev.lines.slice(-options.context)) : [];
-          oldRangeStart -= curRange.length;
-          newRangeStart -= curRange.length;
-        }
-      } // Output our changes
-
-
-      /*istanbul ignore start*/
-
-      /*istanbul ignore end*/
-
-      /*istanbul ignore start*/
-      (_curRange =
-      /*istanbul ignore end*/
-      curRange).push.apply(
-      /*istanbul ignore start*/
-      _curRange
-      /*istanbul ignore end*/
-      ,
-      /*istanbul ignore start*/
-      _toConsumableArray(
-      /*istanbul ignore end*/
-      lines.map(function (entry) {
-        return (current.added ? '+' : '-') + entry;
-      }))); // Track the updated file position
-
-
-      if (current.added) {
-        newLine += lines.length;
-      } else {
-        oldLine += lines.length;
-      }
-    } else {
-      // Identical context lines. Track line changes
-      if (oldRangeStart) {
-        // Close out any changes that have been output (or join overlapping)
-        if (lines.length <= options.context * 2 && i < diff.length - 2) {
-          /*istanbul ignore start*/
-          var _curRange2;
-
-          /*istanbul ignore end*/
-          // Overlapping
-
-          /*istanbul ignore start*/
-
-          /*istanbul ignore end*/
-
-          /*istanbul ignore start*/
-          (_curRange2 =
-          /*istanbul ignore end*/
-          curRange).push.apply(
-          /*istanbul ignore start*/
-          _curRange2
-          /*istanbul ignore end*/
-          ,
-          /*istanbul ignore start*/
-          _toConsumableArray(
-          /*istanbul ignore end*/
-          contextLines(lines)));
-        } else {
-          /*istanbul ignore start*/
-          var _curRange3;
-
-          /*istanbul ignore end*/
-          // end the range and output
-          var contextSize = Math.min(lines.length, options.context);
-
-          /*istanbul ignore start*/
-
-          /*istanbul ignore end*/
-
-          /*istanbul ignore start*/
-          (_curRange3 =
-          /*istanbul ignore end*/
-          curRange).push.apply(
-          /*istanbul ignore start*/
-          _curRange3
-          /*istanbul ignore end*/
-          ,
-          /*istanbul ignore start*/
-          _toConsumableArray(
-          /*istanbul ignore end*/
-          contextLines(lines.slice(0, contextSize))));
-
-          var hunk = {
-            oldStart: oldRangeStart,
-            oldLines: oldLine - oldRangeStart + contextSize,
-            newStart: newRangeStart,
-            newLines: newLine - newRangeStart + contextSize,
-            lines: curRange
-          };
-
-          if (i >= diff.length - 2 && lines.length <= options.context) {
-            // EOF is inside this hunk
-            var oldEOFNewline = /\n$/.test(oldStr);
-            var newEOFNewline = /\n$/.test(newStr);
-            var noNlBeforeAdds = lines.length == 0 && curRange.length > hunk.oldLines;
-
-            if (!oldEOFNewline && noNlBeforeAdds && oldStr.length > 0) {
-              // special case: old has no eol and no trailing context; no-nl can end up before adds
-              // however, if the old file is empty, do not output the no-nl line
-              curRange.splice(hunk.oldLines, 0, '\\ No newline at end of file');
-            }
-
-            if (!oldEOFNewline && !noNlBeforeAdds || !newEOFNewline) {
-              curRange.push('\\ No newline at end of file');
-            }
-          }
-
-          hunks.push(hunk);
-          oldRangeStart = 0;
-          newRangeStart = 0;
-          curRange = [];
-        }
-      }
-
-      oldLine += lines.length;
-      newLine += lines.length;
-    }
-  };
-
-  for (var i = 0; i < diff.length; i++) {
     /*istanbul ignore start*/
-    _loop(
+    var _loop = function _loop()
     /*istanbul ignore end*/
-    i);
+    {
+      var current = diff[i],
+        lines = current.lines || splitLines(current.value);
+      current.lines = lines;
+      if (current.added || current.removed) {
+        /*istanbul ignore start*/
+        var _curRange;
+        /*istanbul ignore end*/
+        // If we have previous context, start with that
+        if (!oldRangeStart) {
+          var prev = diff[i - 1];
+          oldRangeStart = oldLine;
+          newRangeStart = newLine;
+          if (prev) {
+            curRange = options.context > 0 ? contextLines(prev.lines.slice(-options.context)) : [];
+            oldRangeStart -= curRange.length;
+            newRangeStart -= curRange.length;
+          }
+        }
+
+        // Output our changes
+        /*istanbul ignore start*/
+        /*istanbul ignore end*/
+        /*istanbul ignore start*/
+        (_curRange =
+        /*istanbul ignore end*/
+        curRange).push.apply(
+        /*istanbul ignore start*/
+        _curRange
+        /*istanbul ignore end*/
+        ,
+        /*istanbul ignore start*/
+        _toConsumableArray(
+        /*istanbul ignore end*/
+        lines.map(function (entry) {
+          return (current.added ? '+' : '-') + entry;
+        })));
+
+        // Track the updated file position
+        if (current.added) {
+          newLine += lines.length;
+        } else {
+          oldLine += lines.length;
+        }
+      } else {
+        // Identical context lines. Track line changes
+        if (oldRangeStart) {
+          // Close out any changes that have been output (or join overlapping)
+          if (lines.length <= options.context * 2 && i < diff.length - 2) {
+            /*istanbul ignore start*/
+            var _curRange2;
+            /*istanbul ignore end*/
+            // Overlapping
+            /*istanbul ignore start*/
+            /*istanbul ignore end*/
+            /*istanbul ignore start*/
+            (_curRange2 =
+            /*istanbul ignore end*/
+            curRange).push.apply(
+            /*istanbul ignore start*/
+            _curRange2
+            /*istanbul ignore end*/
+            ,
+            /*istanbul ignore start*/
+            _toConsumableArray(
+            /*istanbul ignore end*/
+            contextLines(lines)));
+          } else {
+            /*istanbul ignore start*/
+            var _curRange3;
+            /*istanbul ignore end*/
+            // end the range and output
+            var contextSize = Math.min(lines.length, options.context);
+            /*istanbul ignore start*/
+            /*istanbul ignore end*/
+            /*istanbul ignore start*/
+            (_curRange3 =
+            /*istanbul ignore end*/
+            curRange).push.apply(
+            /*istanbul ignore start*/
+            _curRange3
+            /*istanbul ignore end*/
+            ,
+            /*istanbul ignore start*/
+            _toConsumableArray(
+            /*istanbul ignore end*/
+            contextLines(lines.slice(0, contextSize))));
+            var _hunk = {
+              oldStart: oldRangeStart,
+              oldLines: oldLine - oldRangeStart + contextSize,
+              newStart: newRangeStart,
+              newLines: newLine - newRangeStart + contextSize,
+              lines: curRange
+            };
+            hunks.push(_hunk);
+            oldRangeStart = 0;
+            newRangeStart = 0;
+            curRange = [];
+          }
+        }
+        oldLine += lines.length;
+        newLine += lines.length;
+      }
+    };
+    for (var i = 0; i < diff.length; i++)
+    /*istanbul ignore start*/
+    {
+      _loop();
+    }
+
+    // Step 2: eliminate the trailing `\n` from each line of each hunk, and, where needed, add
+    //         "\ No newline at end of file".
+    /*istanbul ignore end*/
+    for (
+    /*istanbul ignore start*/
+    var _i = 0, _hunks =
+      /*istanbul ignore end*/
+      hunks;
+    /*istanbul ignore start*/
+    _i < _hunks.length
+    /*istanbul ignore end*/
+    ;
+    /*istanbul ignore start*/
+    _i++
+    /*istanbul ignore end*/
+    ) {
+      var hunk =
+      /*istanbul ignore start*/
+      _hunks[_i]
+      /*istanbul ignore end*/
+      ;
+      for (var _i2 = 0; _i2 < hunk.lines.length; _i2++) {
+        if (hunk.lines[_i2].endsWith('\n')) {
+          hunk.lines[_i2] = hunk.lines[_i2].slice(0, -1);
+        } else {
+          hunk.lines.splice(_i2 + 1, 0, '\\ No newline at end of file');
+          _i2++; // Skip the line we just added, then continue iterating
+        }
+      }
+    }
+    return {
+      oldFileName: oldFileName,
+      newFileName: newFileName,
+      oldHeader: oldHeader,
+      newHeader: newHeader,
+      hunks: hunks
+    };
   }
-
-  return {
-    oldFileName: oldFileName,
-    newFileName: newFileName,
-    oldHeader: oldHeader,
-    newHeader: newHeader,
-    hunks: hunks
-  };
 }
-
 function formatPatch(diff) {
+  if (Array.isArray(diff)) {
+    return diff.map(formatPatch).join('\n');
+  }
   var ret = [];
-
   if (diff.oldFileName == diff.newFileName) {
     ret.push('Index: ' + diff.oldFileName);
   }
-
   ret.push('===================================================================');
   ret.push('--- ' + diff.oldFileName + (typeof diff.oldHeader === 'undefined' ? '' : '\t' + diff.oldHeader));
   ret.push('+++ ' + diff.newFileName + (typeof diff.newHeader === 'undefined' ? '' : '\t' + diff.newHeader));
-
   for (var i = 0; i < diff.hunks.length; i++) {
-    var hunk = diff.hunks[i]; // Unified Diff Format quirk: If the chunk size is 0,
+    var hunk = diff.hunks[i];
+    // Unified Diff Format quirk: If the chunk size is 0,
     // the first number is one lower than one would expect.
     // https://www.artima.com/weblogs/viewpost.jsp?thread=164293
-
     if (hunk.oldLines === 0) {
       hunk.oldStart -= 1;
     }
-
     if (hunk.newLines === 0) {
       hunk.newStart -= 1;
     }
-
     ret.push('@@ -' + hunk.oldStart + ',' + hunk.oldLines + ' +' + hunk.newStart + ',' + hunk.newLines + ' @@');
     ret.push.apply(ret, hunk.lines);
   }
-
   return ret.join('\n') + '\n';
 }
-
 function createTwoFilesPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
-  return formatPatch(structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options));
+  /*istanbul ignore start*/
+  var _options2;
+  /*istanbul ignore end*/
+  if (typeof options === 'function') {
+    options = {
+      callback: options
+    };
+  }
+  if (!
+  /*istanbul ignore start*/
+  ((_options2 =
+  /*istanbul ignore end*/
+  options) !== null && _options2 !== void 0 &&
+  /*istanbul ignore start*/
+  _options2
+  /*istanbul ignore end*/
+  .callback)) {
+    var patchObj = structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options);
+    if (!patchObj) {
+      return;
+    }
+    return formatPatch(patchObj);
+  } else {
+    var
+      /*istanbul ignore start*/
+      _options3 =
+      /*istanbul ignore end*/
+      options,
+      /*istanbul ignore start*/
+      /*istanbul ignore end*/
+      _callback2 = _options3.callback;
+    structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader,
+    /*istanbul ignore start*/
+    _objectSpread(_objectSpread({},
+    /*istanbul ignore end*/
+    options), {}, {
+      callback: function
+      /*istanbul ignore start*/
+      callback
+      /*istanbul ignore end*/
+      (patchObj) {
+        if (!patchObj) {
+          _callback2();
+        } else {
+          _callback2(formatPatch(patchObj));
+        }
+      }
+    }));
+  }
 }
-
 function createPatch(fileName, oldStr, newStr, oldHeader, newHeader, options) {
   return createTwoFilesPatch(fileName, fileName, oldStr, newStr, oldHeader, newHeader, options);
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9jcmVhdGUuanMiXSwibmFtZXMiOlsic3RydWN0dXJlZFBhdGNoIiwib2xkRmlsZU5hbWUiLCJuZXdGaWxlTmFtZSIsIm9sZFN0ciIsIm5ld1N0ciIsIm9sZEhlYWRlciIsIm5ld0hlYWRlciIsIm9wdGlvbnMiLCJjb250ZXh0IiwiZGlmZiIsImRpZmZMaW5lcyIsInB1c2giLCJ2YWx1ZSIsImxpbmVzIiwiY29udGV4dExpbmVzIiwibWFwIiwiZW50cnkiLCJodW5rcyIsIm9sZFJhbmdlU3RhcnQiLCJuZXdSYW5nZVN0YXJ0IiwiY3VyUmFuZ2UiLCJvbGRMaW5lIiwibmV3TGluZSIsImkiLCJjdXJyZW50IiwicmVwbGFjZSIsInNwbGl0IiwiYWRkZWQiLCJyZW1vdmVkIiwicHJldiIsInNsaWNlIiwibGVuZ3RoIiwiY29udGV4dFNpemUiLCJNYXRoIiwibWluIiwiaHVuayIsIm9sZFN0YXJ0Iiwib2xkTGluZXMiLCJuZXdTdGFydCIsIm5ld0xpbmVzIiwib2xkRU9GTmV3bGluZSIsInRlc3QiLCJuZXdFT0ZOZXdsaW5lIiwibm9ObEJlZm9yZUFkZHMiLCJzcGxpY2UiLCJmb3JtYXRQYXRjaCIsInJldCIsImFwcGx5Iiwiam9pbiIsImNyZWF0ZVR3b0ZpbGVzUGF0Y2giLCJjcmVhdGVQYXRjaCIsImZpbGVOYW1lIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBOzs7Ozs7Ozs7Ozs7Ozs7QUFFTyxTQUFTQSxlQUFULENBQXlCQyxXQUF6QixFQUFzQ0MsV0FBdEMsRUFBbURDLE1BQW5ELEVBQTJEQyxNQUEzRCxFQUFtRUMsU0FBbkUsRUFBOEVDLFNBQTlFLEVBQXlGQyxPQUF6RixFQUFrRztBQUN2RyxNQUFJLENBQUNBLE9BQUwsRUFBYztBQUNaQSxJQUFBQSxPQUFPLEdBQUcsRUFBVjtBQUNEOztBQUNELE1BQUksT0FBT0EsT0FBTyxDQUFDQyxPQUFmLEtBQTJCLFdBQS9CLEVBQTRDO0FB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eHBvcnQgZnVuY3Rpb24gc3RydWN0dXJlZFBhdGNoKG9sZEZpbGVOYW1lLCBuZXdGaWxlTmFtZSwgb2xkU3RyLCBuZXdTdHIsIG9sZEhlYWRlciwgbmV3SGVhZGVyLCBvcHRpb25zKSB7XG4gIGlmICghb3B0aW9ucykge1xuICAgIG9wdGlvbnMgPSB7fTtcbiAgfVxuICBpZiAodHlwZW9mIG9wdGlvbnMuY29udGV4dCA9PT0gJ3VuZGVmaW5lZCcpIHtcbiAgICBvcHRpb25zLmNvbnRleHQgPSA0O1xuICB9XG5cbiAgY29uc3QgZGlmZiA9IGRpZmZMaW5lcyhvbGRTdHIsIG5ld1N0ciwgb3B0aW9ucyk7XG4gIGRpZmYucHVzaCh7dmFsdWU6ICcnLCBsaW5lczogW119KTsgLy8gQXBwZW5kIGFuIGVtcHR5IHZhbHVlIHRvIG1ha2UgY2xlYW51cCBlYXNpZXJcblxuICBmdW5jdGlvbiBjb250ZXh0TGluZXMobGluZXMpIHtcbiAgICByZXR1cm4gbGluZXMubWFwKGZ1bmN0aW9uKGVudHJ5KSB7IHJldHVybiAnICcgKyBlbnRyeTsgfSk7XG4gIH1cblxuICBsZXQgaHVua3MgPSBbXTtcbiAgbGV0IG9sZFJhbmdlU3RhcnQgPSAwLCBuZXdSYW5nZVN0YXJ0ID0gMCwgY3VyUmFuZ2UgPSBbXSxcbiAgICAgIG9sZExpbmUgPSAxLCBuZXdMaW5lID0gMTtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBkaWZmLmxlbmd0aDsgaSsrKSB7XG4gICAgY29uc3QgY3VycmVudCA9IGRpZmZbaV0sXG4gICAgICAgICAgbGluZXMgPSBjdXJyZW50LmxpbmVzIHx8IGN1cnJlbnQudmFsdWUucmVwbGFjZSgvXFxuJC8sICcnKS5zcGxpdCgnXFxuJyk7XG4gICAgY3VycmVudC5saW5lcyA9IGxpbmVzO1xuXG4gICAgaWYgKGN1cnJlbnQuYWRkZWQgfHwgY3VycmVudC5yZW1vdmVkKSB7XG4gICAgICAvLyBJZiB3ZSBoYXZlIHByZXZpb3VzIGNvbnRleHQsIHN0YXJ0IHdpdGggdGhhdFxuICAgICAgaWYgKCFvbGRSYW5nZVN0YXJ0KSB7XG4gICAgICAgIGNvbnN0IHByZXYgPSBkaWZmW2kgLSAxXTtcbiAgICAgICAgb2xkUmFuZ2VTdGFydCA9IG9sZExpbmU7XG4gICAgICAgIG5ld1JhbmdlU3RhcnQgPSBuZXdMaW5lO1xuXG4gICAgICAgIGlmIChwcmV2KSB7XG4gICAgICAgICAgY3VyUmFuZ2UgPSBvcHRpb25zLmNvbnRleHQgPiAwID8gY29udGV4dExpbmVzKHByZXYubGluZXMuc2xpY2UoLW9wdGlvbnMuY29udGV4dCkpIDogW107XG4gICAgICAgICAgb2xkUmFuZ2VTdGFydCAtPSBjdXJSYW5nZS5sZW5ndGg7XG4gICAgICAgICAgbmV3UmFuZ2VTdGFydCAtPSBjdXJSYW5nZS5sZW5ndGg7XG4gICAgICAgIH1cbiAgICAgIH1cblxuICAgICAgLy8gT3V0cHV0IG91ciBjaGFuZ2VzXG4gICAgICBjdXJSYW5nZS5wdXNoKC4uLiBsaW5lcy5tYXAoZnVuY3Rpb24oZW50cnkpIHtcbiAgICAgICAgcmV0dXJuIChjdXJyZW50LmFkZGVkID8gJysnIDogJy0nKSArIGVudHJ5O1xuICAgICAgfSkpO1xuXG4gICAgICAvLyBUcmFjayB0aGUgdXBkYXRlZCBmaWxlIHBvc2l0aW9uXG4gICAgICBpZiAoY3VycmVudC5hZGRlZCkge1xuICAgICAgICBuZXdMaW5lICs9IGxpbmVzLmxlbmd0aDtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIG9sZExpbmUgKz0gbGluZXMubGVuZ3RoO1xuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICAvLyBJZGVudGljYWwgY29udGV4dCBsaW5lcy4gVHJhY2sgbGluZSBjaGFuZ2VzXG4gICAgICBpZiAob2xkUmFuZ2VTdGFydCkge1xuICAgICAgICAvLyBDbG9zZSBvdXQgYW55IGNoYW5nZXMgdGhhdCBoYXZlIGJlZW4gb3V0cHV0IChvciBqb2luIG92ZXJsYXBwaW5nKVxuICAgICAgICBpZiAobGluZXMubGVuZ3RoIDw9IG9wdGlvbnMuY29udGV4dCAqIDIgJiYgaSA8IGRpZmYubGVuZ3RoIC0gMikge1xuICAgICAgICAgIC8vIE92ZXJsYXBwaW5nXG4gICAgICAgICAgY3VyUmFuZ2UucHVzaCguLi4gY29udGV4dExpbmVzKGxpbmVzKSk7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgLy8gZW5kIHRoZSByYW5nZSBhbmQgb3V0cHV0XG4gICAgICAgICAgbGV0IGNvbnRleHRTaXplID0gTWF0aC5taW4obGluZXMubGVuZ3RoLCBvcHRpb25zLmNvbnRleHQpO1xuICAgICAgICAgIGN1clJhbmdlLnB1c2goLi4uIGNvbnRleHRMaW5lcyhsaW5lcy5zbGljZSgwLCBjb250ZXh0U2l6ZSkpKTtcblxuICAgICAgICAgIGxldCBodW5rID0ge1xuICAgICAgICAgICAgb2xkU3RhcnQ6IG9sZFJhbmdlU3RhcnQsXG4gICAgICAgICAgICBvbGRMaW5lczogKG9sZExpbmUgLSBvbGRSYW5nZVN0YXJ0ICsgY29udGV4dFNpemUpLFxuICAgICAgICAgICAgbmV3U3RhcnQ6IG5ld1JhbmdlU3RhcnQsXG4gICAgICAgICAgICBuZXdMaW5lczogKG5ld0xpbmUgLSBuZXdSYW5nZVN0YXJ0ICsgY29udGV4dFNpemUpLFxuICAgICAgICAgICAgbGluZXM6IGN1clJhbmdlXG4gICAgICAgICAgfTtcbiAgICAgICAgICBpZiAoaSA+PSBkaWZmLmxlbmd0aCAtIDIgJiYgbGluZXMubGVuZ3RoIDw9IG9wdGlvbnMuY29udGV4dCkge1xuICAgICAgICAgICAgLy8gRU9GIGlzIGluc2lkZSB0aGlzIGh1bmtcbiAgICAgICAgICAgIGxldCBvbGRFT0ZOZXdsaW5lID0gKCgvXFxuJC8pLnRlc3Qob2xkU3RyKSk7XG4gICAgICAgICAgICBsZXQgbmV3RU9GTmV3bGluZSA9ICgoL1xcbiQvKS50ZXN0KG5ld1N0cikpO1xuICAgICAgICAgICAgbGV0IG5vTmxCZWZvcmVBZGRzID0gbGluZXMubGVuZ3RoID09IDAgJiYgY3VyUmFuZ2UubGVuZ3RoID4gaHVuay5vbGRMaW5lcztcbiAgICAgICAgICAgIGlmICghb2xkRU9GTmV3bGluZSAmJiBub05sQmVmb3JlQWRkcyAmJiBvbGRTdHIubGVuZ3RoID4gMCkge1xuICAgICAgICAgICAgICAvLyBzcGVjaWFsIGNhc2U6IG9sZCBoYXMgbm8gZW9sIGFuZCBubyB0cmFpbGluZyBjb250ZXh0OyBuby1ubCBjYW4gZW5kIHVwIGJlZm9yZSBhZGRzXG4gICAgICAgICAgICAgIC8vIGhvd2V2ZXIsIGlmIHRoZSBvbGQgZmlsZSBpcyBlbXB0eSwgZG8gbm90IG91dHB1dCB0aGUgbm8tbmwgbGluZVxuICAgICAgICAgICAgICBjdXJSYW5nZS5zcGxpY2UoaHVuay5vbGRMaW5lcywgMCwgJ1xcXFwgTm8gbmV3bGluZSBhdCBlbmQgb2YgZmlsZScpO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgaWYgKCghb2xkRU9GTmV3bGluZSAmJiAhbm9ObEJlZm9yZUFkZHMpIHx8ICFuZXdFT0ZOZXdsaW5lKSB7XG4gICAgICAgICAgICAgIGN1clJhbmdlLnB1c2goJ1xcXFwgTm8gbmV3bGluZSBhdCBlbmQgb2YgZmlsZScpO1xuICAgICAgICAgICAgfVxuICAgICAgICAgIH1cbiAgICAgICAgICBodW5rcy5wdXNoKGh1bmspO1xuXG4gICAgICAgICAgb2xkUmFuZ2VTdGFydCA9IDA7XG4gICAgICAgICAgbmV3UmFuZ2VTdGFydCA9IDA7XG4gICAgICAgICAgY3VyUmFuZ2UgPSBbXTtcbiAgICAgICAgfVxuICAgICAgfVxuICAgICAgb2xkTGluZSArPSBsaW5lcy5sZW5ndGg7XG4gICAgICBuZXdMaW5lICs9IGxpbmVzLmxlbmd0aDtcbiAgICB9XG4gIH1cblxuICByZXR1cm4ge1xuICAgIG9sZEZpbGVOYW1lOiBvbGRGaWxlTmFtZSwgbmV3RmlsZU5hbWU6IG5ld0ZpbGVOYW1lLFxuICAgIG9sZEhlYWRlcjogb2xkSGVhZGVyLCBuZXdIZWFkZXI6IG5ld0hlYWRlcixcbiAgICBodW5rczogaHVua3NcbiAgfTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGZvcm1hdFBhdGNoKGRpZmYpIHtcbiAgY29uc3QgcmV0ID0gW107XG4gIGlmIChkaWZmLm9sZEZpbGVOYW1lID09IGRpZmYubmV3RmlsZU5hbWUpIHtcbiAgICByZXQucHVzaCgnSW5kZXg6ICcgKyBkaWZmLm9sZEZpbGVOYW1lKTtcbiAgfVxuICByZXQucHVzaCgnPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PScpO1xuICByZXQucHVzaCgnLS0tICcgKyBkaWZmLm9sZEZpbGVOYW1lICsgKHR5cGVvZiBkaWZmLm9sZEhlYWRlciA9PT0gJ3VuZGVmaW5lZCcgPyAnJyA6ICdcXHQnICsgZGlmZi5vbGRIZWFkZXIpKTtcbiAgcmV0LnB1c2goJysrKyAnICsgZGlmZi5uZXdGaWxlTmFtZSArICh0eXBlb2YgZGlmZi5uZXdIZWFkZXIgPT09ICd1bmRlZmluZWQnID8gJycgOiAnXFx0JyArIGRpZmYubmV3SGVhZGVyKSk7XG5cbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBkaWZmLmh1bmtzLmxlbmd0aDsgaSsrKSB7XG4gICAgY29uc3QgaHVuayA9IGRpZmYuaHVua3NbaV07XG4gICAgLy8gVW5pZmllZCBEaWZmIEZvcm1hdCBxdWlyazogSWYgdGhlIGNodW5rIHNpemUgaXMgMCxcbiAgICAvLyB0aGUgZmlyc3QgbnVtYmVyIGlzIG9uZSBsb3dlciB0aGFuIG9uZSB3b3VsZCBleHBlY3QuXG4gICAgLy8gaHR0cHM6Ly93d3cuYXJ0aW1hLmNvbS93ZWJsb2dzL3ZpZXdwb3N0LmpzcD90aHJlYWQ9MTY0MjkzXG4gICAgaWYgKGh1bmsub2xkTGluZXMgPT09IDApIHtcbiAgICAgIGh1bmsub2xkU3RhcnQgLT0gMTtcbiAgICB9XG4gICAgaWYgKGh1bmsubmV3TGluZXMgPT09IDApIHtcbiAgICAgIGh1bmsubmV3U3RhcnQgLT0gMTtcbiAgICB9XG4gICAgcmV0LnB1c2goXG4gICAgICAnQEAgLScgKyBodW5rLm9sZFN0YXJ0ICsgJywnICsgaHVuay5vbGRMaW5lc1xuICAgICAgKyAnICsnICsgaHVuay5uZXdTdGFydCArICcsJyArIGh1bmsubmV3TGluZXNcbiAgICAgICsgJyBAQCdcbiAgICApO1xuICAgIHJldC5wdXNoLmFwcGx5KHJldCwgaHVuay5saW5lcyk7XG4gIH1cblxuICByZXR1cm4gcmV0LmpvaW4oJ1xcbicpICsgJ1xcbic7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBjcmVhdGVUd29GaWxlc1BhdGNoKG9sZEZpbGVOYW1lLCBuZXdGaWxlTmFtZSwgb2xkU3RyLCBuZXdTdHIsIG9sZEhlYWRlciwgbmV3SGVhZGVyLCBvcHRpb25zKSB7XG4gIHJldHVybiBmb3JtYXRQYXRjaChzdHJ1Y3R1cmVkUGF0Y2gob2xkRmlsZU5hbWUsIG5ld0ZpbGVOYW1lLCBvbGRTdHIsIG5ld1N0ciwgb2xkSGVhZGVyLCBuZXdIZWFkZXIsIG9wdGlvbnMpKTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGNyZWF0ZVBhdGNoKGZpbGVOYW1lLCBvbGRTdHIsIG5ld1N0ciwgb2xkSGVhZGVyLCBuZXdIZWFkZXIsIG9wdGlvbnMpIHtcbiAgcmV0dXJuIGNyZWF0ZVR3b0ZpbGVzUGF0Y2goZmlsZU5hbWUsIGZpbGVOYW1lLCBvbGRTdHIsIG5ld1N0ciwgb2xkSGVhZGVyLCBuZXdIZWFkZXIsIG9wdGlvbnMpO1xufVxuIl19
+
+/**
+ * Split `text` into an array of lines, including the trailing newline character (where present)
+ */
+function splitLines(text) {
+  var hasTrailingNl = text.endsWith('\n');
+  var result = text.split('\n').map(function (line)
+  /*istanbul ignore start*/
+  {
+    return (
+      /*istanbul ignore end*/
+      line + '\n'
+    );
+  });
+  if (hasTrailingNl) {
+    result.pop();
+  } else {
+    result.push(result.pop().slice(0, -1));
+  }
+  return result;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfbGluZSIsInJlcXVpcmUiLCJfdHlwZW9mIiwibyIsIlN5bWJvbCIsIml0ZXJhdG9yIiwiY29uc3RydWN0b3IiLCJwcm90b3R5cGUiLCJfdG9Db25zdW1hYmxlQXJyYXkiLCJhcnIiLCJfYXJyYXlXaXRob3V0SG9sZXMiLCJfaXRlcmFibGVUb0FycmF5IiwiX3Vuc3VwcG9ydGVkSXRlcmFibGVUb0FycmF5IiwiX25vbkl0ZXJhYmxlU3ByZWFkIiwiVHlwZUVycm9yIiwibWluTGVuIiwiX2FycmF5TGlrZVRvQXJyYXkiLCJuIiwiT2JqZWN0IiwidG9TdHJpbmciLCJjYWxsIiwic2xpY2UiLCJuYW1lIiwiQXJyYXkiLCJmcm9tIiwidGVzdCIsIml0ZXIiLCJpc0FycmF5IiwibGVuIiwibGVuZ3RoIiwiaSIsImFycjIiLCJvd25LZXlzIiwiZSIsInIiLCJ0Iiwia2V5cyIsImdldE93blByb3BlcnR5U3ltYm9scyIsImZpbHRlciIsImdldE93blByb3BlcnR5RGVzY3JpcHRvciIsImVudW1lcmFibGUiLCJwdXNoIiwiYXBwbHkiLCJfb2JqZWN0U3ByZWFkIiwiYXJndW1lbnRzIiwiZm9yRWFjaCIsIl9kZWZpbmVQcm9wZXJ0eSIsImdldE93blByb3BlcnR5RGVzY3JpcHRvcnMiLCJkZWZpbmVQcm9wZXJ0aWVzIiwiZGVmaW5lUHJvcGVydHkiLCJvYmoiLCJrZXkiLCJ2YWx1ZSIsIl90b1Byb3BlcnR5S2V5IiwiY29uZmlndXJhYmxlIiwid3JpdGFibGUiLCJfdG9QcmltaXRpdmUiLCJ0b1ByaW1pdGl2ZSIsIlN0cmluZyIsIk51bWJlciIsInN0cnVjdHVyZWRQYXRjaCIsIm9sZEZpbGVOYW1lIiwibmV3RmlsZU5hbWUiLCJvbGRTdHIiLCJuZXdTdHIiLCJvbGRIZWFkZXIiLCJuZXdIZWFkZXIiLCJvcHRpb25zIiwiY2FsbGJhY2siLCJjb250ZXh0IiwibmV3bGluZUlzVG9rZW4iLCJFcnJvciIsImRpZmZMaW5lc1Jlc3VsdFRvUGF0Y2giLCJkaWZmTGluZXMiLCJfb3B0aW9ucyIsImRpZmYiLCJwYXRjaCIsImxpbmVzIiwiY29udGV4dExpbmVzIiwibWFwIiwiZW50cnkiLCJodW5rcyIsIm9sZFJhbmdlU3RhcnQiLCJuZXdSYW5nZVN0YXJ0IiwiY3VyUmFuZ2UiLCJvbGRMaW5lIiwibmV3TGluZSIsIl9sb29wIiwiY3VycmVudCIsInNwbGl0TGluZXMiLCJhZGRlZCIsInJlbW92ZWQiLCJfY3VyUmFuZ2UiLCJwcmV2IiwiX2N1clJhbmdlMiIsIl9jdXJSYW5nZTMiLCJjb250ZXh0U2l6ZSIsIk1hdGgiLCJtaW4iLCJodW5rIiwib2xkU3RhcnQiLCJvbGRMaW5lcyIsIm5ld1N0YXJ0IiwibmV3TGluZXMiLCJfaSIsIl9odW5rcyIsImVuZHNXaXRoIiwic3BsaWNlIiwiZm9ybWF0UGF0Y2giLCJqb2luIiwicmV0IiwiY3JlYXRlVHdvRmlsZXNQYXRjaCIsIl9vcHRpb25zMiIsInBhdGNoT2JqIiwiX29wdGlvbnMzIiwiY3JlYXRlUGF0Y2giLCJmaWxlTmFtZSIsInRleHQiLCJoYXNUcmFpbGluZ05sIiwicmVzdWx0Iiwic3BsaXQiLCJsaW5lIiwicG9wIl0sInNvdXJjZXMiOlsiLi4vLi4vc3JjL3BhdGNoL2NyZWF0ZS5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge2RpZmZMaW5lc30gZnJvbSAnLi4vZGlmZi9saW5lJztcblxuZXhwb3J0IGZ1bmN0aW9uIHN0cnVjdHVyZWRQYXRjaChvbGRGaWxlTmFtZSwgbmV3RmlsZU5hbWUsIG9sZFN0ciwgbmV3U3RyLCBvbGRIZWFkZXIsIG5ld0hlYWRlciwgb3B0aW9ucykge1xuICBpZiAoIW9wdGlvbnMpIHtcbiAgICBvcHRpb25zID0ge307XG4gIH1cbiAgaWYgKHR5cGVvZiBvcHRpb25zID09PSAnZnVuY3Rpb24nKSB7XG4gICAgb3B0aW9ucyA9IHtjYWxsYmFjazogb3B0aW9uc307XG4gIH1cbiAgaWYgKHR5cGVvZiBvcHRpb25zLmNvbnRleHQgPT09ICd1bmRlZmluZWQnKSB7XG4gICAgb3B0aW9ucy5jb250ZXh0ID0gNDtcbiAgfVxuICBpZiAob3B0aW9ucy5uZXdsaW5lSXNUb2tlbikge1xuICAgIHRocm93IG5ldyBFcnJvcignbmV3bGluZUlzVG9rZW4gbWF5IG5vdCBiZSB1c2VkIHdpdGggcGF0Y2gtZ2VuZXJhdGlvbiBmdW5jdGlvbnMsIG9ubHkgd2l0aCBkaWZmaW5nIGZ1bmN0aW9ucycpO1xuICB9XG5cbiAgaWYgKCFvcHRpb25zLmNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIGRpZmZMaW5lc1Jlc3VsdFRvUGF0Y2goZGlmZkxpbmVzKG9sZFN0ciwgbmV3U3RyLCBvcHRpb25zKSk7XG4gIH0gZWxzZSB7XG4gICAgY29uc3Qge2NhbGxiYWNrfSA9IG9wdGlvbnM7XG4gICAgZGlmZkxpbmVzKFxuICAgICAgb2xkU3RyLFxuICAgICAgbmV3U3RyLFxuICAgICAge1xuICAgICAgICAuLi5vcHRpb25zLFxuICAgICAgICBjYWxsYmFjazogKGRpZmYpID0+IHtcbiAgICAgICAgICBjb25zdCBwYXRjaCA9IGRpZmZMaW5lc1Jlc3VsdFRvUGF0Y2goZGlmZik7XG4gICAgICAgICAgY2FsbGJhY2socGF0Y2gpO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgKTtcbiAgfVxuXG4gIGZ1bmN0aW9uIGRpZmZMaW5lc1Jlc3VsdFRvUGF0Y2goZGlmZikge1xuICAgIC8vIFNURVAgMTogQnVpbGQgdXAgdGhlIHBhdGNoIHdpdGggbm8gXCJcXCBObyBuZXdsaW5lIGF0IGVuZCBvZiBmaWxlXCIgbGluZXMgYW5kIHdpdGggdGhlIGFycmF5c1xuICAgIC8vICAgICAgICAgb2YgbGluZXMgY29udGFpbmluZyB0cmFpbGluZyBuZXdsaW5lIGNoYXJhY3RlcnMuIFdlJ2xsIHRpZHkgdXAgbGF0ZXIuLi5cblxuICAgIGlmKCFkaWZmKSB7XG4gICAgICByZXR1cm47XG4gICAgfVxuXG4gICAgZGlmZi5wdXNoKHt2YWx1ZTogJycsIGxpbmVzOiBbXX0pOyAvLyBBcHBlbmQgYW4gZW1wdHkgdmFsdWUgdG8gbWFrZSBjbGVhbnVwIGVhc2llclxuXG4gICAgZnVuY3Rpb24gY29udGV4dExpbmVzKGxpbmVzKSB7XG4gICAgICByZXR1cm4gbGluZXMubWFwKGZ1bmN0aW9uKGVudHJ5KSB7IHJldHVybiAnICcgKyBlbnRyeTsgfSk7XG4gICAgfVxuXG4gICAgbGV0IGh1bmtzID0gW107XG4gICAgbGV0IG9sZFJhbmdlU3RhcnQgPSAwLCBuZXdSYW5nZVN0YXJ0ID0gMCwgY3VyUmFuZ2UgPSBbXSxcbiAgICAgICAgb2xkTGluZSA9IDEsIG5ld0xpbmUgPSAxO1xuICAgIGZvciAobGV0IGkgPSAwOyBpIDwgZGlmZi5sZW5ndGg7IGkrKykge1xuICAgICAgY29uc3QgY3VycmVudCA9IGRpZmZbaV0sXG4gICAgICAgICAgICBsaW5lcyA9IGN1cnJlbnQubGluZXMgfHwgc3BsaXRMaW5lcyhjdXJyZW50LnZhbHVlKTtcbiAgICAgIGN1cnJlbnQubGluZXMgPSBsaW5lcztcblxuICAgICAgaWYgKGN1cnJlbnQuYWRkZWQgfHwgY3VycmVudC5yZW1vdmVkKSB7XG4gICAgICAgIC8vIElmIHdlIGhhdmUgcHJldmlvdXMgY29udGV4dCwgc3RhcnQgd2l0aCB0aGF0XG4gICAgICAgIGlmICghb2xkUmFuZ2VTdGFydCkge1xuICAgICAgICAgIGNvbnN0IHByZXYgPSBkaWZmW2kgLSAxXTtcbiAgICAgICAgICBvbGRSYW5nZVN0YXJ0ID0gb2xkTGluZTtcbiAgICAgICAgICBuZXdSYW5nZVN0YXJ0ID0gbmV3TGluZTtcblxuICAgICAgICAgIGlmIChwcmV2KSB7XG4gICAgICAgICAgICBjdXJSYW5nZSA9IG9wdGlvbnMuY29udGV4dCA+IDAgPyBjb250ZXh0TGluZXMocHJldi5saW5lcy5zbGljZSgtb3B0aW9ucy5jb250ZXh0KSkgOiBbXTtcbiAgICAgICAgICAgIG9sZFJhbmdlU3RhcnQgLT0gY3VyUmFuZ2UubGVuZ3RoO1xuICAgICAgICAgICAgbmV3UmFuZ2VTdGFydCAtPSBjdXJSYW5nZS5sZW5ndGg7XG4gICAgICAgICAgfVxuICAgICAgICB9XG5cbiAgICAgICAgLy8gT3V0cHV0IG91ciBjaGFuZ2VzXG4gICAgICAgIGN1clJhbmdlLnB1c2goLi4uIGxpbmVzLm1hcChmdW5jdGlvbihlbnRyeSkge1xuICAgICAgICAgIHJldHVybiAoY3VycmVudC5hZGRlZCA/ICcrJyA6ICctJykgKyBlbnRyeTtcbiAgICAgICAgfSkpO1xuXG4gICAgICAgIC8vIFRyYWNrIHRoZSB1cGRhdGVkIGZpbGUgcG9zaXRpb25cbiAgICAgICAgaWYgKGN1cnJlbnQuYWRkZWQpIHtcbiAgICAgICAgICBuZXdMaW5lICs9IGxpbmVzLmxlbmd0aDtcbiAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICBvbGRMaW5lICs9IGxpbmVzLmxlbmd0aDtcbiAgICAgICAgfVxuICAgICAgfSBlbHNlIHtcbiAgICAgICAgLy8gSWRlbnRpY2FsIGNvbnRleHQgbGluZXMuIFRyYWNrIGxpbmUgY2hhbmdlc1xuICAgICAgICBpZiAob2xkUmFuZ2VTdGFydCkge1xuICAgICAgICAgIC8vIENsb3NlIG91dCBhbnkgY2hhbmdlcyB0aGF0IGhhdmUgYmVlbiBvdXRwdXQgKG9yIGpvaW4gb3ZlcmxhcHBpbmcpXG4gICAgICAgICAgaWYgKGxpbmVzLmxlbmd0aCA8PSBvcHRpb25zLmNvbnRleHQgKiAyICYmIGkgPCBkaWZmLmxlbmd0aCAtIDIpIHtcbiAgICAgICAgICAgIC8vIE92ZXJsYXBwaW5nXG4gICAgICAgICAgICBjdXJSYW5nZS5wdXNoKC4uLiBjb250ZXh0TGluZXMobGluZXMpKTtcbiAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgLy8gZW5kIHRoZSByYW5nZSBhbmQgb3V0cHV0XG4gICAgICAgICAgICBsZXQgY29udGV4dFNpemUgPSBNYXRoLm1pbihsaW5lcy5sZW5ndGgsIG9wdGlvbnMuY29udGV4dCk7XG4gICAgICAgICAgICBjdXJSYW5nZS5wdXNoKC4uLiBjb250ZXh0TGluZXMobGluZXMuc2xpY2UoMCwgY29udGV4dFNpemUpKSk7XG5cbiAgICAgICAgICAgIGxldCBodW5rID0ge1xuICAgICAgICAgICAgICBvbGRTdGFydDogb2xkUmFuZ2VTdGFydCxcbiAgICAgICAgICAgICAgb2xkTGluZXM6IChvbGRMaW5lIC0gb2xkUmFuZ2VTdGFydCArIGNvbnRleHRTaXplKSxcbiAgICAgICAgICAgICAgbmV3U3RhcnQ6IG5ld1JhbmdlU3RhcnQsXG4gICAgICAgICAgICAgIG5ld0xpbmVzOiAobmV3TGluZSAtIG5ld1JhbmdlU3RhcnQgKyBjb250ZXh0U2l6ZSksXG4gICAgICAgICAgICAgIGxpbmVzOiBjdXJSYW5nZVxuICAgICAgICAgICAgfTtcbiAgICAgICAgICAgIGh1bmtzLnB1c2goaHVuayk7XG5cbiAgICAgICAgICAgIG9sZFJhbmdlU3RhcnQgPSAwO1xuICAgICAgICAgICAgbmV3UmFuZ2VTdGFydCA9IDA7XG4gICAgICAgICAgICBjdXJSYW5nZSA9IFtdO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgICBvbGRMaW5lICs9IGxpbmVzLmxlbmd0aDtcbiAgICAgICAgbmV3TGluZSArPSBsaW5lcy5sZW5ndGg7XG4gICAgICB9XG4gICAgfVxuXG4gICAgLy8gU3RlcCAyOiBlbGltaW5hdGUgdGhlIHRyYWlsaW5nIGBcXG5gIGZyb20gZWFjaCBsaW5lIG9mIGVhY2ggaHVuaywgYW5kLCB3aGVyZSBuZWVkZWQsIGFkZFxuICAgIC8vICAgICAgICAgXCJcXCBObyBuZXdsaW5lIGF0IGVuZCBvZiBmaWxlXCIuXG4gICAgZm9yIChjb25zdCBodW5rIG9mIGh1bmtzKSB7XG4gICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGh1bmsubGluZXMubGVuZ3RoOyBpKyspIHtcbiAgICAgICAgaWYgKGh1bmsubGluZXNbaV0uZW5kc1dpdGgoJ1xcbicpKSB7XG4gICAgICAgICAgaHVuay5saW5lc1tpXSA9IGh1bmsubGluZXNbaV0uc2xpY2UoMCwgLTEpO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIGh1bmsubGluZXMuc3BsaWNlKGkgKyAxLCAwLCAnXFxcXCBObyBuZXdsaW5lIGF0IGVuZCBvZiBmaWxlJyk7XG4gICAgICAgICAgaSsrOyAvLyBTa2lwIHRoZSBsaW5lIHdlIGp1c3QgYWRkZWQsIHRoZW4gY29udGludWUgaXRlcmF0aW5nXG4gICAgICAgIH1cbiAgICAgIH1cbiAgICB9XG5cbiAgICByZXR1cm4ge1xuICAgICAgb2xkRmlsZU5hbWU6IG9sZEZpbGVOYW1lLCBuZXdGaWxlTmFtZTogbmV3RmlsZU5hbWUsXG4gICAgICBvbGRIZWFkZXI6IG9sZEhlYWRlciwgbmV3SGVhZGVyOiBuZXdIZWFkZXIsXG4gICAgICBodW5rczogaHVua3NcbiAgICB9O1xuICB9XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBmb3JtYXRQYXRjaChkaWZmKSB7XG4gIGlmIChBcnJheS5pc0FycmF5KGRpZmYpKSB7XG4gICAgcmV0dXJuIGRpZmYubWFwKGZvcm1hdFBhdGNoKS5qb2luKCdcXG4nKTtcbiAgfVxuXG4gIGNvbnN0IHJldCA9IFtdO1xuICBpZiAoZGlmZi5vbGRGaWxlTmFtZSA9PSBkaWZmLm5ld0ZpbGVOYW1lKSB7XG4gICAgcmV0LnB1c2goJ0luZGV4OiAnICsgZGlmZi5vbGRGaWxlTmFtZSk7XG4gIH1cbiAgcmV0LnB1c2goJz09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0nKTtcbiAgcmV0LnB1c2goJy0tLSAnICsgZGlmZi5vbGRGaWxlTmFtZSArICh0eXBlb2YgZGlmZi5vbGRIZWFkZXIgPT09ICd1bmRlZmluZWQnID8gJycgOiAnXFx0JyArIGRpZmYub2xkSGVhZGVyKSk7XG4gIHJldC5wdXNoKCcrKysgJyArIGRpZmYubmV3RmlsZU5hbWUgKyAodHlwZW9mIGRpZmYubmV3SGVhZGVyID09PSAndW5kZWZpbmVkJyA/ICcnIDogJ1xcdCcgKyBkaWZmLm5ld0hlYWRlcikpO1xuXG4gIGZvciAobGV0IGkgPSAwOyBpIDwgZGlmZi5odW5rcy5sZW5ndGg7IGkrKykge1xuICAgIGNvbnN0IGh1bmsgPSBkaWZmLmh1bmtzW2ldO1xuICAgIC8vIFVuaWZpZWQgRGlmZiBGb3JtYXQgcXVpcms6IElmIHRoZSBjaHVuayBzaXplIGlzIDAsXG4gICAgLy8gdGhlIGZpcnN0IG51bWJlciBpcyBvbmUgbG93ZXIgdGhhbiBvbmUgd291bGQgZXhwZWN0LlxuICAgIC8vIGh0dHBzOi8vd3d3LmFydGltYS5jb20vd2VibG9ncy92aWV3cG9zdC5qc3A/dGhyZWFkPTE2NDI5M1xuICAgIGlmIChodW5rLm9sZExpbmVzID09PSAwKSB7XG4gICAgICBodW5rLm9sZFN0YXJ0IC09IDE7XG4gICAgfVxuICAgIGlmIChodW5rLm5ld0xpbmVzID09PSAwKSB7XG4gICAgICBodW5rLm5ld1N0YXJ0IC09IDE7XG4gICAgfVxuICAgIHJldC5wdXNoKFxuICAgICAgJ0BAIC0nICsgaHVuay5vbGRTdGFydCArICcsJyArIGh1bmsub2xkTGluZXNcbiAgICAgICsgJyArJyArIGh1bmsubmV3U3RhcnQgKyAnLCcgKyBodW5rLm5ld0xpbmVzXG4gICAgICArICcgQEAnXG4gICAgKTtcbiAgICByZXQucHVzaC5hcHBseShyZXQsIGh1bmsubGluZXMpO1xuICB9XG5cbiAgcmV0dXJuIHJldC5qb2luKCdcXG4nKSArICdcXG4nO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gY3JlYXRlVHdvRmlsZXNQYXRjaChvbGRGaWxlTmFtZSwgbmV3RmlsZU5hbWUsIG9sZFN0ciwgbmV3U3RyLCBvbGRIZWFkZXIsIG5ld0hlYWRlciwgb3B0aW9ucykge1xuICBpZiAodHlwZW9mIG9wdGlvbnMgPT09ICdmdW5jdGlvbicpIHtcbiAgICBvcHRpb25zID0ge2NhbGxiYWNrOiBvcHRpb25zfTtcbiAgfVxuXG4gIGlmICghb3B0aW9ucz8uY2FsbGJhY2spIHtcbiAgICBjb25zdCBwYXRjaE9iaiA9IHN0cnVjdHVyZWRQYXRjaChvbGRGaWxlTmFtZSwgbmV3RmlsZU5hbWUsIG9sZFN0ciwgbmV3U3RyLCBvbGRIZWFkZXIsIG5ld0hlYWRlciwgb3B0aW9ucyk7XG4gICAgaWYgKCFwYXRjaE9iaikge1xuICAgICAgcmV0dXJuO1xuICAgIH1cbiAgICByZXR1cm4gZm9ybWF0UGF0Y2gocGF0Y2hPYmopO1xuICB9IGVsc2Uge1xuICAgIGNvbnN0IHtjYWxsYmFja30gPSBvcHRpb25zO1xuICAgIHN0cnVjdHVyZWRQYXRjaChcbiAgICAgIG9sZEZpbGVOYW1lLFxuICAgICAgbmV3RmlsZU5hbWUsXG4gICAgICBvbGRTdHIsXG4gICAgICBuZXdTdHIsXG4gICAgICBvbGRIZWFkZXIsXG4gICAgICBuZXdIZWFkZXIsXG4gICAgICB7XG4gICAgICAgIC4uLm9wdGlvbnMsXG4gICAgICAgIGNhbGxiYWNrOiBwYXRjaE9iaiA9PiB7XG4gICAgICAgICAgaWYgKCFwYXRjaE9iaikge1xuICAgICAgICAgICAgY2FsbGJhY2soKTtcbiAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgY2FsbGJhY2soZm9ybWF0UGF0Y2gocGF0Y2hPYmopKTtcbiAgICAgICAgICB9XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICApO1xuICB9XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBjcmVhdGVQYXRjaChmaWxlTmFtZSwgb2xkU3RyLCBuZXdTdHIsIG9sZEhlYWRlciwgbmV3SGVhZGVyLCBvcHRpb25zKSB7XG4gIHJldHVybiBjcmVhdGVUd29GaWxlc1BhdGNoKGZpbGVOYW1lLCBmaWxlTmFtZSwgb2xkU3RyLCBuZXdTdHIsIG9sZEhlYWRlciwgbmV3SGVhZGVyLCBvcHRpb25zKTtcbn1cblxuLyoqXG4gKiBTcGxpdCBgdGV4dGAgaW50byBhbiBhcnJheSBvZiBsaW5lcywgaW5jbHVkaW5nIHRoZSB0cmFpbGluZyBuZXdsaW5lIGNoYXJhY3RlciAod2hlcmUgcHJlc2VudClcbiAqL1xuZnVuY3Rpb24gc3BsaXRMaW5lcyh0ZXh0KSB7XG4gIGNvbnN0IGhhc1RyYWlsaW5nTmwgPSB0ZXh0LmVuZHNXaXRoKCdcXG4nKTtcbiAgY29uc3QgcmVzdWx0ID0gdGV4dC5zcGxpdCgnXFxuJykubWFwKGxpbmUgPT4gbGluZSArICdcXG4nKTtcbiAgaWYgKGhhc1RyYWlsaW5nTmwpIHtcbiAgICByZXN1bHQucG9wKCk7XG4gIH0gZWxzZSB7XG4gICAgcmVzdWx0LnB1c2gocmVzdWx0LnBvcCgpLnNsaWNlKDAsIC0xKSk7XG4gIH1cbiAgcmV0dXJuIHJlc3VsdDtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUFBLEtBQUEsR0FBQUMsT0FBQTtBQUFBO0FBQUE7QUFBdUMsbUNBQUFDLFFBQUFDLENBQUEsc0NBQUFELE9BQUEsd0JBQUFFLE1BQUEsdUJBQUFBLE1BQUEsQ0FBQUMsUUFBQSxhQUFBRixDQUFBLGtCQUFBQSxDQUFBLGdCQUFBQSxDQUFBLFdBQUFBLENBQUEseUJBQUFDLE1BQUEsSUFBQUQsQ0FBQSxDQUFBRyxXQUFBLEtBQUFGLE1BQUEsSUFBQUQsQ0FBQSxLQUFBQyxNQUFBLENBQUFHLFNBQUEscUJBQUFKLENBQUEsS0FBQUQsT0FBQSxDQUFBQyxDQUFBO0FBQUEsU0FBQUssbUJBQUFDLEdBQUEsV0FBQUMsa0JBQUEsQ0FBQUQsR0FBQSxLQUFBRSxnQkFBQSxDQUFBRixHQUFBLEtBQUFHLDJCQUFBLENBQUFILEdBQUEsS0FBQUksa0JBQUE7QUFBQSxTQUFBQSxtQkFBQSxjQUFBQyxTQUFBO0FBQUEsU0FBQUYsNEJBQUFULENBQUEsRUFBQVksTUFBQSxTQUFBWixDQUFBLHFCQUFBQSxDQUFBLHNCQUFBYSxpQkFBQSxDQUFBYixDQUFBLEVBQUFZLE1BQUEsT0FBQUUsQ0FBQSxHQUFBQyxNQUFBLENBQUFYLFNBQUEsQ0FBQVksUUFBQSxDQUFBQyxJQUFBLENBQUFqQixDQUFBLEVBQUFrQixLQUFBLGFBQUFKLENBQUEsaUJBQUFkLENBQUEsQ0FBQUcsV0FBQSxFQUFBVyxDQUFBLEdBQUFkLENBQUEsQ0FBQUcsV0FBQSxDQUFBZ0IsSUFBQSxNQUFBTCxDQUFBLGNBQUFBLENBQUEsbUJBQUFNLEtBQUEsQ0FBQUMsSUFBQSxDQUFBckIsQ0FBQSxPQUFBYyxDQUFBLCtE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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/patch/merge.js":
+/***/ "./node_modules/diff/lib/patch/line-endings.js"
+/*!*****************************************************!*\
+  !*** ./node_modules/diff/lib/patch/line-endings.js ***!
+  \*****************************************************/
+(__unused_webpack_module, exports) {
+
+/*istanbul ignore start*/
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.isUnix = isUnix;
+exports.isWin = isWin;
+exports.unixToWin = unixToWin;
+exports.winToUnix = winToUnix;
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/*istanbul ignore end*/
+function unixToWin(patch) {
+  if (Array.isArray(patch)) {
+    return patch.map(unixToWin);
+  }
+  return (
+    /*istanbul ignore start*/
+    _objectSpread(_objectSpread({},
+    /*istanbul ignore end*/
+    patch), {}, {
+      hunks: patch.hunks.map(function (hunk)
+      /*istanbul ignore start*/
+      {
+        return _objectSpread(_objectSpread({},
+        /*istanbul ignore end*/
+        hunk), {}, {
+          lines: hunk.lines.map(function (line, i)
+          /*istanbul ignore start*/
+          {
+            var _hunk$lines;
+            return (
+              /*istanbul ignore end*/
+              line.startsWith('\\') || line.endsWith('\r') ||
+              /*istanbul ignore start*/
+              (_hunk$lines =
+              /*istanbul ignore end*/
+              hunk.lines[i + 1]) !== null && _hunk$lines !== void 0 &&
+              /*istanbul ignore start*/
+              _hunk$lines
+              /*istanbul ignore end*/
+              .startsWith('\\') ? line : line + '\r'
+            );
+          })
+        });
+      })
+    })
+  );
+}
+function winToUnix(patch) {
+  if (Array.isArray(patch)) {
+    return patch.map(winToUnix);
+  }
+  return (
+    /*istanbul ignore start*/
+    _objectSpread(_objectSpread({},
+    /*istanbul ignore end*/
+    patch), {}, {
+      hunks: patch.hunks.map(function (hunk)
+      /*istanbul ignore start*/
+      {
+        return _objectSpread(_objectSpread({},
+        /*istanbul ignore end*/
+        hunk), {}, {
+          lines: hunk.lines.map(function (line)
+          /*istanbul ignore start*/
+          {
+            return (
+              /*istanbul ignore end*/
+              line.endsWith('\r') ? line.substring(0, line.length - 1) : line
+            );
+          })
+        });
+      })
+    })
+  );
+}
+
+/**
+ * Returns true if the patch consistently uses Unix line endings (or only involves one line and has
+ * no line endings).
+ */
+function isUnix(patch) {
+  if (!Array.isArray(patch)) {
+    patch = [patch];
+  }
+  return !patch.some(function (index)
+  /*istanbul ignore start*/
+  {
+    return (
+      /*istanbul ignore end*/
+      index.hunks.some(function (hunk)
+      /*istanbul ignore start*/
+      {
+        return (
+          /*istanbul ignore end*/
+          hunk.lines.some(function (line)
+          /*istanbul ignore start*/
+          {
+            return (
+              /*istanbul ignore end*/
+              !line.startsWith('\\') && line.endsWith('\r')
+            );
+          })
+        );
+      })
+    );
+  });
+}
+
+/**
+ * Returns true if the patch uses Windows line endings and only Windows line endings.
+ */
+function isWin(patch) {
+  if (!Array.isArray(patch)) {
+    patch = [patch];
+  }
+  return patch.some(function (index)
+  /*istanbul ignore start*/
+  {
+    return (
+      /*istanbul ignore end*/
+      index.hunks.some(function (hunk)
+      /*istanbul ignore start*/
+      {
+        return (
+          /*istanbul ignore end*/
+          hunk.lines.some(function (line)
+          /*istanbul ignore start*/
+          {
+            return (
+              /*istanbul ignore end*/
+              line.endsWith('\r')
+            );
+          })
+        );
+      })
+    );
+  }) && patch.every(function (index)
+  /*istanbul ignore start*/
+  {
+    return (
+      /*istanbul ignore end*/
+      index.hunks.every(function (hunk)
+      /*istanbul ignore start*/
+      {
+        return (
+          /*istanbul ignore end*/
+          hunk.lines.every(function (line, i)
+          /*istanbul ignore start*/
+          {
+            var _hunk$lines2;
+            return (
+              /*istanbul ignore end*/
+              line.startsWith('\\') || line.endsWith('\r') ||
+              /*istanbul ignore start*/
+              ((_hunk$lines2 =
+              /*istanbul ignore end*/
+              hunk.lines[i + 1]) === null || _hunk$lines2 === void 0 ? void 0 :
+              /*istanbul ignore start*/
+              _hunk$lines2
+              /*istanbul ignore end*/
+              .startsWith('\\'))
+            );
+          })
+        );
+      })
+    );
+  });
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJ1bml4VG9XaW4iLCJwYXRjaCIsIkFycmF5IiwiaXNBcnJheSIsIm1hcCIsIl9vYmplY3RTcHJlYWQiLCJodW5rcyIsImh1bmsiLCJsaW5lcyIsImxpbmUiLCJpIiwiX2h1bmskbGluZXMiLCJzdGFydHNXaXRoIiwiZW5kc1dpdGgiLCJ3aW5Ub1VuaXgiLCJzdWJzdHJpbmciLCJsZW5ndGgiLCJpc1VuaXgiLCJzb21lIiwiaW5kZXgiLCJpc1dpbiIsImV2ZXJ5IiwiX2h1bmskbGluZXMyIl0sInNvdXJjZXMiOlsiLi4vLi4vc3JjL3BhdGNoL2xpbmUtZW5kaW5ncy5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gdW5peFRvV2luKHBhdGNoKSB7XG4gIGlmIChBcnJheS5pc0FycmF5KHBhdGNoKSkge1xuICAgIHJldHVybiBwYXRjaC5tYXAodW5peFRvV2luKTtcbiAgfVxuXG4gIHJldHVybiB7XG4gICAgLi4ucGF0Y2gsXG4gICAgaHVua3M6IHBhdGNoLmh1bmtzLm1hcChodW5rID0+ICh7XG4gICAgICAuLi5odW5rLFxuICAgICAgbGluZXM6IGh1bmsubGluZXMubWFwKFxuICAgICAgICAobGluZSwgaSkgPT5cbiAgICAgICAgICAobGluZS5zdGFydHNXaXRoKCdcXFxcJykgfHwgbGluZS5lbmRzV2l0aCgnXFxyJykgfHwgaHVuay5saW5lc1tpICsgMV0/LnN0YXJ0c1dpdGgoJ1xcXFwnKSlcbiAgICAgICAgICAgID8gbGluZVxuICAgICAgICAgICAgOiBsaW5lICsgJ1xccidcbiAgICAgIClcbiAgICB9KSlcbiAgfTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIHdpblRvVW5peChwYXRjaCkge1xuICBpZiAoQXJyYXkuaXNBcnJheShwYXRjaCkpIHtcbiAgICByZXR1cm4gcGF0Y2gubWFwKHdpblRvVW5peCk7XG4gIH1cblxuICByZXR1cm4ge1xuICAgIC4uLnBhdGNoLFxuICAgIGh1bmtzOiBwYXRjaC5odW5rcy5tYXAoaHVuayA9PiAoe1xuICAgICAgLi4uaHVuayxcbiAgICAgIGxpbmVzOiBodW5rLmxpbmVzLm1hcChsaW5lID0+IGxpbmUuZW5kc1dpdGgoJ1xccicpID8gbGluZS5zdWJzdHJpbmcoMCwgbGluZS5sZW5ndGggLSAxKSA6IGxpbmUpXG4gICAgfSkpXG4gIH07XG59XG5cbi8qKlxuICogUmV0dXJucyB0cnVlIGlmIHRoZSBwYXRjaCBjb25zaXN0ZW50bHkgdXNlcyBVbml4IGxpbmUgZW5kaW5ncyAob3Igb25seSBpbnZvbHZlcyBvbmUgbGluZSBhbmQgaGFzXG4gKiBubyBsaW5lIGVuZGluZ3MpLlxuICovXG5leHBvcnQgZnVuY3Rpb24gaXNVbml4KHBhdGNoKSB7XG4gIGlmICghQXJyYXkuaXNBcnJheShwYXRjaCkpIHsgcGF0Y2ggPSBbcGF0Y2hdOyB9XG4gIHJldHVybiAhcGF0Y2guc29tZShcbiAgICBpbmRleCA9PiBpbmRleC5odW5rcy5zb21lKFxuICAgICAgaHVuayA9PiBodW5rLmxpbmVzLnNvbWUoXG4gICAgICAgIGxpbmUgPT4gIWxpbmUuc3RhcnRzV2l0aCgnXFxcXCcpICYmIGxpbmUuZW5kc1dpdGgoJ1xccicpXG4gICAgICApXG4gICAgKVxuICApO1xufVxuXG4vKipcbiAqIFJldHVybnMgdHJ1ZSBpZiB0aGUgcGF0Y2ggdXNlcyBXaW5kb3dzIGxpbmUgZW5kaW5ncyBhbmQgb25seSBXaW5kb3dzIGxpbmUgZW5kaW5ncy5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGlzV2luKHBhdGNoKSB7XG4gIGlmICghQXJyYXkuaXNBcnJheShwYXRjaCkpIHsgcGF0Y2ggPSBbcGF0Y2hdOyB9XG4gIHJldHVybiBwYXRjaC5zb21lKGluZGV4ID0+IGluZGV4Lmh1bmtzLnNvbWUoaHVuayA9PiBodW5rLmxpbmVzLnNvbWUobGluZSA9PiBsaW5lLmVuZHNXaXRoKCdcXHInKSkpKVxuICAgICYmIHBhdGNoLmV2ZXJ5KFxuICAgICAgaW5kZXggPT4gaW5kZXguaHVua3MuZXZlcnkoXG4gICAgICAgIGh1bmsgPT4gaHVuay5saW5lcy5ldmVyeShcbiAgICAgICAgICAobGluZSwgaSkgPT4gbGluZS5zdGFydHNXaXRoKCdcXFxcJykgfHwgbGluZS5lbmRzV2l0aCgnXFxyJykgfHwgaHVuay5saW5lc1tpICsgMV0/LnN0YXJ0c1dpdGgoJ1xcXFwnKVxuICAgICAgICApXG4gICAgICApXG4gICAgKTtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBTyxTQUFTQSxTQUFTQSxDQUFDQyxLQUFLLEVBQUU7RUFDL0IsSUFBSUMsS0FBSyxDQUFDQyxPQUFPLENBQUNGLEtBQUssQ0FBQyxFQUFFO0lBQ3hCLE9BQU9BLEtBQUssQ0FBQ0csR0FBRyxDQUFDSixTQUFTLENBQUM7RUFDN0I7RUFFQTtJQUFBO0lBQUFLLGFBQUEsQ0FBQUEsYUFBQTtJQUFBO0lBQ0tKLEtBQUs7TUFDUkssS0FBSyxFQUFFTCxLQUFLLENBQUNLLEtBQUssQ0FBQ0YsR0FBRyxDQUFDLFVBQUFHLElBQUk7TUFBQTtNQUFBO1FBQUEsT0FBQUYsYUFBQSxDQUFBQSxhQUFBO1FBQUE7UUFDdEJFLElBQUk7VUFDUEMsS0FBSyxFQUFFRCxJQUFJLENBQUNDLEtBQUssQ0FBQ0osR0FBRyxDQUNuQixVQUFDSyxJQUFJLEVBQUVDLENBQUM7VUFBQTtVQUFBO1lBQUEsSUFBQUMsV0FBQTtZQUFBO2NBQUE7Y0FDTEYsSUFBSSxDQUFDRyxVQUFVLENBQUMsSUFBSSxDQUFDLElBQUlILElBQUksQ0FBQ0ksUUFBUSxDQUFDLElBQUksQ0FBQztjQUFBO2NBQUEsQ0FBQUYsV0FBQTtjQUFBO2NBQUlKLElBQUksQ0FBQ0MsS0FBSyxDQUFDRSxDQUFDLEdBQUcsQ0FBQyxDQUFDLGNBQUFDLFdBQUE7Y0FBakI7Y0FBQUE7Y0FBQTtjQUFBLENBQW1CQyxVQUFVLENBQUMsSUFBSSxDQUFDLEdBQ2hGSCxJQUFJLEdBQ0pBLElBQUksR0FBRztZQUFJO1VBQUEsQ0FDbkI7UUFBQztNQUFBLENBQ0Q7SUFBQztFQUFBO0FBRVA7QUFFTyxTQUFTSyxTQUFTQSxDQUFDYixLQUFLLEVBQUU7RUFDL0IsSUFBSUMsS0FBSyxDQUFDQyxPQUFPLENBQUNGLEtBQUssQ0FBQyxFQUFFO0lBQ3hCLE9BQU9BLEtBQUssQ0FBQ0csR0FBRyxDQUFDVSxTQUFTLENBQUM7RUFDN0I7RUFFQTtJQUFBO0lBQUFULGFBQUEsQ0FBQUEsYUFBQTtJQUFBO0lBQ0tKLEtBQUs7TUFDUkssS0FBSyxFQUFFTCxLQUFLLENBQUNLLEtBQUssQ0FBQ0YsR0FBRyxDQUFDLFVBQUFHLElBQUk7TUFBQTtNQUFBO1FBQUEsT0FBQUYsYUFBQSxDQUFBQSxhQUFBO1FBQUE7UUFDdEJFLElBQUk7VUFDUEMsS0FBSyxFQUFFRCxJQUFJLENBQUNDLEtBQUssQ0FBQ0osR0FBRyxDQUFDLFVBQUFLLElBQUk7VUFBQTtVQUFBO1lBQUE7Y0FBQTtjQUFJQSxJQUFJLENBQUNJLFFBQVEsQ0FBQyxJQUFJLENBQUMsR0FBR0osSUFBSSxDQUFDTSxTQUFTLENBQUMsQ0FBQyxFQUFFTixJQUFJLENBQUNPLE1BQU0sR0FBRyxDQUFDLENBQUMsR0FBR1A7WUFBSTtVQUFBO1FBQUM7TUFBQSxDQUM5RjtJQUFDO0VBQUE7QUFFUDs7QUFFQTtBQUNBO0FBQ0E7QUFDQTtBQUNPLFNBQVNRLE1BQU1BLENBQUNoQixLQUFLLEVBQUU7RUFDNUIsSUFBSSxDQUFDQyxLQUFLLENBQUNDLE9BQU8sQ0FBQ0YsS0FBSyxDQUFDLEVBQUU7SUFBRUEsS0FBSyxHQUFHLENBQUNBLEtBQUssQ0FBQztFQUFFO0VBQzlDLE9BQU8sQ0FBQ0EsS0FBSyxDQUFDaUIsSUFBSSxDQUNoQixVQUFBQyxLQUFLO0VBQUE7RUFBQTtJQUFBO01BQUE7TUFBSUEsS0FBSyxDQUFDYixLQUFLLENBQUNZLElBQUksQ0FDdkIsVUFBQVgsSUFBSTtNQUFBO01BQUE7UUFBQTtVQUFBO1VBQUlBLElBQUksQ0FBQ0MsS0FBSyxDQUFDVSxJQUFJLENBQ3JCLFVBQUFULElBQUk7VUFBQTtVQUFBO1lBQUE7Y0FBQTtjQUFJLENBQUNBLElBQUksQ0FBQ0csVUFBVSxDQUFDLElBQUksQ0FBQyxJQUFJSCxJQUFJLENBQUNJLFFBQVEsQ0FBQyxJQUFJO1lBQUM7VUFBQSxDQUN2RDtRQUFDO01BQUEsQ0FDSDtJQUFDO0VBQUEsQ0FDSCxDQUFDO0FBQ0g7O0FBRUE7QUFDQTtBQUNBO0FBQ08sU0FBU08sS0FBS0EsQ0FBQ25CLEtBQUssRUFBRTtFQUMzQixJQUFJLENBQUNDLEtBQUssQ0FBQ0MsT0FBTyxDQUFDRixLQUFLLENBQUMsRUFBRTtJQUFFQSxLQUFLLEdBQUcsQ0FBQ0EsS0FBSyxDQUFDO0VBQUU7RUFDOUMsT0FBT0EsS0FBSyxDQUFDaUIsSUFBSSxDQUFDLFVBQUFDLEtBQUs7RUFBQTtFQUFBO0lBQUE7TUFBQTtNQUFJQSxLQUFLLENBQUNiLEtBQUssQ0FBQ1ksSUFBSSxDQUFDLFVBQUFYLElBQUk7TUFBQTtNQUFBO1FBQUE7VUFBQTtVQUFJQSxJQUFJLENBQUNDLEtBQUssQ0FBQ1UsSUFBSSxDQUFDLFVBQUFULElBQUk7VUFBQTtVQUFBO1lBQUE7Y0FBQTtjQUFJQSxJQUFJLENBQUNJLFFBQVEsQ0FBQyxJQUFJO1lBQUM7VUFBQTtRQUFDO01BQUE7SUFBQztFQUFBLEVBQUMsSUFDN0ZaLEtBQUssQ0FBQ29CLEtBQUssQ0FDWixVQUFBRixLQUFLO0VBQUE7RUFBQTtJQUFBO01BQUE7TUFBSUEsS0FBSyxDQUFDYixLQUFLLENBQUNlLEtBQUssQ0FDeEIsVUFBQWQsSUFBSTtNQUFBO01BQUE7UUFBQTtVQUFBO1VBQUlBLElBQUksQ0FBQ0MsS0FBSyxDQUFDYSxLQUFLLENBQ3RCLFVBQUNaLElBQUksRUFBRUMsQ0FBQztVQUFBO1VBQUE7WUFBQSxJQUFBWSxZQUFBO1lBQUE7Y0FBQTtjQUFLYixJQUFJLENBQUNHLFVBQVUsQ0FBQyxJQUFJLENBQUMsSUFBSUgsSUFBSSxDQUFDSSxRQUFRLENBQUMsSUFBSSxDQUFDO2NBQUE7Y0FBQSxFQUFBUyxZQUFBO2NBQUE7Y0FBSWYsSUFBSSxDQUFDQyxLQUFLLENBQUNFLENBQUMsR0FBRyxDQUFDLENBQUMsY0FBQVksWUFBQTtjQUFqQjtjQUFBQTtjQUFBO2NBQUEsQ0FBbUJWLFVBQVUsQ0FBQyxJQUFJLENBQUM7WUFBQTtVQUFBLENBQ2xHO1FBQUM7TUFBQSxDQUNIO0lBQUM7RUFBQSxDQUNILENBQUM7QUFDTCIsImlnbm9yZUxpc3QiOltdfQ==
+
+
+/***/ },
+
+/***/ "./node_modules/diff/lib/patch/merge.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/patch/merge.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 /*istanbul ignore start*/
 
@@ -14737,71 +14843,63 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.calcLineCount = calcLineCount;
 exports.merge = merge;
-
 /*istanbul ignore end*/
 var
 /*istanbul ignore start*/
 _create = __webpack_require__(/*! ./create */ "./node_modules/diff/lib/patch/create.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _parse = __webpack_require__(/*! ./parse */ "./node_modules/diff/lib/patch/parse.js")
 /*istanbul ignore end*/
 ;
-
 var
 /*istanbul ignore start*/
 _array = __webpack_require__(/*! ../util/array */ "./node_modules/diff/lib/util/array.js")
 /*istanbul ignore end*/
 ;
-
 /*istanbul ignore start*/ function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
-
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
-
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 /*istanbul ignore end*/
 function calcLineCount(hunk) {
-  /*istanbul ignore start*/
-  var _calcOldNewLineCount =
-  /*istanbul ignore end*/
-  calcOldNewLineCount(hunk.lines),
-      oldLines = _calcOldNewLineCount.oldLines,
-      newLines = _calcOldNewLineCount.newLines;
-
+  var
+    /*istanbul ignore start*/
+    _calcOldNewLineCount =
+    /*istanbul ignore end*/
+    calcOldNewLineCount(hunk.lines),
+    /*istanbul ignore start*/
+    /*istanbul ignore end*/
+    oldLines = _calcOldNewLineCount.oldLines,
+    /*istanbul ignore start*/
+    /*istanbul ignore end*/
+    newLines = _calcOldNewLineCount.newLines;
   if (oldLines !== undefined) {
     hunk.oldLines = oldLines;
   } else {
     delete hunk.oldLines;
   }
-
   if (newLines !== undefined) {
     hunk.newLines = newLines;
   } else {
     delete hunk.newLines;
   }
 }
-
 function merge(mine, theirs, base) {
   mine = loadPatch(mine, base);
   theirs = loadPatch(theirs, base);
-  var ret = {}; // For index we just let it pass through as it doesn't have any necessary meaning.
+  var ret = {};
+
+  // For index we just let it pass through as it doesn't have any necessary meaning.
   // Leaving sanity checks on this to the API consumer that may know more about the
   // meaning in their own context.
-
   if (mine.index || theirs.index) {
     ret.index = mine.index || theirs.index;
   }
-
   if (mine.newFileName || theirs.newFileName) {
     if (!fileNameChanged(mine)) {
       // No header or no change in ours, use theirs (and ours if theirs does not exist)
@@ -14823,21 +14921,18 @@ function merge(mine, theirs, base) {
       ret.newHeader = selectField(ret, mine.newHeader, theirs.newHeader);
     }
   }
-
   ret.hunks = [];
   var mineIndex = 0,
-      theirsIndex = 0,
-      mineOffset = 0,
-      theirsOffset = 0;
-
+    theirsIndex = 0,
+    mineOffset = 0,
+    theirsOffset = 0;
   while (mineIndex < mine.hunks.length || theirsIndex < theirs.hunks.length) {
     var mineCurrent = mine.hunks[mineIndex] || {
-      oldStart: Infinity
-    },
-        theirsCurrent = theirs.hunks[theirsIndex] || {
-      oldStart: Infinity
-    };
-
+        oldStart: Infinity
+      },
+      theirsCurrent = theirs.hunks[theirsIndex] || {
+        oldStart: Infinity
+      };
     if (hunkBefore(mineCurrent, theirsCurrent)) {
       // This patch does not overlap with any of the others, yay.
       ret.hunks.push(cloneHunk(mineCurrent, mineOffset));
@@ -14863,10 +14958,8 @@ function merge(mine, theirs, base) {
       ret.hunks.push(mergedHunk);
     }
   }
-
   return ret;
 }
-
 function loadPatch(param, base) {
   if (typeof param === 'string') {
     if (/^@@/m.test(param) || /^Index:/m.test(param)) {
@@ -14874,7 +14967,6 @@ function loadPatch(param, base) {
         /*istanbul ignore start*/
         (0,
         /*istanbul ignore end*/
-
         /*istanbul ignore start*/
         _parse
         /*istanbul ignore end*/
@@ -14885,16 +14977,13 @@ function loadPatch(param, base) {
         (param)[0]
       );
     }
-
     if (!base) {
       throw new Error('Must provide a base reference or pass in a patch');
     }
-
     return (
       /*istanbul ignore start*/
       (0,
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
       _create
       /*istanbul ignore end*/
@@ -14905,14 +14994,11 @@ function loadPatch(param, base) {
       (undefined, undefined, base, param)
     );
   }
-
   return param;
 }
-
 function fileNameChanged(patch) {
   return patch.newFileName && patch.newFileName !== patch.oldFileName;
 }
-
 function selectField(index, mine, theirs) {
   if (mine === theirs) {
     return mine;
@@ -14924,11 +15010,9 @@ function selectField(index, mine, theirs) {
     };
   }
 }
-
 function hunkBefore(test, check) {
   return test.oldStart < check.oldStart && test.oldStart + test.oldLines < check.oldStart;
 }
-
 function cloneHunk(hunk, offset) {
   return {
     oldStart: hunk.oldStart,
@@ -14938,42 +15022,38 @@ function cloneHunk(hunk, offset) {
     lines: hunk.lines
   };
 }
-
 function mergeLines(hunk, mineOffset, mineLines, theirOffset, theirLines) {
   // This will generally result in a conflicted hunk, but there are cases where the context
   // is the only overlap where we can successfully merge the content here.
   var mine = {
-    offset: mineOffset,
-    lines: mineLines,
-    index: 0
-  },
-      their = {
-    offset: theirOffset,
-    lines: theirLines,
-    index: 0
-  }; // Handle any leading content
+      offset: mineOffset,
+      lines: mineLines,
+      index: 0
+    },
+    their = {
+      offset: theirOffset,
+      lines: theirLines,
+      index: 0
+    };
 
+  // Handle any leading content
   insertLeading(hunk, mine, their);
-  insertLeading(hunk, their, mine); // Now in the overlap content. Scan through and select the best changes from each.
+  insertLeading(hunk, their, mine);
 
+  // Now in the overlap content. Scan through and select the best changes from each.
   while (mine.index < mine.lines.length && their.index < their.lines.length) {
     var mineCurrent = mine.lines[mine.index],
-        theirCurrent = their.lines[their.index];
-
+      theirCurrent = their.lines[their.index];
     if ((mineCurrent[0] === '-' || mineCurrent[0] === '+') && (theirCurrent[0] === '-' || theirCurrent[0] === '+')) {
       // Both modified ...
       mutualChange(hunk, mine, their);
     } else if (mineCurrent[0] === '+' && theirCurrent[0] === ' ') {
       /*istanbul ignore start*/
       var _hunk$lines;
-
       /*istanbul ignore end*/
       // Mine inserted
-
       /*istanbul ignore start*/
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
       (_hunk$lines =
       /*istanbul ignore end*/
@@ -14989,14 +15069,10 @@ function mergeLines(hunk, mineOffset, mineLines, theirOffset, theirLines) {
     } else if (theirCurrent[0] === '+' && mineCurrent[0] === ' ') {
       /*istanbul ignore start*/
       var _hunk$lines2;
-
       /*istanbul ignore end*/
       // Theirs inserted
-
       /*istanbul ignore start*/
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
       (_hunk$lines2 =
       /*istanbul ignore end*/
@@ -15024,25 +15100,22 @@ function mergeLines(hunk, mineOffset, mineLines, theirOffset, theirLines) {
       // Context mismatch
       conflict(hunk, collectChange(mine), collectChange(their));
     }
-  } // Now push anything that may be remaining
+  }
 
-
+  // Now push anything that may be remaining
   insertTrailing(hunk, mine);
   insertTrailing(hunk, their);
   calcLineCount(hunk);
 }
-
 function mutualChange(hunk, mine, their) {
   var myChanges = collectChange(mine),
-      theirChanges = collectChange(their);
-
+    theirChanges = collectChange(their);
   if (allRemoves(myChanges) && allRemoves(theirChanges)) {
     // Special case for remove changes that are supersets of one another
     if (
     /*istanbul ignore start*/
     (0,
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     _array
     /*istanbul ignore end*/
@@ -15053,13 +15126,9 @@ function mutualChange(hunk, mine, their) {
     (myChanges, theirChanges) && skipRemoveSuperset(their, myChanges, myChanges.length - theirChanges.length)) {
       /*istanbul ignore start*/
       var _hunk$lines3;
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
       (_hunk$lines3 =
       /*istanbul ignore end*/
@@ -15072,13 +15141,11 @@ function mutualChange(hunk, mine, their) {
       _toConsumableArray(
       /*istanbul ignore end*/
       myChanges));
-
       return;
     } else if (
     /*istanbul ignore start*/
     (0,
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     _array
     /*istanbul ignore end*/
@@ -15089,13 +15156,9 @@ function mutualChange(hunk, mine, their) {
     (theirChanges, myChanges) && skipRemoveSuperset(mine, theirChanges, theirChanges.length - myChanges.length)) {
       /*istanbul ignore start*/
       var _hunk$lines4;
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
-
       /*istanbul ignore end*/
-
       /*istanbul ignore start*/
       (_hunk$lines4 =
       /*istanbul ignore end*/
@@ -15108,14 +15171,12 @@ function mutualChange(hunk, mine, their) {
       _toConsumableArray(
       /*istanbul ignore end*/
       theirChanges));
-
       return;
     }
   } else if (
   /*istanbul ignore start*/
   (0,
   /*istanbul ignore end*/
-
   /*istanbul ignore start*/
   _array
   /*istanbul ignore end*/
@@ -15126,13 +15187,9 @@ function mutualChange(hunk, mine, their) {
   (myChanges, theirChanges)) {
     /*istanbul ignore start*/
     var _hunk$lines5;
-
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
-
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     (_hunk$lines5 =
     /*istanbul ignore end*/
@@ -15145,27 +15202,19 @@ function mutualChange(hunk, mine, their) {
     _toConsumableArray(
     /*istanbul ignore end*/
     myChanges));
-
     return;
   }
-
   conflict(hunk, myChanges, theirChanges);
 }
-
 function removal(hunk, mine, their, swap) {
   var myChanges = collectChange(mine),
-      theirChanges = collectContext(their, myChanges);
-
+    theirChanges = collectContext(their, myChanges);
   if (theirChanges.merged) {
     /*istanbul ignore start*/
     var _hunk$lines6;
-
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
-
     /*istanbul ignore end*/
-
     /*istanbul ignore start*/
     (_hunk$lines6 =
     /*istanbul ignore end*/
@@ -15182,7 +15231,6 @@ function removal(hunk, mine, their, swap) {
     conflict(hunk, swap ? theirChanges : myChanges, swap ? myChanges : theirChanges);
   }
 }
-
 function conflict(hunk, mine, their) {
   hunk.conflict = true;
   hunk.lines.push({
@@ -15191,7 +15239,6 @@ function conflict(hunk, mine, their) {
     theirs: their
   });
 }
-
 function insertLeading(hunk, insert, their) {
   while (insert.offset < their.offset && insert.index < insert.lines.length) {
     var line = insert.lines[insert.index++];
@@ -15199,25 +15246,22 @@ function insertLeading(hunk, insert, their) {
     insert.offset++;
   }
 }
-
 function insertTrailing(hunk, insert) {
   while (insert.index < insert.lines.length) {
     var line = insert.lines[insert.index++];
     hunk.lines.push(line);
   }
 }
-
 function collectChange(state) {
   var ret = [],
-      operation = state.lines[state.index][0];
-
+    operation = state.lines[state.index][0];
   while (state.index < state.lines.length) {
-    var line = state.lines[state.index]; // Group additions that are immediately after subtractions and treat them as one "atomic" modify change.
+    var line = state.lines[state.index];
 
+    // Group additions that are immediately after subtractions and treat them as one "atomic" modify change.
     if (operation === '-' && line[0] === '+') {
       operation = '+';
     }
-
     if (operation === line[0]) {
       ret.push(line);
       state.index++;
@@ -15225,39 +15269,35 @@ function collectChange(state) {
       break;
     }
   }
-
   return ret;
 }
-
 function collectContext(state, matchChanges) {
   var changes = [],
-      merged = [],
-      matchIndex = 0,
-      contextChanges = false,
-      conflicted = false;
-
+    merged = [],
+    matchIndex = 0,
+    contextChanges = false,
+    conflicted = false;
   while (matchIndex < matchChanges.length && state.index < state.lines.length) {
     var change = state.lines[state.index],
-        match = matchChanges[matchIndex]; // Once we've hit our add, then we are done
+      match = matchChanges[matchIndex];
 
+    // Once we've hit our add, then we are done
     if (match[0] === '+') {
       break;
     }
-
     contextChanges = contextChanges || change[0] !== ' ';
     merged.push(match);
-    matchIndex++; // Consume any additions in the other block as a conflict to attempt
-    // to pull in the remaining context after this
+    matchIndex++;
 
+    // Consume any additions in the other block as a conflict to attempt
+    // to pull in the remaining context after this
     if (change[0] === '+') {
       conflicted = true;
-
       while (change[0] === '+') {
         changes.push(change);
         change = state.lines[++state.index];
       }
     }
-
     if (match.substr(1) === change.substr(1)) {
       changes.push(change);
       state.index++;
@@ -15265,44 +15305,35 @@ function collectContext(state, matchChanges) {
       conflicted = true;
     }
   }
-
   if ((matchChanges[matchIndex] || '')[0] === '+' && contextChanges) {
     conflicted = true;
   }
-
   if (conflicted) {
     return changes;
   }
-
   while (matchIndex < matchChanges.length) {
     merged.push(matchChanges[matchIndex++]);
   }
-
   return {
     merged: merged,
     changes: changes
   };
 }
-
 function allRemoves(changes) {
   return changes.reduce(function (prev, change) {
     return prev && change[0] === '-';
   }, true);
 }
-
 function skipRemoveSuperset(state, removeChanges, delta) {
   for (var i = 0; i < delta; i++) {
     var changeContent = removeChanges[removeChanges.length - delta + i].substr(1);
-
     if (state.lines[state.index + i] !== ' ' + changeContent) {
       return false;
     }
   }
-
   state.index += delta;
   return true;
 }
-
 function calcOldNewLineCount(lines) {
   var oldLines = 0;
   var newLines = 0;
@@ -15310,7 +15341,6 @@ function calcOldNewLineCount(lines) {
     if (typeof line !== 'string') {
       var myCount = calcOldNewLineCount(line.mine);
       var theirCount = calcOldNewLineCount(line.theirs);
-
       if (oldLines !== undefined) {
         if (myCount.oldLines === theirCount.oldLines) {
           oldLines += myCount.oldLines;
@@ -15318,7 +15348,6 @@ function calcOldNewLineCount(lines) {
           oldLines = undefined;
         }
       }
-
       if (newLines !== undefined) {
         if (myCount.newLines === theirCount.newLines) {
           newLines += myCount.newLines;
@@ -15330,7 +15359,6 @@ function calcOldNewLineCount(lines) {
       if (newLines !== undefined && (line[0] === '+' || line[0] === ' ')) {
         newLines++;
       }
-
       if (oldLines !== undefined && (line[0] === '-' || line[0] === ' ')) {
         oldLines++;
       }
@@ -15341,16 +15369,16 @@ function calcOldNewLineCount(lines) {
     newLines: newLines
   };
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9tZXJnZS5qcyJdLCJuYW1lcyI6WyJjYWxjTGluZUNvdW50IiwiaHVuayIsImNhbGNPbGROZXdMaW5lQ291bnQiLCJsaW5lcyIsIm9sZExpbmVzIiwibmV3TGluZXMiLCJ1bmRlZmluZWQiLCJtZXJnZSIsIm1pbmUiLCJ0aGVpcnMiLCJiYXNlIiwibG9hZFBhdGNoIiwicmV0IiwiaW5kZXgiLCJuZXdGaWxlTmFtZSIsImZpbGVOYW1lQ2hhbmdlZCIsIm9sZEZpbGVOYW1lIiwib2xkSGVhZGVyIiwibmV3SGVhZGVyIiwic2VsZWN0RmllbGQiLCJodW5rcyIsIm1pbmVJbmRleCIsInRoZWlyc0luZGV4IiwibWluZU9mZnNldCIsInRoZWlyc09mZnNldCIsImxlbmd0aCIsIm1pbmVDdXJyZW50Iiwib2xkU3RhcnQiLCJJbmZpbml0eSIsInRoZWlyc0N1cnJlbnQiLCJodW5rQmVmb3JlIiwicHVzaCIsImNsb25lSHVuayIsIm1lcmdlZEh1bmsiLCJNYXRoIiwibWluIiwibmV3U3RhcnQiLCJtZXJnZUxpbmVzIiwicGFyYW0iLCJ0ZXN0IiwicGFyc2VQYXRjaCIsIkVycm9yIiwic3RydWN0dXJlZFBhdGNoIiwicGF0Y2giLCJjb25mbGljdCIsImNoZWNrIiwib2Zmc2V0IiwibWluZUxpbmVzIiwidGhlaXJPZmZzZXQiLCJ0aGVpckxpbmVzIiwidGhlaXIiLCJpbnNlcnRMZWFkaW5nIiwidGhlaXJDdXJyZW50IiwibXV0dWFsQ2hhbmdlIiwiY29sbGVjdENoYW5nZSIsInJlbW92YWwiLCJpbnNlcnRUcmFpbGluZyIsIm15Q2hhbmdlcyIsInRoZWlyQ2hhbmdlcyIsImFsbFJlbW92ZXMiLCJhcnJheVN0YXJ0c1dpdGgiLCJza2lwUmVtb3ZlU3VwZXJzZXQiLCJhcnJheUVxdWFsIiwic3dhcCIsImNvbGxlY3RDb250ZXh0IiwibWVyZ2VkIiwiaW5zZXJ0IiwibGluZSIsInN0YXRlIiwib3BlcmF0aW9uIiwibWF0Y2hDaGFuZ2VzIiwiY2hhbmdlcyIsIm1hdGNoSW5kZXgiLCJjb250ZXh0Q2hhbmdlcyIsImNvbmZsaWN0ZWQiLCJjaGFuZ2UiLCJtYXRjaCIsInN1YnN0ciIsInJlZHVjZSIsInByZXYiLCJyZW1vdmVDaGFuZ2VzIiwiZGVsdGEiLCJpIiwiY2hhbmdlQ29udGVudCIsImZvckVhY2giLCJteUNvdW50IiwidGhlaXJDb3VudCJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7OztBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQ0E7QUFBQTtBQUFBO0FBQUE7QUFBQTs7QUFFQTtBQUFBO0FBQUE7QUFBQTtBQUFBOzs7Ozs7Ozs7Ozs7Ozs7QUFFTyxTQUFTQSxhQUFULENBQXVCQyxJQUF2QixFQUE2QjtBQUFBO0FBQUE7QUFBQTtBQUNMQyxFQUFBQSxtQkFBbUIsQ0FBQ0QsSUFBSSxDQUFDRSxLQUFOLENBRGQ7QUFBQSxNQUMzQkMsUUFEMkIsd0JBQzNCQSxRQUQyQjtBQUFBLE1BQ2pCQyxRQURpQix3QkFDakJBLFFBRGlCOztBQUdsQyxNQUFJRCxRQUFRLEtBQUtFLFNBQWpCLEVBQTRCO0FBQzFCTCxJQUFBQSxJQUFJLENBQUNHLFFBQUwsR0FBZ0JBLFFBQWhCO0FBQ0QsR0FGRCxNQUVPO0FBQ0wsV0FBT0gsSUFBSSxDQUFDRyxRQUFaO0FBQ0Q7O0FBRUQsTUFBSUMsUUFBUSxLQUFLQyxTQUFqQixFQUE0QjtBQUMxQkwsSUFBQUEsSUFBSSxDQUFDSSxRQUFMLEdBQWdCQSxRQUFoQjtBQUNELEdBRkQsTUFFTztBQUNMLFdBQU9KLElBQUksQ0FBQ0ksUUFBWjtBQUNEO0FBQ0Y7O0FBRU0sU0FBU0UsS0FBVCxDQUFlQyxJQUFmLEVBQXFCQyxNQUFyQixFQUE2QkMsSUFBN0IsRUFBbUM7QUFDeENGLEVBQUFBLElBQUksR0FBR0csU0FBUyxDQUFDSCxJQUFELEVBQU9FLElBQVAsQ0FBaEI7QUFDQUQsRUFBQUEsTUFBTSxHQUFHRSxTQUFTLENBQUNGLE1BQUQsRUFBU0MsSUFBVCxDQUFsQjtBQUVBLE1BQUlFLEdBQUcsR0FBRyxFQUFWLENBSndD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QUFKLEVBQW9FO0FBQ2xFL0QsUUFBQUEsUUFBUTtBQUNUO0FBQ0Y7QUFDRixHQTVCRDtBQThCQSxTQUFPO0FBQUNBLElBQUFBLFFBQVEsRUFBUkEsUUFBRDtBQUFXQyxJQUFBQSxRQUFRLEVBQVJBO0FBQVgsR0FBUDtBQUNEIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHtzdHJ1Y3R1cmVkUGF0Y2h9IGZyb20gJy4vY3JlYXRlJztcbmltcG9ydCB7cGFyc2VQYXRjaH0gZnJvbSAnLi9wYXJzZSc7XG5cbmltcG9ydCB7YXJyYXlFcXVhbCwgYXJyYXlTdGFydHNXaXRofSBmcm9tICcuLi91dGlsL2FycmF5JztcblxuZXhwb3J0IGZ1bmN0aW9uIGNhbGNMaW5lQ291bnQoaHVuaykge1xuICBjb25zdCB7b2xkTGluZXMsIG5ld0xpbmVzfSA9IGNhbGNPbGROZXdMaW5lQ291bnQoaHVuay5saW5lcyk7XG5cbiAgaWYgKG9sZExpbmVzICE9PSB1bmRlZmluZWQpIHtcbiAgICBodW5rLm9sZExpbmVzID0gb2xkTGluZXM7XG4gIH0gZWxzZSB7XG4gICAgZGVsZXRlIGh1bmsub2xkTGluZXM7XG4gIH1cblxuICBpZiAobmV3TGluZXMgIT09IHVuZGVmaW5lZCkge1xuICAgIGh1bmsubmV3TGluZXMgPSBuZXdMaW5lcztcbiAgfSBlbHNlIHtcbiAgICBkZWxldGUgaHVuay5uZXdMaW5lcztcbiAgfVxufVxuXG5leHBvcnQgZnVuY3Rpb24gbWVyZ2UobWluZSwgdGhlaXJzLCBiYXNlKSB7XG4gIG1pbmUgPSBsb2FkUGF0Y2gobWluZSwgYmFzZSk7XG4gIHRoZWlycyA9IGxvYWRQYXRjaCh0aGVpcnMsIGJhc2UpO1xuXG4gIGxldCByZXQgPSB7fTtcblxuICAvLyBGb3IgaW5kZXggd2UganVzdCBsZXQgaXQgcGFzcyB0aHJvdWdoIGFzIGl0IGRvZXNuJ3QgaGF2ZSBhbnkgbmVjZXNzYXJ5IG1lYW5pbmcuXG4gIC8vIExlYXZpbmcgc2FuaXR5IGNoZWNrcyBvbiB0aGlzIHRvIHRoZSBBUEkgY29uc3VtZXIgdGhhdCBtYXkga25vdyBtb3JlIGFib3V0IHRoZVxuICAvLyBtZWFuaW5nIGluIHRoZWlyIG93biBjb250ZXh0LlxuICBpZiAobWluZS5pbmRleCB8fCB0aGVpcnMuaW5kZXgpIHtcbiAgICByZXQuaW5kZXggPSBtaW5lLmluZGV4IHx8IHRoZWlycy5pbmRleDtcbiAgfVxuXG4gIGlmIChtaW5lLm5ld0ZpbGVOYW1lIHx8IHRoZWlycy5uZXdGaWxlTmFtZSkge1xuICAgIGlmICghZmlsZU5hbWVDaGFuZ2VkKG1pbmUpKSB7XG4gICAgICAvLyBObyBoZWFkZXIgb3Igbm8gY2hhbmdlIGluIG91cnMsIHVzZSB0aGVpcnMgKGFuZCBvdXJzIGlmIHRoZWlycyBkb2VzIG5vdCBleGlzdClcbiAgICAgIHJldC5vbGRGaWxlTmFtZSA9IHRoZWlycy5vbGRGaWxlTmFtZSB8fCBtaW5lLm9sZEZpbGVOYW1lO1xuICAgICAgcmV0Lm5ld0ZpbGVOYW1lID0gdGhlaXJzLm5ld0ZpbGVOYW1lIHx8IG1pbmUubmV3RmlsZU5hbWU7XG4gICAgICByZXQub2xkSGVhZGVyID0gdGhlaXJzLm9sZEhlYWRlciB8fCBtaW5lLm9sZEhlYWRlcjtcbiAgICAgIHJldC5uZXdIZWFkZXIgPSB0aGVpcnMubmV3SGVhZGVyIHx8IG1pbmUubmV3SGVhZGVyO1xuICAgIH0gZWxzZSBpZiAoIWZpbGVOYW1lQ2hhbmdlZCh0aGVpcnMpKSB7XG4gICAgICAvLyBObyBoZWFkZXIgb3Igbm8gY2hhbmdlIGluIHRoZWlycywgdXNlIG91cnNcbiAgICAgIHJldC5vbGRGaWxlTmFtZSA9IG1pbmUub2xkRmlsZU5hbWU7XG4gICAgICByZXQubmV3RmlsZU5hbWUgPSBtaW5lLm5ld0ZpbGVOYW1lO1xuICAgICAgcmV0Lm9sZEhlYWRlciA9IG1pbmUub2xkSGVhZGVyO1xuICAgICAgcmV0Lm5ld0hlYWRlciA9IG1pbmUubmV3SGVhZGVyO1xuICAgIH0gZWxzZSB7XG4gICAgICAvLyBCb3RoIGNoYW5nZWQuLi4gZmlndXJlIGl0IG91dFxuICAgICAgcmV0Lm9sZEZpbGVOYW1lID0gc2VsZWN0RmllbGQocmV0LCBtaW5lLm9sZEZpbGVOYW1lLCB0aGVpcnMub2xkRmlsZU5hbWUpO1xuICAgICAgcmV0Lm5ld0ZpbGVOYW1lID0gc2VsZWN0RmllbGQocmV0LCBtaW5lLm5ld0ZpbGVOYW1lLCB0aGVpcnMubmV3RmlsZU5hbWUpO1xuICAgICAgcmV0Lm9sZEhlYWRlciA9IHNlbGVjdEZpZWxkKHJldCwgbWluZS5vbGRIZWFkZXIsIHRoZWlycy5vbGRIZWFkZXIpO1xuICAgICAgcmV0Lm5ld0hlYWRlciA9IHNlbGVjdEZpZWxkKHJldCwgbWluZS5uZXdIZWFkZXIsIHRoZWlycy5uZXdIZWFkZXIpO1xuICAgIH1cbiAgfVxuXG4gIHJldC5odW5rcyA9IFtdO1xuXG4gIGxldCBtaW5lSW5kZXggPSAwLFxuICAgICAgdGhlaXJzSW5kZXggPSAwLFxuICAgICAgbWluZU9mZnNldCA9IDAsXG4gICAgICB0aGVpcnNPZmZzZXQgPSAwO1xuXG4gIHdoaWxlIChtaW5lSW5kZXggPCBtaW5lLmh1bmtzLmxlbmd0aCB8fCB0aGVpcnNJbmRleCA8IHRoZWlycy5odW5rcy5sZW5ndGgpIHtcbiAgICBsZXQgbWluZUN1cnJlbnQgPSBtaW5lLmh1bmtzW21pbmVJbmRleF0gfHwge29sZFN0YXJ0OiBJbmZpbml0eX0sXG4gICAgICAgIHRoZWlyc0N1cnJlbnQgPSB0aGVpcnMuaHVua3NbdGhlaXJzSW5kZXhdIHx8IHtvbGRTdGFydDogSW5maW5pdHl9O1xuXG4gICAgaWYgKGh1bmtCZWZvcmUobWluZUN1cnJlbnQsIHRoZWlyc0N1cnJlbnQpKSB7XG4gICAgICAvLyBUaGlzIHBhdGNoIGRvZXMgbm90IG92ZXJsYXAgd2l0aCBhbnkgb2YgdGhlIG90aGVycywgeWF5LlxuICAgICAgcmV0Lmh1bmtzLnB1c2goY2xvbmVIdW5rKG1pbmVDdXJyZW50LCBtaW5lT2Zmc2V0KSk7XG4gICAgICBtaW5lSW5kZXgrKztcbiAgICAgIHRoZWlyc09mZnNldCArPSBtaW5lQ3VycmVudC5uZXdMaW5lcyAtIG1pbmVDdXJyZW50Lm9sZExpbmVzO1xuICAgIH0gZWxzZSBpZiAoaHVua0JlZm9yZSh0aGVpcnNDdXJyZW50LCBtaW5lQ3VycmVudCkpIHtcbiAgICAgIC8vIFRoaXMgcGF0Y2ggZG9lcyBub3Qgb3ZlcmxhcCB3aXRoIGFueSBvZiB0aGUgb3RoZXJzLCB5YXkuXG4gICAgICByZXQuaHVua3MucHVzaChjbG9uZUh1bmsodGhlaXJzQ3VycmVudCwgdGhlaXJzT2Zmc2V0KSk7XG4gICAgICB0aGVpcnNJbmRleCsrO1xuICAgICAgbWluZU9mZnNldCArPSB0aGVpcnNDdXJyZW50Lm5ld0xpbmVzIC0gdGhlaXJzQ3VycmVudC5vbGRMaW5lcztcbiAgICB9IGVsc2Uge1xuICAgICAgLy8gT3ZlcmxhcCwgbWVyZ2UgYXMgYmVzdCB3ZSBjYW5cbiAgICAgIGxldCBtZXJnZWRIdW5rID0ge1xuICAgICAgICBvbGRTdGFydDogTWF0aC5taW4obWluZUN1cnJlbnQub2xkU3RhcnQsIHRoZWlyc0N1cnJlbnQub2xkU3RhcnQpLFxuICAgICAgICBvbGRMaW5lczogMCxcbiAgICAgICAgbmV3U3RhcnQ6IE1hdGgubWluKG1pbmVDdXJyZW50Lm5ld1N0YXJ0ICsgbWluZU9mZnNldCwgdGhlaXJzQ3VycmVudC5vbGRTdGFydCArIHRoZWlyc09mZnNldCksXG4gICAgICAgIG5ld0xpbmVzOiAwLFxuICAgICAgICBsaW5lczogW11cbiAgICAgIH07XG4gICAgICBtZXJnZUxpbmVzKG1lcmdlZEh1bmssIG1pbmVDdXJyZW50Lm9sZFN0YXJ0LCBtaW5lQ3VycmVudC5saW5lcywgdGhlaXJzQ3VycmVudC5vbGRTdGFydCwgdGhlaXJzQ3VycmVudC5saW5lcyk7XG4gICAgICB0aGVpcnNJbmRleCsrO1xuICAgICAgbWluZUluZGV4Kys7XG5cbiAgICAgIHJldC5odW5rcy5wdXNoKG1lcmdlZEh1bmspO1xuICAgIH1cbiAgfVxuXG4gIHJldHVybiByZXQ7XG59XG5cbmZ1bmN0aW9uIGxvYWRQYXRjaChwYXJhbSwgYmFzZSkge1xuICBpZiAodHlwZW9mIHBhcmFtID09PSAnc3RyaW5nJykge1xuICAgIGlmICgoL15AQC9tKS50ZXN0KHBhcmFtKSB8fCAoKC9eSW5kZXg6L20pLnRlc3QocGFyYW0pKSkge1xuICAgICAgcmV0dXJuIHBhcnNlUGF0Y2gocGFyYW0pWzBdO1xuICAgIH1cblxuICAgIGlmICghYmFzZSkge1xuICAgICAgdGhyb3cgbmV3IEVycm9yKCdNdXN0IHByb3ZpZGUgYSBiYXNlIHJlZmVyZW5jZSBvciBwYXNzIGluIGEgcGF0Y2gnKTtcbiAgICB9XG4gICAgcmV0dXJuIHN0cnVjdHVyZWRQYXRjaCh1bmRlZmluZWQsIHVuZGVmaW5lZCwgYmFzZSwgcGFyYW0pO1xuICB9XG5cbiAgcmV0dXJuIHBhcmFtO1xufVxuXG5mdW5jdGlvbiBmaWxlTmFtZUNoYW5nZWQocGF0Y2gpIHtcbiAgcmV0dXJuIHBhdGNoLm5ld0ZpbGVOYW1lICYmIHBhdGNoLm5ld0ZpbGVOYW1lICE9PSBwYXRjaC5vbGRGaWxlTmFtZTtcbn1cblxuZnVuY3Rpb24gc2VsZWN0RmllbGQoaW5kZXgsIG1pbmUsIHRoZWlycykge1xuICBpZiAobWluZSA9PT0gdGhlaXJzKSB7XG4gICAgcmV0dXJuIG1pbmU7XG4gIH0gZWxzZSB7XG4gICAgaW5kZXguY29uZmxpY3QgPSB0cnVlO1xuICAgIHJldHVybiB7bWluZSwgdGhlaXJzfTtcbiAgfVxufVxuXG5mdW5jdGlvbiBodW5rQmVmb3JlKHRlc3QsIGNoZWNrKSB7XG4gIHJldHVybiB0ZXN0Lm9sZFN0YXJ0IDwgY2hlY2sub2xkU3RhcnRcbiAgICAmJiAodGVzdC5vbGRTdGFydCArIHRlc3Qub2xkTGluZXMpIDwgY2hlY2sub2xkU3RhcnQ7XG59XG5cbmZ1bmN0aW9uIGNsb25lSHVuayhodW5rLCBvZmZzZXQpIHtcbiAgcmV0dXJuIHtcbiAgICBvbGRTdGFydDogaHVuay5vbGRTdGFydCwgb2xkTGluZXM6IGh1bmsub2xkTGluZXMsXG4gICAgbmV3U3RhcnQ6IGh1bmsubmV3U3RhcnQgKyBvZmZzZXQsIG5ld0xpbmVzOiBodW5rLm5ld0xpbmVzLFxuICAgIGxpbmVzOiBodW5rLmxpbmVzXG4gIH07XG59XG5cbmZ1bmN0aW9uIG1lcmdlTGluZXMoaHVuaywgbWluZU9mZnNldCwgbWluZUxpbmVzLCB0aGVpck9mZnNldCwgdGhlaXJMaW5lcykge1xuICAvLyBUaGlzIHdpbGwgZ2VuZXJhbGx5IHJlc3VsdCBpbiBhIGNvbmZsaWN0ZWQgaHVuaywgYnV0IHRoZXJlIGFyZSBjYXNlcyB3aGVyZSB0aGUgY29udGV4dFxuICAvLyBpcyB0aGUgb25seSBvdmVybGFwIHdoZXJlIHdlIGNhbiBzdWNjZXNzZnVsbHkgbWVyZ2UgdGhlIGNvbnRlbnQgaGVyZS5cbiAgbGV0IG1pbmUgPSB7b2Zmc2V0OiBtaW5lT2Zmc2V0LCBsaW5lczogbWluZUxpbmVzLCBpbmRleDogMH0sXG4gICAgICB0aGVpciA9IHtvZmZzZXQ6IHRoZWlyT2Zmc2V0LCBsaW5lczogdGhlaXJMaW5lcywgaW5kZXg6IDB9O1xuXG4gIC8vIEhhbmRsZSBhbnkgbGVhZGluZyBjb250ZW50XG4gIGluc2VydExlYWRpbmcoaHVuaywgbWluZSwgdGhlaXIpO1xuICBpbnNlcnRMZWFkaW5nKGh1bmssIHRoZWlyLCBtaW5lKTtcblxuICAvLyBOb3cgaW4gdGhlIG92ZXJsYXAgY29udGVudC4gU2NhbiB0aHJvdWdoIGFuZCBzZWxlY3QgdGhlIGJlc3QgY2hhbmdlcyBmcm9tIGVhY2guXG4gIHdoaWxlIChtaW5lLmluZGV4IDwgbWluZS5saW5lcy5sZW5ndGggJiYgdGhlaXIuaW5kZXggPCB0aGVpci5saW5lcy5sZW5ndGgpIHtcbiAgICBsZXQgbWluZUN1cnJlbnQgPSBtaW5lLmxpbmVzW21pbmUuaW5kZXhdLFxuICAgICAgICB0aGVpckN1cnJlbnQgPSB0aGVpci5saW5lc1t0aGVpci5pbmRleF07XG5cbiAgICBpZiAoKG1pbmVDdXJyZW50WzBdID09PSAnLScgfHwgbWluZUN1cnJlbnRbMF0gPT09ICcrJylcbiAgICAgICAgJiYgKHRoZWlyQ3VycmVudFswXSA9PT0gJy0nIHx8IHRoZWlyQ3VycmVudFswXSA9PT0gJysnKSkge1xuICAgICAgLy8gQm90aCBtb2RpZmllZCAuLi5cbiAgICAgIG11dHVhbENoYW5nZShodW5rLCBtaW5lLCB0aGVpcik7XG4gICAgfSBlbHNlIGlmIChtaW5lQ3VycmVudFswXSA9PT0gJysnICYmIHRoZWlyQ3VycmVudFswXSA9PT0gJyAnKSB7XG4gICAgICAvLyBNaW5lIGluc2VydGVkXG4gICAgICBodW5rLmxpbmVzLnB1c2goLi4uIGNvbGxlY3RDaGFuZ2UobWluZSkpO1xuICAgIH0gZWxzZSBpZiAodGhlaXJDdXJyZW50WzBdID09PSAnKycgJiYgbWluZUN1cnJlbnRbMF0gPT09ICcgJykge1xuICAgICAgLy8gVGhlaXJzIGluc2VydGVkXG4gICAgICBodW5rLmxpbmVzLnB1c2goLi4uIGNvbGxlY3RDaGFuZ2UodGhlaXIpKTtcbiAgICB9IGVsc2UgaWYgKG1pbmVDdXJyZW50WzBdID09PSAnLScgJiYgdGhlaXJDdXJyZW50WzBdID09PSAnICcpIHtcbiAgICAgIC8vIE1pbmUgcmVtb3ZlZCBvciBlZGl0ZWRcbiAgICAgIHJlbW92YWwoaHVuaywgbWluZSwgdGhlaXIpO1xuICAgIH0gZWxzZSBpZiAodGhlaXJDdXJyZW50WzBdID09PSAnLScgJiYgbWluZUN1cnJlbnRbMF0gPT09ICcgJykge1xuICAgICAgLy8gVGhlaXIgcmVtb3ZlZCBvciBlZGl0ZWRcbiAgICAgIHJlbW92YWwoaHVuaywgdGhlaXIsIG1pbmUsIHRydWUpO1xuICAgIH0gZWxzZSBpZiAobWluZUN1cnJlbnQgPT09IHRoZWlyQ3VycmVudCkge1xuICAgICAgLy8gQ29udGV4dCBpZGVudGl0eVxuICAgICAgaHVuay5saW5lcy5wdXNoKG1pbmVDdXJyZW50KTtcbiAgICAgIG1pbmUuaW5kZXgrKztcbiAgICAgIHRoZWlyLmluZGV4Kys7XG4gICAgfSBlbHNlIHtcbiAgICAgIC8vIENvbnRleHQgbWlzbWF0Y2hcbiAgICAgIGNvbmZsaWN0KGh1bmssIGNvbGxlY3RDaGFuZ2UobWluZSksIGNvbGxlY3RDaGFuZ2UodGhlaXIpKTtcbiAgICB9XG4gIH1cblxuICAvLyBOb3cgcHVzaCBhbnl0aGluZyB0aGF0IG1heSBiZSByZW1haW5pbmdcbiAgaW5zZXJ0VHJhaWxpbmcoaHVuaywgbWluZSk7XG4gIGluc2VydFRyYWlsaW5nKGh1bmssIHRoZWlyKTtcblxuICBjYWxjTGluZUNvdW50KGh1bmspO1xufVxuXG5mdW5jdGlvbiBtdXR1YWxDaGFuZ2UoaHVuaywgbWluZSwgdGhlaXIpIHtcbiAgbGV0IG15Q2hhbmdlcyA9IGNvbGxlY3RDaGFuZ2UobWluZSksXG4gICAgICB0aGVpckNoYW5nZXMgPSBjb2xsZWN0Q2hhbmdlKHRoZWlyKTtcblxuICBpZiAoYWxsUmVtb3ZlcyhteUNoYW5nZXMpICYmIGFsbFJlbW92ZXModGhlaXJDaGFuZ2VzKSkge1xuICAgIC8vIFNwZWNpYWwgY2FzZSBmb3IgcmVtb3ZlIGNoYW5nZXMgdGhhdCBhcmUgc3VwZXJzZXRzIG9mIG9uZSBhbm90aGVyXG4gICAgaWYgKGFycmF5U3RhcnRzV2l0aChteUNoYW5nZXMsIHRoZWlyQ2hhbmdlcylcbiAgICAgICAgJiYgc2tpcFJlbW92ZVN1cGVyc2V0KHRoZWlyLCBteUNoYW5nZXMsIG15Q2hhbmdlcy5sZW5ndGggLSB0aGVpckNoYW5nZXMubGVuZ3RoKSkge1xuICAgICAgaHVuay5saW5lcy5wdXNoKC4uLiBteUNoYW5nZXMpO1xuICAgICAgcmV0dXJuO1xuICAgIH0gZWxzZSBpZiAoYXJyYXlTdGFydHNXaXRoKHRoZWlyQ2hhbmdlcywgbXlDaGFuZ2VzKVxuICAgICAgICAmJiBza2lwUmVtb3ZlU3VwZXJzZXQobWluZSwgdGhlaXJDaGFuZ2VzLCB0aGVpckNoYW5nZXMubGVuZ3RoIC0gbXlDaGFuZ2VzLmxlbmd0aCkpIHtcbiAgICAgIGh1bmsubGluZXMucHVzaCguLi4gdGhlaXJDaGFuZ2VzKTtcbiAgICAgIHJldHVybjtcbiAgICB9XG4gIH0gZWxzZSBpZiAoYXJyYXlFcXVhbChteUNoYW5nZXMsIHRoZWlyQ2hhbmdlcykpIHtcbiAgICBodW5rLmxpbmVzLnB1c2goLi4uIG15Q2hhbmdlcyk7XG4gICAgcmV0dXJuO1xuICB9XG5cbiAgY29uZmxpY3QoaHVuaywgbXlDaGFuZ2VzLCB0aGVpckNoYW5nZXMpO1xufVxuXG5mdW5jdGlvbiByZW1vdmFsKGh1bmssIG1pbmUsIHRoZWlyLCBzd2FwKSB7XG4gIGxldCBteUNoYW5nZXMgPSBjb2xsZWN0Q2hhbmdlKG1pbmUpLFxuICAgICAgdGhlaXJDaGFuZ2VzID0gY29sbGVjdENvbnRleHQodGhlaXIsIG15Q2hhbmdlcyk7XG4gIGlmICh0aGVpckNoYW5nZXMubWVyZ2VkKSB7XG4gICAgaHVuay5saW5lcy5wdXNoKC4uLiB0aGVpckNoYW5nZXMubWVyZ2VkKTtcbiAgfSBlbHNlIHtcbiAgICBjb25mbGljdChodW5rLCBzd2FwID8gdGhlaXJDaGFuZ2VzIDogbXlDaGFuZ2VzLCBzd2FwID8gbXlDaGFuZ2VzIDogdGhlaXJDaGFuZ2VzKTtcbiAgfVxufVxuXG5mdW5jdGlvbiBjb25mbGljdChodW5rLCBtaW5lLCB0aGVpcikge1xuICBodW5rLmNvbmZsaWN0ID0gdHJ1ZTtcbiAgaHVuay5saW5lcy5wdXNoKHtcbiAgICBjb25mbGljdDogdHJ1ZSxcbiAgICBtaW5lOiBtaW5lLFxuICAgIHRoZWlyczogdGhlaXJcbiAgfSk7XG59XG5cbmZ1bmN0aW9uIGluc2VydExlYWRpbmcoaHVuaywgaW5zZXJ0LCB0aGVpcikge1xuICB3aGlsZSAoaW5zZXJ0Lm9mZnNldCA8IHRoZWlyLm9mZnNldCAmJiBpbnNlcnQuaW5kZXggPCBpbnNlcnQubGluZXMubGVuZ3RoKSB7XG4gICAgbGV0IGxpbmUgPSBpbnNlcnQubGluZXNbaW5zZXJ0LmluZGV4KytdO1xuICAgIGh1bmsubGluZXMucHVzaChsaW5lKTtcbiAgICBpbnNlcnQub2Zmc2V0Kys7XG4gIH1cbn1cbmZ1bmN0aW9uIGluc2VydFRyYWlsaW5nKGh1bmssIGluc2VydCkge1xuICB3aGlsZSAoaW5zZXJ0LmluZGV4IDwgaW5zZXJ0LmxpbmVzLmxlbmd0aCkge1xuICAgIGxldCBsaW5lID0gaW5zZXJ0LmxpbmVzW2luc2VydC5pbmRleCsrXTtcbiAgICBodW5rLmxpbmVzLnB1c2gobGluZSk7XG4gIH1cbn1cblxuZnVuY3Rpb24gY29sbGVjdENoYW5nZShzdGF0ZSkge1xuICBsZXQgcmV0ID0gW10sXG4gICAgICBvcGVyYXRpb24gPSBzdGF0ZS5saW5lc1tzdGF0ZS5pbmRleF1bMF07XG4gIHdoaWxlIChzdGF0ZS5pbmRleCA8IHN0YXRlLmxpbmVzLmxlbmd0aCkge1xuICAgIGxldCBsaW5lID0gc3RhdGUubGluZXNbc3RhdGUuaW5kZXhdO1xuXG4gICAgLy8gR3JvdXAgYWRkaXRpb25zIHRoYXQgYXJlIGltbWVkaWF0ZWx5IGFmdGVyIHN1YnRyYWN0aW9ucyBhbmQgdHJlYXQgdGhlbSBhcyBvbmUgXCJhdG9taWNcIiBtb2RpZnkgY2hhbmdlLlxuICAgIGlmIChvcGVyYXRpb24gPT09ICctJyAmJiBsaW5lWzBdID09PSAnKycpIHtcbiAgICAgIG9wZXJhdGlvbiA9ICcrJztcbiAgICB9XG5cbiAgICBpZiAob3BlcmF0aW9uID09PSBsaW5lWzBdKSB7XG4gICAgICByZXQucHVzaChsaW5lKTtcbiAgICAgIHN0YXRlLmluZGV4Kys7XG4gICAgfSBlbHNlIHtcbiAgICAgIGJyZWFrO1xuICAgIH1cbiAgfVxuXG4gIHJldHVybiByZXQ7XG59XG5mdW5jdGlvbiBjb2xsZWN0Q29udGV4dChzdGF0ZSwgbWF0Y2hDaGFuZ2VzKSB7XG4gIGxldCBjaGFuZ2VzID0gW10sXG4gICAgICBtZXJnZWQgPSBbXSxcbiAgICAgIG1hdGNoSW5kZXggPSAwLFxuICAgICAgY29udGV4dENoYW5nZXMgPSBmYWxzZSxcbiAgICAgIGNvbmZsaWN0ZWQgPSBmYWxzZTtcbiAgd2hpbGUgKG1hdGNoSW5kZXggPCBtYXRjaENoYW5nZXMubGVuZ3RoXG4gICAgICAgICYmIHN0YXRlLmluZGV4IDwgc3RhdGUubGluZXMubGVuZ3RoKSB7XG4gICAgbGV0IGNoYW5nZSA9IHN0YXRlLmxpbmVzW3N0YXRlLmluZGV4XSxcbiAgICAgICAgbWF0Y2ggPSBtYXRjaENoYW5nZXNbbWF0Y2hJbmRleF07XG5cbiAgICAvLyBPbmNlIHdlJ3ZlIGhpdCBvdXIgYWRkLCB0aGVuIHdlIGFyZSBkb25lXG4gICAgaWYgKG1hdGNoWzBdID09PSAnKycpIHtcbiAgICAgIGJyZWFrO1xuICAgIH1cblxuICAgIGNvbnRleHRDaGFuZ2VzID0gY29udGV4dENoYW5nZXMgfHwgY2hhbmdlWzBdICE9PSAnICc7XG5cbiAgICBtZXJnZWQucHVzaChtYXRjaCk7XG4gICAgbWF0Y2hJbmRleCsrO1xuXG4gICAgLy8gQ29uc3VtZSBhbnkgYWRkaXRpb25zIGluIHRoZSBvdGhlciBibG9jayBhcyBhIGNvbmZsaWN0IHRvIGF0dGVtcHRcbiAgICAvLyB0byBwdWxsIGluIHRoZSByZW1haW5pbmcgY29udGV4dCBhZnRlciB0aGlzXG4gICAgaWYgKGNoYW5nZVswXSA9PT0gJysnKSB7XG4gICAgICBjb25mbGljdGVkID0gdHJ1ZTtcblxuICAgICAgd2hpbGUgKGNoYW5nZVswXSA9PT0gJysnKSB7XG4gICAgICAgIGNoYW5nZXMucHVzaChjaGFuZ2UpO1xuICAgICAgICBjaGFuZ2UgPSBzdGF0ZS5saW5lc1srK3N0YXRlLmluZGV4XTtcbiAgICAgIH1cbiAgICB9XG5cbiAgICBpZiAobWF0Y2guc3Vic3RyKDEpID09PSBjaGFuZ2Uuc3Vic3RyKDEpKSB7XG4gICAgICBjaGFuZ2VzLnB1c2goY2hhbmdlKTtcbiAgICAgIHN0YXRlLmluZGV4Kys7XG4gICAgfSBlbHNlIHtcbiAgICAgIGNvbmZsaWN0ZWQgPSB0cnVlO1xuICAgIH1cbiAgfVxuXG4gIGlmICgobWF0Y2hDaGFuZ2VzW21hdGNoSW5kZXhdIHx8ICcnKVswXSA9PT0gJysnXG4gICAgICAmJiBjb250ZXh0Q2hhbmdlcykge1xuICAgIGNvbmZsaWN0ZWQgPSB0cnVlO1xuICB9XG5cbiAgaWYgKGNvbmZsaWN0ZWQpIHtcbiAgICByZXR1cm4gY2hhbmdlcztcbiAgfVxuXG4gIHdoaWxlIChtYXRjaEluZGV4IDwgbWF0Y2hDaGFuZ2VzLmxlbmd0aCkge1xuICAgIG1lcmdlZC5wdXNoKG1hdGNoQ2hhbmdlc1ttYXRjaEluZGV4KytdKTtcbiAgfVxuXG4gIHJldHVybiB7XG4gICAgbWVyZ2VkLFxuICAgIGNoYW5nZXNcbiAgfTtcbn1cblxuZnVuY3Rpb24gYWxsUmVtb3ZlcyhjaGFuZ2VzKSB7XG4gIHJldHVybiBjaGFuZ2VzLnJlZHVjZShmdW5jdGlvbihwcmV2LCBjaGFuZ2UpIHtcbiAgICByZXR1cm4gcHJldiAmJiBjaGFuZ2VbMF0gPT09ICctJztcbiAgfSwgdHJ1ZSk7XG59XG5mdW5jdGlvbiBza2lwUmVtb3ZlU3VwZXJzZXQoc3RhdGUsIHJlbW92ZUNoYW5nZXMsIGRlbHRhKSB7XG4gIGZvciAobGV0IGkgPSAwOyBpIDwgZGVsdGE7IGkrKykge1xuICAgIGxldCBjaGFuZ2VDb250ZW50ID0gcmVtb3ZlQ2hhbmdlc1tyZW1vdmVDaGFuZ2VzLmxlbmd0aCAtIGRlbHRhICsgaV0uc3Vic3RyKDEpO1xuICAgIGlmIChzdGF0ZS5saW5lc1tzdGF0ZS5pbmRleCArIGldICE9PSAnICcgKyBjaGFuZ2VDb250ZW50KSB7XG4gICAgICByZXR1cm4gZmFsc2U7XG4gICAgfVxuICB9XG5cbiAgc3RhdGUuaW5kZXggKz0gZGVsdGE7XG4gIHJldHVybiB0cnVlO1xufVxuXG5mdW5jdGlvbiBjYWxjT2xkTmV3TGluZUNvdW50KGxpbmVzKSB7XG4gIGxldCBvbGRMaW5lcyA9IDA7XG4gIGxldCBuZXdMaW5lcyA9IDA7XG5cbiAgbGluZXMuZm9yRWFjaChmdW5jdGlvbihsaW5lKSB7XG4gICAgaWYgKHR5cGVvZiBsaW5lICE9PSAnc3RyaW5nJykge1xuICAgICAgbGV0IG15Q291bnQgPSBjYWxjT2xkTmV3TGluZUNvdW50KGxpbmUubWluZSk7XG4gICAgICBsZXQgdGhlaXJDb3VudCA9IGNhbGNPbGROZXdMaW5lQ291bnQobGluZS50aGVpcnMpO1xuXG4gICAgICBpZiAob2xkTGluZXMgIT09IHVuZGVmaW5lZCkge1xuICAgICAgICBpZiAobXlDb3VudC5vbGRMaW5lcyA9PT0gdGhlaXJDb3VudC5vbGRMaW5lcykge1xuICAgICAgICAgIG9sZExpbmVzICs9IG15Q291bnQub2xkTGluZXM7XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgb2xkTGluZXMgPSB1bmRlZmluZWQ7XG4gICAgICAgIH1cbiAgICAgIH1cblxuICAgICAgaWYgKG5ld0xpbmVzICE9PSB1bmRlZmluZWQpIHtcbiAgICAgICAgaWYgKG15Q291bnQubmV3TGluZXMgPT09IHRoZWlyQ291bnQubmV3TGluZXMpIHtcbiAgICAgICAgICBuZXdMaW5lcyArPSBteUNvdW50Lm5ld0xpbmVzO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIG5ld0xpbmVzID0gdW5kZWZpbmVkO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgfSBlbHNlIHtcbiAgICAgIGlmIChuZXdMaW5lcyAhPT0gdW5kZWZpbmVkICYmIChsaW5lWzBdID09PSAnKycgfHwgbGluZVswXSA9PT0gJyAnKSkge1xuICAgICAgICBuZXdMaW5lcysrO1xuICAgICAgfVxuICAgICAgaWYgKG9sZExpbmVzICE9PSB1bmRlZmluZWQgJiYgKGxpbmVbMF0gPT09ICctJyB8fCBsaW5lWzBdID09PSAnICcpKSB7XG4gICAgICAgIG9sZExpbmVzKys7XG4gICAgICB9XG4gICAgfVxuICB9KTtcblxuICByZXR1cm4ge29sZExpbmVzLCBuZXdMaW5lc307XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfY3JlYXRlIiwicmVxdWlyZSIsIl9wYXJzZSIsIl9hcnJheSIsIl90b0NvbnN1bWFibGVBcnJheSIsImFyciIsIl9hcnJheVdpdGhvdXRIb2xlcyIsIl9pdGVyYWJsZVRvQXJyYXkiLCJfdW5zdXBwb3J0ZWRJdGVyYWJsZVRvQXJyYXkiLCJfbm9uSXRlcmFibGVTcHJlYWQiLCJUeXBlRXJyb3IiLCJvIiwibWluTGVuIiwiX2FycmF5TGlrZVRvQXJyYXkiLCJuIiwiT2JqZWN0IiwicHJvdG90eXBlIiwidG9TdHJpbmciLCJjYWxsIiwic2xpY2UiLCJjb25zdHJ1Y3RvciIsIm5hbWUiLCJBcnJheSIsImZyb20iLCJ0ZXN0IiwiaXRlciIsIlN5bWJvbCIsIml0ZXJhdG9yIiwiaXNBcnJheSIsImxlbiIsImxlbmd0aCIsImkiLCJhcnIyIiwiY2FsY0xpbmVDb3VudCIsImh1bmsiLCJfY2FsY09sZE5ld0xpbmVDb3VudCIsImNhbGNPbGROZXdMaW5lQ291bnQiLCJsaW5lcyIsIm9sZExpbmVzIiwibmV3TGluZXMiLCJ1bmRlZmluZWQiLCJtZXJnZSIsIm1pbmUiLCJ0aGVpcnMiLCJiYXNlIiwibG9hZFBhdGNoIiwicmV0IiwiaW5kZXgiLCJuZXdGaWxlTmFtZSIsImZpbGVOYW1lQ2hhbmdlZCIsIm9sZEZpbGVOYW1lIiwib2xkSGVhZGVyIiwibmV3SGVhZGVyIiwic2VsZWN0RmllbGQiLCJodW5rcyIsIm1pbmVJbmRleCIsInRoZWlyc0luZGV4IiwibWluZU9mZnNldCIsInRoZWlyc09mZnNldCIsIm1pbmVDdXJyZW50Iiwib2xkU3RhcnQiLCJJbmZpbml0eSIsInRoZWlyc0N1cnJlbnQiLCJodW5rQmVmb3JlIiwicHVzaCIsImNsb25lSHVuayIsIm1lcmdlZEh1bmsiLCJNYXRoIiwibWluIiwibmV3U3RhcnQiLCJtZXJnZUxpbmVzIiwicGFyYW0iLCJwYXJzZVBhdGNoIiwiRXJyb3IiLCJzdHJ1Y3R1cmVkUGF0Y2giLCJwYXRjaCIsImNvbmZsaWN0IiwiY2hlY2siLCJvZmZzZXQiLCJtaW5lTGluZXMiLCJ0aGVpck9mZnNldCIsInRoZWlyTGluZXMiLCJ0aGVpciIsImluc2VydExlYWRpbmciLCJ0aGVpckN1cnJlbnQiLCJtdXR1YWxDaGFuZ2UiLCJfaHVuayRsaW5lcyIsImFwcGx5IiwiY29sbGVjdENoYW5nZSIsIl9odW5rJGxpbmVzMiIsInJlbW92YWwiLCJpbnNlcnRUcmFpbGluZyIsIm15Q2hhbmdlcyIsInRoZWlyQ2hhbmdlcyIsImFsbFJlbW92ZXMiLCJhcnJheVN0YXJ0c1dpdGgiLCJza2lwUmVtb3ZlU3VwZXJzZXQiLCJfaHVuayRsaW5lczMiLCJfaHVuayRsaW5lczQiLCJhcnJheUVxdWFsIiwiX2h1bmskbGluZXM1Iiwic3dhcCIsImNvbGxlY3RDb250ZXh0IiwibWVyZ2VkIiwiX2h1bmskbGluZXM2IiwiaW5zZXJ0IiwibGluZSIsInN0YXRlIiwib3BlcmF0aW9uIiwibWF0Y2hDaGFuZ2VzIiwiY2hhbmdlcyIsIm1hdGNoSW5kZXgiLCJjb250ZXh0Q2hhbmdlcyIsImNvbmZsaWN0ZWQiLCJjaGFuZ2UiLCJtYXRjaCIsInN1YnN0ciIsInJlZHVjZSIsInByZXYiLCJyZW1vdmVDaGFuZ2VzIiwiZGVsdGEiLCJjaGFuZ2VDb250ZW50IiwiZm9yRWFjaCIsIm15Q291bnQiLCJ0aGVpckNvdW50Il0sInNvdXJjZXMiOlsiLi4vLi4vc3JjL3BhdGNoL21lcmdlLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7c3RydWN0dXJlZFBhdGNofSBmcm9tICcuL2NyZWF0ZSc7XG5pbXBvcnQge3BhcnNlUGF0Y2h9IGZyb20gJy4vcGFyc2UnO1xuXG5pbXBvcnQge2FycmF5RXF1YWwsIGFycmF5U3RhcnRzV2l0aH0gZnJvbSAnLi4vdXRpbC9hcnJheSc7XG5cbmV4cG9ydCBmdW5jdGlvbiBjYWxjTGluZUNvdW50KGh1bmspIHtcbiAgY29uc3Qge29sZExpbmVzLCBuZXdMaW5lc30gPSBjYWxjT2xkTmV3TGluZUNvdW50KGh1bmsubGluZXMpO1xuXG4gIGlmIChvbGRMaW5lcyAhPT0gdW5kZWZpbmVkKSB7XG4gICAgaHVuay5vbGRMaW5lcyA9IG9sZExpbmVzO1xuICB9IGVsc2Uge1xuICAgIGRlbGV0ZSBodW5rLm9sZExpbmVzO1xuICB9XG5cbiAgaWYgKG5ld0xpbmVzICE9PSB1bmRlZmluZWQpIHtcbiAgICBodW5rLm5ld0xpbmVzID0gbmV3TGluZXM7XG4gIH0gZWxzZSB7XG4gICAgZGVsZXRlIGh1bmsubmV3TGluZXM7XG4gIH1cbn1cblxuZXhwb3J0IGZ1bmN0aW9uIG1lcmdlKG1pbmUsIHRoZWlycywgYmFzZSkge1xuICBtaW5lID0gbG9hZFBhdGNoKG1pbmUsIGJhc2UpO1xuICB0aGVpcnMgPSBsb2FkUGF0Y2godGhlaXJzLCBiYXNlKTtcblxuICBsZXQgcmV0ID0ge307XG5cbiAgLy8gRm9yIGluZGV4IHdlIGp1c3QgbGV0IGl0IHBhc3MgdGhyb3VnaCBhcyBpdCBkb2Vzbid0IGhhdmUgYW55IG5lY2Vzc2FyeSBtZWFuaW5nLlxuICAvLyBMZWF2aW5nIHNhbml0eSBjaGVja3Mgb24gdGhpcyB0byB0aGUgQVBJIGNvbnN1bWVyIHRoYXQgbWF5IGtub3cgbW9yZSBhYm91dCB0aGVcbiAgLy8gbWVhbmluZyBpbiB0aGVpciBvd24gY29udGV4dC5cbiAgaWYgKG1pbmUuaW5kZXggfHwgdGhlaXJzLmluZGV4KSB7XG4gICAgcmV0LmluZGV4ID0gbWluZS5pbmRleCB8fCB0aGVpcnMuaW5kZXg7XG4gIH1cblxuICBpZiAobWluZS5uZXdGaWxlTmFtZSB8fCB0aGVpcnMubmV3RmlsZU5hbWUpIHtcbiAgICBpZiAoIWZpbGVOYW1lQ2hhbmdlZChtaW5lKSkge1xuICAgICAgLy8gTm8gaGVhZGVyIG9yIG5vIGNoYW5nZSBpbiBvdXJzLCB1c2UgdGhlaXJzIChhbmQgb3VycyBpZiB0aGVpcnMgZG9lcyBub3QgZXhpc3QpXG4gICAgICByZXQub2xkRmlsZU5hbWUgPSB0aGVpcnMub2xkRmlsZU5hbWUgfHwgbWluZS5vbGRGaWxlTmFtZTtcbiAgICAgIHJldC5uZXdGaWxlTmFtZSA9IHRoZWlycy5uZXdGaWxlTmFtZSB8fCBtaW5lLm5ld0ZpbGVOYW1lO1xuICAgICAgcmV0Lm9sZEhlYWRlciA9IHRoZWlycy5vbGRIZWFkZXIgfHwgbWluZS5vbGRIZWFkZXI7XG4gICAgICByZXQubmV3SGVhZGVyID0gdGhlaXJzLm5ld0hlYWRlciB8fCBtaW5lLm5ld0hlYWRlcjtcbiAgICB9IGVsc2UgaWYgKCFmaWxlTmFtZUNoYW5nZWQodGhlaXJzKSkge1xuICAgICAgLy8gTm8gaGVhZGVyIG9yIG5vIGNoYW5nZSBpbiB0aGVpcnMsIHVzZSBvdXJzXG4gICAgICByZXQub2xkRmlsZU5hbWUgPSBtaW5lLm9sZEZpbGVOYW1lO1xuICAgICAgcmV0Lm5ld0ZpbGVOYW1lID0gbWluZS5uZXdGaWxlTmFtZTtcbiAgICAgIHJldC5vbGRIZWFkZXIgPSBtaW5lLm9sZEhlYWRlcjtcbiAgICAgIHJldC5uZXdIZWFkZXIgPSBtaW5lLm5ld0hlYWRlcjtcbiAgICB9IGVsc2Uge1xuICAgICAgLy8gQm90aCBjaGFuZ2VkLi4uIGZpZ3VyZSBpdCBvdXRcbiAgICAgIHJldC5vbGRGaWxlTmFtZSA9IHNlbGVjdEZpZWxkKHJldCwgbWluZS5vbGRGaWxlTmFtZSwgdGhlaXJzLm9sZEZpbGVOYW1lKTtcbiAgICAgIHJldC5uZXdGaWxlTmFtZSA9IHNlbGVjdEZpZWxkKHJldCwgbWluZS5uZXdGaWxlTmFtZSwgdGhlaXJzLm5ld0ZpbGVOYW1lKTtcbiAgICAgIHJldC5vbGRIZWFkZXIgPSBzZWxlY3RGaWVsZChyZXQsIG1pbmUub2xkSGVhZGVyLCB0aGVpcnMub2xkSGVhZGVyKTtcbiAgICAgIHJldC5uZXdIZWFkZXIgPSBzZWxlY3RGaWVsZChyZXQsIG1pbmUubmV3SGVhZGVyLCB0aGVpcnMubmV3SGVhZGVyKTtcbiAgICB9XG4gIH1cblxuICByZXQuaHVua3MgPSBbXTtcblxuICBsZXQgbWluZUluZGV4ID0gMCxcbiAgICAgIHRoZWlyc0luZGV4ID0gMCxcbiAgICAgIG1pbmVPZmZzZXQgPSAwLFxuICAgICAgdGhlaXJzT2Zmc2V0ID0gMDtcblxuICB3aGlsZSAobWluZUluZGV4IDwgbWluZS5odW5rcy5sZW5ndGggfHwgdGhlaXJzSW5kZXggPCB0aGVpcnMuaHVua3MubGVuZ3RoKSB7XG4gICAgbGV0IG1pbmVDdXJyZW50ID0gbWluZS5odW5rc1ttaW5lSW5kZXhdIHx8IHtvbGRTdGFydDogSW5maW5pdHl9LFxuICAgICAgICB0aGVpcnNDdXJyZW50ID0gdGhlaXJzLmh1bmtzW3RoZWlyc0luZGV4XSB8fCB7b2xkU3RhcnQ6IEluZmluaXR5fTtcblxuICAgIGlmIChodW5rQmVmb3JlKG1pbmVDdXJyZW50LCB0aGVpcnNDdXJyZW50KSkge1xuICAgICAgLy8gVGhpcyBwYXRjaCBkb2VzIG5vdCBvdmVybGFwIHdpdGggYW55IG9mIHRoZSBvdGhlcnMsIHlheS5cbiAgICAgIHJldC5odW5rcy5wdXNoKGNsb25lSHVuayhtaW5lQ3VycmVudCwgbWluZU9mZnNldCkpO1xuICAgICAgbWluZUluZGV4Kys7XG4gICAgICB0aGVpcnNPZmZzZXQgKz0gbWluZUN1cnJlbnQubmV3TGluZXMgLSBtaW5lQ3VycmVudC5vbGRMaW5lcztcbiAgICB9IGVsc2UgaWYgKGh1bmtCZWZvcmUodGhlaXJzQ3VycmVudCwgbWluZUN1cnJlbnQpKSB7XG4gICAgICAvLyBUaGlzIHBhdGNoIGRvZXMgbm90IG92ZXJsYXAgd2l0aCBhbnkgb2YgdGhlIG90aGVycywgeWF5LlxuICAgICAgcmV0Lmh1bmtzLnB1c2goY2xvbmVIdW5rKHRoZWlyc0N1cnJlbnQsIHRoZWlyc09mZnNldCkpO1xuICAgICAgdGhlaXJzSW5kZXgrKztcbiAgICAgIG1pbmVPZmZzZXQgKz0gdGhlaXJzQ3VycmVudC5uZXdMaW5lcyAtIHRoZWlyc0N1cnJlbnQub2xkTGluZXM7XG4gICAgfSBlbHNlIHtcbiAgICAgIC8vIE92ZXJsYXAsIG1lcmdlIGFzIGJlc3Qgd2UgY2FuXG4gICAgICBsZXQgbWVyZ2VkSHVuayA9IHtcbiAgICAgICAgb2xkU3RhcnQ6IE1hdGgubWluKG1pbmVDdXJyZW50Lm9sZFN0YXJ0LCB0aGVpcnNDdXJyZW50Lm9sZFN0YXJ0KSxcbiAgICAgICAgb2xkTGluZXM6IDAsXG4gICAgICAgIG5ld1N0YXJ0OiBNYXRoLm1pbihtaW5lQ3VycmVudC5uZXdTdGFydCArIG1pbmVPZmZzZXQsIHRoZWlyc0N1cnJlbnQub2xkU3RhcnQgKyB0aGVpcnNPZmZzZXQpLFxuICAgICAgICBuZXdMaW5lczogMCxcbiAgICAgICAgbGluZXM6IFtdXG4gICAgICB9O1xuICAgICAgbWVyZ2VMaW5lcyhtZXJnZWRIdW5rLCBtaW5lQ3VycmVudC5vbGRTdGFydCwgbWluZUN1cnJlbnQubGluZXMsIHRoZWlyc0N1cnJlbnQub2xkU3RhcnQsIHRoZWlyc0N1cnJlbnQubGluZXMpO1xuICAgICAgdGhlaXJzSW5kZXgrKztcbiAgICAgIG1pbmVJbmRleCsrO1xuXG4gICAgICByZXQuaHVua3MucHVzaChtZXJnZWRIdW5rKTtcbiAgICB9XG4gIH1cblxuICByZXR1cm4gcmV0O1xufVxuXG5mdW5jdGlvbiBsb2FkUGF0Y2gocGFyYW0sIGJhc2UpIHtcbiAgaWYgKHR5cGVvZiBwYXJhbSA9PT0gJ3N0cmluZycpIHtcbiAgICBpZiAoKC9eQEAvbSkudGVzdChwYXJhbSkgfHwgKCgvXkluZGV4Oi9tKS50ZXN0KHBhcmFtKSkpIHtcbiAgICAgIHJldHVybiBwYXJzZVBhdGNoKHBhcmFtKVswXTtcbiAgICB9XG5cbiAgICBpZiAoIWJhc2UpIHtcbiAgICAgIHRocm93IG5ldyBFcnJvcignTXVzdCBwcm92aWRlIGEgYmFzZSByZWZlcmVuY2Ugb3IgcGFzcyBpbiBhIHBhdGNoJyk7XG4gICAgfVxuICAgIHJldHVybiBzdHJ1Y3R1cmVkUGF0Y2godW5kZWZpbmVkLCB1bmRlZmluZWQsIGJhc2UsIHBhcmFtKTtcbiAgfVxuXG4gIHJldHVybiBwYXJhbTtcbn1cblxuZnVuY3Rpb24gZmlsZU5hbWVDaGFuZ2VkKHBhdGNoKSB7XG4gIHJldHVybiBwYXRjaC5uZXdGaWxlTmFtZSAmJiBwYXRjaC5uZXdGaWxlTmFtZSAhPT0gcGF0Y2gub2xkRmlsZU5hbWU7XG59XG5cbmZ1bmN0aW9uIHNlbGVjdEZpZWxkKGluZGV4LCBtaW5lLCB0aGVpcnMpIHtcbiAgaWYgKG1pbmUgPT09IHRoZWlycykge1xuICAgIHJldHVybiBtaW5lO1xuICB9IGVsc2Uge1xuICAgIGluZGV4LmNvbmZsaWN0ID0gdHJ1ZTtcbiAgICByZXR1cm4ge21pbmUsIHRoZWlyc307XG4gIH1cbn1cblxuZnVuY3Rpb24gaHVua0JlZm9yZSh0ZXN0LCBjaGVjaykge1xuICByZXR1cm4gdGVzdC5vbGRTdGFydCA8IGNoZWNrLm9sZFN0YXJ0XG4gICAgJiYgKHRlc3Qub2xkU3RhcnQgKyB0ZXN0Lm9sZExpbmVzKSA8IGNoZWNrLm9sZFN0YXJ0O1xufVxuXG5mdW5jdGlvbiBjbG9uZUh1bmsoaHVuaywgb2Zmc2V0KSB7XG4gIHJldHVybiB7XG4gICAgb2xkU3RhcnQ6IGh1bmsub2xkU3RhcnQsIG9sZExpbmVzOiBodW5rLm9sZExpbmVzLFxuICAgIG5ld1N0YXJ0OiBodW5rLm5ld1N0YXJ0ICsgb2Zmc2V0LCBuZXdMaW5lczogaHVuay5uZXdMaW5lcyxcbiAgICBsaW5lczogaHVuay5saW5lc1xuICB9O1xufVxuXG5mdW5jdGlvbiBtZXJnZUxpbmVzKGh1bmssIG1pbmVPZmZzZXQsIG1pbmVMaW5lcywgdGhlaXJPZmZzZXQsIHRoZWlyTGluZXMpIHtcbiAgLy8gVGhpcyB3aWxsIGdlbmVyYWxseSByZXN1bHQgaW4gYSBjb25mbGljdGVkIGh1bmssIGJ1dCB0aGVyZSBhcmUgY2FzZXMgd2hlcmUgdGhlIGNvbnRleHRcbiAgLy8gaXMgdGhlIG9ubHkgb3ZlcmxhcCB3aGVyZSB3ZSBjYW4gc3VjY2Vzc2Z1bGx5IG1lcmdlIHRoZSBjb250ZW50IGhlcmUuXG4gIGxldCBtaW5lID0ge29mZnNldDogbWluZU9mZnNldCwgbGluZXM6IG1pbmVMaW5lcywgaW5kZXg6IDB9LFxuICAgICAgdGhlaXIgPSB7b2Zmc2V0OiB0aGVpck9mZnNldCwgbGluZXM6IHRoZWlyTGluZXMsIGluZGV4OiAwfTtcblxuICAvLyBIYW5kbGUgYW55IGxlYWRpbmcgY29udGVudFxuICBpbnNlcnRMZWFkaW5nKGh1bmssIG1pbmUsIHRoZWlyKTtcbiAgaW5zZXJ0TGVhZGluZyhodW5rLCB0aGVpciwgbWluZSk7XG5cbiAgLy8gTm93IGluIHRoZSBvdmVybGFwIGNvbnRlbnQuIFNjYW4gdGhyb3VnaCBhbmQgc2VsZWN0IHRoZSBiZXN0IGNoYW5nZXMgZnJvbSBlYWNoLlxuICB3aGlsZSAobWluZS5pbmRleCA8IG1pbmUubGluZXMubGVuZ3RoICYmIHRoZWlyLmluZGV4IDwgdGhlaXIubGluZXMubGVuZ3RoKSB7XG4gICAgbGV0IG1pbmVDdXJyZW50ID0gbWluZS5saW5lc1ttaW5lLmluZGV4XSxcbiAgICAgICAgdGhlaXJDdXJyZW50ID0gdGhlaXIubGluZXNbdGhlaXIuaW5kZXhdO1xuXG4gICAgaWYgKChtaW5lQ3VycmVudFswXSA9PT0gJy0nIHx8IG1pbmVDdXJyZW50WzBdID09PSAnKycpXG4gICAgICAgICYmICh0aGVpckN1cnJlbnRbMF0gPT09ICctJyB8fCB0aGVpckN1cnJlbnRbMF0gPT09ICcrJykpIHtcbiAgICAgIC8vIEJvdGggbW9kaWZpZWQgLi4uXG4gICAgICBtdXR1YWxDaGFuZ2UoaHVuaywgbWluZSwgdGhlaXIpO1xuICAgIH0gZWxzZSBpZiAobWluZUN1cnJlbnRbMF0gPT09ICcrJyAmJiB0aGVpckN1cnJlbnRbMF0gPT09ICcgJykge1xuICAgICAgLy8gTWluZSBpbnNlcnRlZFxuICAgICAgaHVuay5saW5lcy5wdXNoKC4uLiBjb2xsZWN0Q2hhbmdlKG1pbmUpKTtcbiAgICB9IGVsc2UgaWYgKHRoZWlyQ3VycmVudFswXSA9PT0gJysnICYmIG1pbmVDdXJyZW50WzBdID09PSAnICcpIHtcbiAgICAgIC8vIFRoZWlycyBpbnNlcnRlZFxuICAgICAgaHVuay5saW5lcy5wdXNoKC4uLiBjb2xsZWN0Q2hhbmdlKHRoZWlyKSk7XG4gICAgfSBlbHNlIGlmIChtaW5lQ3VycmVudFswXSA9PT0gJy0nICYmIHRoZWlyQ3VycmVudFswXSA9PT0gJyAnKSB7XG4gICAgICAvLyBNaW5lIHJlbW92ZWQgb3IgZWRpdGVkXG4gICAgICByZW1vdmFsKGh1bmssIG1pbmUsIHRoZWlyKTtcbiAgICB9IGVsc2UgaWYgKHRoZWlyQ3VycmVudFswXSA9PT0gJy0nICYmIG1pbmVDdXJyZW50WzBdID09PSAnICcpIHtcbiAgICAgIC8vIFRoZWlyIHJlbW92ZWQgb3IgZWRpdGVkXG4gICAgICByZW1vdmFsKGh1bmssIHRoZWlyLCBtaW5lLCB0cnVlKTtcbiAgICB9IGVsc2UgaWYgKG1pbmVDdXJyZW50ID09PSB0aGVpckN1cnJlbnQpIHtcbiAgICAgIC8vIENvbnRleHQgaWRlbnRpdHlcbiAgICAgIGh1bmsubGluZXMucHVzaChtaW5lQ3VycmVudCk7XG4gICAgICBtaW5lLmluZGV4Kys7XG4gICAgICB0aGVpci5pbmRleCsrO1xuICAgIH0gZWxzZSB7XG4gICAgICAvLyBDb250ZXh0IG1pc21hdGNoXG4gICAgICBjb25mbGljdChodW5rLCBjb2xsZWN0Q2hhbmdlKG1pbmUpLCBjb2xsZWN0Q2hhbmdlKHRoZWlyKSk7XG4gICAgfVxuICB9XG5cbiAgLy8gTm93IHB1c2ggYW55dGhpbmcgdGhhdCBtYXkgYmUgcmVtYWluaW5nXG4gIGluc2VydFRyYWlsaW5nKGh1bmssIG1pbmUpO1xuICBpbnNlcnRUcmFpbGluZyhodW5rLCB0aGVpcik7XG5cbiAgY2FsY0xpbmVDb3VudChodW5rKTtcbn1cblxuZnVuY3Rpb24gbXV0dWFsQ2hhbmdlKGh1bmssIG1pbmUsIHRoZWlyKSB7XG4gIGxldCBteUNoYW5nZXMgPSBjb2xsZWN0Q2hhbmdlKG1pbmUpLFxuICAgICAgdGhlaXJDaGFuZ2VzID0gY29sbGVjdENoYW5nZSh0aGVpcik7XG5cbiAgaWYgKGFsbFJlbW92ZXMobXlDaGFuZ2VzKSAmJiBhbGxSZW1vdmVzKHRoZWlyQ2hhbmdlcykpIHtcbiAgICAvLyBTcGVjaWFsIGNhc2UgZm9yIHJlbW92ZSBjaGFuZ2VzIHRoYXQgYXJlIHN1cGVyc2V0cyBvZiBvbmUgYW5vdGhlclxuICAgIGlmIChhcnJheVN0YXJ0c1dpdGgobXlDaGFuZ2VzLCB0aGVpckNoYW5nZXMpXG4gICAgICAgICYmIHNraXBSZW1vdmVTdXBlcnNldCh0aGVpciwgbXlDaGFuZ2VzLCBteUNoYW5nZXMubGVuZ3RoIC0gdGhlaXJDaGFuZ2VzLmxlbmd0aCkpIHtcbiAgICAgIGh1bmsubGluZXMucHVzaCguLi4gbXlDaGFuZ2VzKTtcbiAgICAgIHJldHVybjtcbiAgICB9IGVsc2UgaWYgKGFycmF5U3RhcnRzV2l0aCh0aGVpckNoYW5nZXMsIG15Q2hhbmdlcylcbiAgICAgICAgJiYgc2tpcFJlbW92ZVN1cGVyc2V0KG1pbmUsIHRoZWlyQ2hhbmdlcywgdGhlaXJDaGFuZ2VzLmxlbmd0aCAtIG15Q2hhbmdlcy5sZW5ndGgpKSB7XG4gICAgICBodW5rLmxpbmVzLnB1c2goLi4uIHRoZWlyQ2hhbmdlcyk7XG4gICAgICByZXR1cm47XG4gICAgfVxuICB9IGVsc2UgaWYgKGFycmF5RXF1YWwobXlDaGFuZ2VzLCB0aGVpckNoYW5nZXMpKSB7XG4gICAgaHVuay5saW5lcy5wdXNoKC4uLiBteUNoYW5nZXMpO1xuICAgIHJldHVybjtcbiAgfVxuXG4gIGNvbmZsaWN0KGh1bmssIG15Q2hhbmdlcywgdGhlaXJDaGFuZ2VzKTtcbn1cblxuZnVuY3Rpb24gcmVtb3ZhbChodW5rLCBtaW5lLCB0aGVpciwgc3dhcCkge1xuICBsZXQgbXlDaGFuZ2VzID0gY29sbGVjdENoYW5nZShtaW5lKSxcbiAgICAgIHRoZWlyQ2hhbmdlcyA9IGNvbGxlY3RDb250ZXh0KHRoZWlyLCBteUNoYW5nZXMpO1xuICBpZiAodGhlaXJDaGFuZ2VzLm1lcmdlZCkge1xuICAgIGh1bmsubGluZXMucHVzaCguLi4gdGhlaXJDaGFuZ2VzLm1lcmdlZCk7XG4gIH0gZWxzZSB7XG4gICAgY29uZmxpY3QoaHVuaywgc3dhcCA/IHRoZWlyQ2hhbmdlcyA6IG15Q2hhbmdlcywgc3dhcCA/IG15Q2hhbmdlcyA6IHRoZWlyQ2hhbmdlcyk7XG4gIH1cbn1cblxuZnVuY3Rpb24gY29uZmxpY3QoaHVuaywgbWluZSwgdGhlaXIpIHtcbiAgaHVuay5jb25mbGljdCA9IHRydWU7XG4gIGh1bmsubGluZXMucHVzaCh7XG4gICAgY29uZmxpY3Q6IHRydWUsXG4gICAgbWluZTogbWluZSxcbiAgICB0aGVpcnM6IHRoZWlyXG4gIH0pO1xufVxuXG5mdW5jdGlvbiBpbnNlcnRMZWFkaW5nKGh1bmssIGluc2VydCwgdGhlaXIpIHtcbiAgd2hpbGUgKGluc2VydC5vZmZzZXQgPCB0aGVpci5vZmZzZXQgJiYgaW5zZXJ0LmluZGV4IDwgaW5zZXJ0LmxpbmVzLmxlbmd0aCkge1xuICAgIGxldCBsaW5lID0gaW5zZXJ0LmxpbmVzW2luc2VydC5pbmRleCsrXTtcbiAgICBodW5rLmxpbmVzLnB1c2gobGluZSk7XG4gICAgaW5zZXJ0Lm9mZnNldCsrO1xuICB9XG59XG5mdW5jdGlvbiBpbnNlcnRUcmFpbGluZyhodW5rLCBpbnNlcnQpIHtcbiAgd2hpbGUgKGluc2VydC5pbmRleCA8IGluc2VydC5saW5lcy5sZW5ndGgpIHtcbiAgICBsZXQgbGluZSA9IGluc2VydC5saW5lc1tpbnNlcnQuaW5kZXgrK107XG4gICAgaHVuay5saW5lcy5wdXNoKGxpbmUpO1xuICB9XG59XG5cbmZ1bmN0aW9uIGNvbGxlY3RDaGFuZ2Uoc3RhdGUpIHtcbiAgbGV0IHJldCA9IFtdLFxuICAgICAgb3BlcmF0aW9uID0gc3RhdGUubGluZXNbc3RhdGUuaW5kZXhdWzBdO1xuICB3aGlsZSAoc3RhdGUuaW5kZXggPCBzdGF0ZS5saW5lcy5sZW5ndGgpIHtcbiAgICBsZXQgbGluZSA9IHN0YXRlLmxpbmVzW3N0YXRlLmluZGV4XTtcblxuICAgIC8vIEdyb3VwIGFkZGl0aW9ucyB0aGF0IGFyZSBpbW1lZGlhdGVseSBhZnRlciBzdWJ0cmFjdGlvbnMgYW5kIHRyZWF0IHRoZW0gYXMgb25lIFwiYXRvbWljXCIgbW9kaWZ5IGNoYW5nZS5cbiAgICBpZiAob3BlcmF0aW9uID09PSAnLScgJiYgbGluZVswXSA9PT0gJysnKSB7XG4gICAgICBvcGVyYXRpb24gPSAnKyc7XG4gICAgfVxuXG4gICAgaWYgKG9wZXJhdGlvbiA9PT0gbGluZVswXSkge1xuICAgICAgcmV0LnB1c2gobGluZSk7XG4gICAgICBzdGF0ZS5pbmRleCsrO1xuICAgIH0gZWxzZSB7XG4gICAgICBicmVhaztcbiAgICB9XG4gIH1cblxuICByZXR1cm4gcmV0O1xufVxuZnVuY3Rpb24gY29sbGVjdENvbnRleHQoc3RhdGUsIG1hdGNoQ2hhbmdlcykge1xuICBsZXQgY2hhbmdlcyA9IFtdLFxuICAgICAgbWVyZ2VkID0gW10sXG4gICAgICBtYXRjaEluZGV4ID0gMCxcbiAgICAgIGNvbnRleHRDaGFuZ2VzID0gZmFsc2UsXG4gICAgICBjb25mbGljdGVkID0gZmFsc2U7XG4gIHdoaWxlIChtYXRjaEluZGV4IDwgbWF0Y2hDaGFuZ2VzLmxlbmd0aFxuICAgICAgICAmJiBzdGF0ZS5pbmRleCA8IHN0YXRlLmxpbmVzLmxlbmd0aCkge1xuICAgIGxldCBjaGFuZ2UgPSBzdGF0ZS5saW5lc1tzdGF0ZS5pbmRleF0sXG4gICAgICAgIG1hdGNoID0gbWF0Y2hDaGFuZ2VzW21hdGNoSW5kZXhdO1xuXG4gICAgLy8gT25jZSB3ZSd2ZSBoaXQgb3VyIGFkZCwgdGhlbiB3ZSBhcmUgZG9uZVxuICAgIGlmIChtYXRjaFswXSA9PT0gJysnKSB7XG4gICAgICBicmVhaztcbiAgICB9XG5cbiAgICBjb250ZXh0Q2hhbmdlcyA9IGNvbnRleHRDaGFuZ2VzIHx8IGNoYW5nZVswXSAhPT0gJyAnO1xuXG4gICAgbWVyZ2VkLnB1c2gobWF0Y2gpO1xuICAgIG1hdGNoSW5kZXgrKztcblxuICAgIC8vIENvbnN1bWUgYW55IGFkZGl0aW9ucyBpbiB0aGUgb3RoZXIgYmxvY2sgYXMgYSBjb25mbGljdCB0byBhdHRlbXB0XG4gICAgLy8gdG8gcHVsbCBpbiB0aGUgcmVtYWluaW5nIGNvbnRleHQgYWZ0ZXIgdGhpc1xuICAgIGlmIChjaGFuZ2VbMF0gPT09ICcrJykge1xuICAgICAgY29uZmxpY3RlZCA9IHRydWU7XG5cbiAgICAgIHdoaWxlIChjaGFuZ2VbMF0gPT09ICcrJykge1xuICAgICAgICBjaGFuZ2VzLnB1c2goY2hhbmdlKTtcbiAgICAgICAgY2hhbmdlID0gc3RhdGUubGluZXNbKytzdGF0ZS5pbmRleF07XG4gICAgICB9XG4gICAgfVxuXG4gICAgaWYgKG1hdGNoLnN1YnN0cigxKSA9PT0gY2hhbmdlLnN1YnN0cigxKSkge1xuICAgICAgY2hhbmdlcy5wdXNoKGNoYW5nZSk7XG4gICAgICBzdGF0ZS5pbmRleCsrO1xuICAgIH0gZWxzZSB7XG4gICAgICBjb25mbGljdGVkID0gdHJ1ZTtcbiAgICB9XG4gIH1cblxuICBpZiAoKG1hdGNoQ2hhbmdlc1ttYXRjaEluZGV4XSB8fCAnJylbMF0gPT09ICcrJ1xuICAgICAgJiYgY29udGV4dENoYW5nZXMpIHtcbiAgICBjb25mbGljdGVkID0gdHJ1ZTtcbiAgfVxuXG4gIGlmIChjb25mbGljdGVkKSB7XG4gICAgcmV0dXJuIGNoYW5nZXM7XG4gIH1cblxuICB3aGlsZSAobWF0Y2hJbmRleCA8IG1hdGNoQ2hhbmdlcy5sZW5ndGgpIHtcbiAgICBtZXJnZWQucHVzaChtYXRjaENoYW5nZXNbbWF0Y2hJbmRleCsrXSk7XG4gIH1cblxuICByZXR1cm4ge1xuICAgIG1lcmdlZCxcbiAgICBjaGFuZ2VzXG4gIH07XG59XG5cbmZ1bmN0aW9uIGFsbFJlbW92ZXMoY2hhbmdlcykge1xuICByZXR1cm4gY2hhbmdlcy5yZWR1Y2UoZnVuY3Rpb24ocHJldiwgY2hhbmdlKSB7XG4gICAgcmV0dXJuIHByZXYgJiYgY2hhbmdlWzBdID09PSAnLSc7XG4gIH0sIHRydWUpO1xufVxuZnVuY3Rpb24gc2tpcFJlbW92ZVN1cGVyc2V0KHN0YXRlLCByZW1vdmVDaGFuZ2VzLCBkZWx0YSkge1xuICBmb3IgKGxldCBpID0gMDsgaSA8IGRlbHRhOyBpKyspIHtcbiAgICBsZXQgY2hhbmdlQ29udGVudCA9IHJlbW92ZUNoYW5nZXNbcmVtb3ZlQ2hhbmdlcy5sZW5ndGggLSBkZWx0YSArIGldLnN1YnN0cigxKTtcbiAgICBpZiAoc3RhdGUubGluZXNbc3RhdGUuaW5kZXggKyBpXSAhPT0gJyAnICsgY2hhbmdlQ29udGVudCkge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cbiAgfVxuXG4gIHN0YXRlLmluZGV4ICs9IGRlbHRhO1xuICByZXR1cm4gdHJ1ZTtcbn1cblxuZnVuY3Rpb24gY2FsY09sZE5ld0xpbmVDb3VudChsaW5lcykge1xuICBsZXQgb2xkTGluZXMgPSAwO1xuICBsZXQgbmV3TGluZXMgPSAwO1xuXG4gIGxpbmVzLmZvckVhY2goZnVuY3Rpb24obGluZSkge1xuICAgIGlmICh0eXBlb2YgbGluZSAhPT0gJ3N0cmluZycpIHtcbiAgICAgIGxldCBteUNvdW50ID0gY2FsY09sZE5ld0xpbmVDb3VudChsaW5lLm1pbmUpO1xuICAgICAgbGV0IHRoZWlyQ291bnQgPSBjYWxjT2xkTmV3TGluZUNvdW50KGxpbmUudGhlaXJzKTtcblxuICAgICAgaWYgKG9sZExpbmVzICE9PSB1bmRlZmluZWQpIHtcbiAgICAgICAgaWYgKG15Q291bnQub2xkTGluZXMgPT09IHRoZWlyQ291bnQub2xkTGluZXMpIHtcbiAgICAgICAgICBvbGRMaW5lcyArPSBteUNvdW50Lm9sZExpbmVzO1xuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIG9sZExpbmVzID0gdW5kZWZpbmVkO1xuICAgICAgICB9XG4gICAgICB9XG5cbiAgICAgIGlmIChuZXdMaW5lcyAhPT0gdW5kZWZpbmVkKSB7XG4gICAgICAgIGlmIChteUNvdW50Lm5ld0xpbmVzID09PSB0aGVpckNvdW50Lm5ld0xpbmVzKSB7XG4gICAgICAgICAgbmV3TGluZXMgKz0gbXlDb3VudC5uZXdMaW5lcztcbiAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICBuZXdMaW5lcyA9IHVuZGVmaW5lZDtcbiAgICAgICAgfVxuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICBpZiAobmV3TGluZXMgIT09IHVuZGVmaW5lZCAmJiAobGluZVswXSA9PT0gJysnIHx8IGxpbmVbMF0gPT09ICcgJykpIHtcbiAgICAgICAgbmV3TGluZXMrKztcbiAgICAgIH1cbiAgICAgIGlmIChvbGRMaW5lcyAhPT0gdW5kZWZpbmVkICYmIChsaW5lWzBdID09PSAnLScgfHwgbGluZVswXSA9PT0gJyAnKSkge1xuICAgICAgICBvbGRMaW5lcysrO1xuICAgICAgfVxuICAgIH1cbiAgfSk7XG5cbiAgcmV0dXJuIHtvbGRMaW5lcywgbmV3TGluZXN9O1xufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBQTtBQUFBO0FBQUFBLE9BQUEsR0FBQUMsT0FBQTtBQUFBO0FBQUE7QUFDQTtBQUFBO0FBQUFDLE1BQUEsR0FBQUQsT0FBQTtBQUFBO0FBQUE7QUFFQTtBQUFBO0FBQUFFLE1BQUEsR0FBQUYsT0FBQTtBQUFBO0FBQUE7QUFBMEQsbUNBQUFHLG1CQUFBQyxHQUFBLFdBQUFDLGtCQUFBLENBQUFELEdBQUEsS0FBQUUsZ0JBQUEsQ0FBQUYsR0FBQSxLQUFBRywyQkFBQSxDQUFBSCxHQUFBLEtBQUFJLGtCQUFBO0FBQUEsU0FBQUEsbUJBQUEsY0FBQUMsU0FBQTtBQUFBLFNBQUFGLDRCQUFBRyxDQUFBLEVBQUFDLE1BQUEsU0FBQUQsQ0FBQSxxQkFBQUEsQ0FBQSxzQkFBQUUsaUJBQUEsQ0FBQUYsQ0FBQSxFQUFBQyxNQUFBLE9BQUFFLENBQUEsR0FBQUMsTUFBQSxDQUFBQyxTQUFBLENBQUFDLFFBQUEsQ0FBQUMsSUFBQSxDQUFBUCxDQUFBLEVBQUFRLEtBQUEsYUFBQUwsQ0FBQSxpQkFBQUgsQ0FBQSxDQUFBUyxXQUFBLEVBQUFOLENBQUEsR0FBQUgsQ0FBQSxDQUFBUyxXQUFBLENBQUFDLElBQUEsTUFBQVAsQ0FBQSxjQUFBQSxDQUFBLG1CQUFBUSxLQUFBLENBQUFDLElBQUEsQ0FBQVosQ0FBQSxPQUFBRyxDQUFBLCtEQUFBVSxJQUFBLENB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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/patch/parse.js":
+/***/ "./node_modules/diff/lib/patch/parse.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/patch/parse.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -15359,123 +15387,110 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.parsePatch = parsePatch;
-
 /*istanbul ignore end*/
 function parsePatch(uniDiff) {
-  /*istanbul ignore start*/
-  var
-  /*istanbul ignore end*/
-  options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var diffstr = uniDiff.split(/\r\n|[\n\v\f\r\x85]/),
-      delimiters = uniDiff.match(/\r\n|[\n\v\f\r\x85]/g) || [],
-      list = [],
-      i = 0;
-
+  var diffstr = uniDiff.split(/\n/),
+    list = [],
+    i = 0;
   function parseIndex() {
     var index = {};
-    list.push(index); // Parse diff metadata
+    list.push(index);
 
+    // Parse diff metadata
     while (i < diffstr.length) {
-      var line = diffstr[i]; // File header found, end parsing diff metadata
+      var line = diffstr[i];
 
+      // File header found, end parsing diff metadata
       if (/^(\-\-\-|\+\+\+|@@)\s/.test(line)) {
         break;
-      } // Diff index
+      }
 
-
+      // Diff index
       var header = /^(?:Index:|diff(?: -r \w+)+)\s+(.+?)\s*$/.exec(line);
-
       if (header) {
         index.index = header[1];
       }
-
       i++;
-    } // Parse file headers if they are defined. Unified diff requires them, but
+    }
+
+    // Parse file headers if they are defined. Unified diff requires them, but
     // there's no technical issues to have an isolated hunk without file header
-
-
     parseFileHeader(index);
-    parseFileHeader(index); // Parse hunks
+    parseFileHeader(index);
 
+    // Parse hunks
     index.hunks = [];
-
     while (i < diffstr.length) {
       var _line = diffstr[i];
-
-      if (/^(Index:|diff|\-\-\-|\+\+\+)\s/.test(_line)) {
+      if (/^(Index:\s|diff\s|\-\-\-\s|\+\+\+\s|===================================================================)/.test(_line)) {
         break;
       } else if (/^@@/.test(_line)) {
         index.hunks.push(parseHunk());
-      } else if (_line && options.strict) {
-        // Ignore unexpected content unless in strict mode
+      } else if (_line) {
         throw new Error('Unknown line ' + (i + 1) + ' ' + JSON.stringify(_line));
       } else {
         i++;
       }
     }
-  } // Parses the --- and +++ headers, if none are found, no lines
+  }
+
+  // Parses the --- and +++ headers, if none are found, no lines
   // are consumed.
-
-
   function parseFileHeader(index) {
-    var fileHeader = /^(---|\+\+\+)\s+(.*)$/.exec(diffstr[i]);
-
+    var fileHeader = /^(---|\+\+\+)\s+(.*)\r?$/.exec(diffstr[i]);
     if (fileHeader) {
       var keyPrefix = fileHeader[1] === '---' ? 'old' : 'new';
       var data = fileHeader[2].split('\t', 2);
       var fileName = data[0].replace(/\\\\/g, '\\');
-
       if (/^".*"$/.test(fileName)) {
         fileName = fileName.substr(1, fileName.length - 2);
       }
-
       index[keyPrefix + 'FileName'] = fileName;
       index[keyPrefix + 'Header'] = (data[1] || '').trim();
       i++;
     }
-  } // Parses a hunk
+  }
+
+  // Parses a hunk
   // This assumes that we are at the start of a hunk.
-
-
   function parseHunk() {
     var chunkHeaderIndex = i,
-        chunkHeaderLine = diffstr[i++],
-        chunkHeader = chunkHeaderLine.split(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+      chunkHeaderLine = diffstr[i++],
+      chunkHeader = chunkHeaderLine.split(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
     var hunk = {
       oldStart: +chunkHeader[1],
       oldLines: typeof chunkHeader[2] === 'undefined' ? 1 : +chunkHeader[2],
       newStart: +chunkHeader[3],
       newLines: typeof chunkHeader[4] === 'undefined' ? 1 : +chunkHeader[4],
-      lines: [],
-      linedelimiters: []
-    }; // Unified Diff Format quirk: If the chunk size is 0,
+      lines: []
+    };
+
+    // Unified Diff Format quirk: If the chunk size is 0,
     // the first number is one lower than one would expect.
     // https://www.artima.com/weblogs/viewpost.jsp?thread=164293
-
     if (hunk.oldLines === 0) {
       hunk.oldStart += 1;
     }
-
     if (hunk.newLines === 0) {
       hunk.newStart += 1;
     }
-
     var addCount = 0,
-        removeCount = 0;
-
-    for (; i < diffstr.length; i++) {
-      // Lines starting with '---' could be mistaken for the "remove line" operation
-      // But they could be the header for the next file. Therefore prune such cases out.
-      if (diffstr[i].indexOf('--- ') === 0 && i + 2 < diffstr.length && diffstr[i + 1].indexOf('+++ ') === 0 && diffstr[i + 2].indexOf('@@') === 0) {
-        break;
-      }
-
+      removeCount = 0;
+    for (; i < diffstr.length && (removeCount < hunk.oldLines || addCount < hunk.newLines ||
+    /*istanbul ignore start*/
+    (_diffstr$i =
+    /*istanbul ignore end*/
+    diffstr[i]) !== null && _diffstr$i !== void 0 &&
+    /*istanbul ignore start*/
+    _diffstr$i
+    /*istanbul ignore end*/
+    .startsWith('\\')); i++) {
+      /*istanbul ignore start*/
+      var _diffstr$i;
+      /*istanbul ignore end*/
       var operation = diffstr[i].length == 0 && i != diffstr.length - 1 ? ' ' : diffstr[i][0];
-
       if (operation === '+' || operation === '-' || operation === ' ' || operation === '\\') {
         hunk.lines.push(diffstr[i]);
-        hunk.linedelimiters.push(delimiters[i] || '\n');
-
         if (operation === '+') {
           addCount++;
         } else if (operation === '-') {
@@ -15485,49 +15500,114 @@ function parsePatch(uniDiff) {
           removeCount++;
         }
       } else {
-        break;
+        throw new Error(
+        /*istanbul ignore start*/
+        "Hunk at line ".concat(
+        /*istanbul ignore end*/
+        chunkHeaderIndex + 1, " contained invalid line ").concat(diffstr[i]));
       }
-    } // Handle the empty block count case
+    }
 
-
+    // Handle the empty block count case
     if (!addCount && hunk.newLines === 1) {
       hunk.newLines = 0;
     }
-
     if (!removeCount && hunk.oldLines === 1) {
       hunk.oldLines = 0;
-    } // Perform optional sanity checking
-
-
-    if (options.strict) {
-      if (addCount !== hunk.newLines) {
-        throw new Error('Added line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
-      }
-
-      if (removeCount !== hunk.oldLines) {
-        throw new Error('Removed line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
-      }
     }
 
+    // Perform sanity checking
+    if (addCount !== hunk.newLines) {
+      throw new Error('Added line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+    }
+    if (removeCount !== hunk.oldLines) {
+      throw new Error('Removed line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+    }
     return hunk;
   }
-
   while (i < diffstr.length) {
     parseIndex();
   }
-
   return list;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9wYXJzZS5qcyJdLCJuYW1lcyI6WyJwYXJzZVBhdGNoIiwidW5pRGlmZiIsIm9wdGlvbnMiLCJkaWZmc3RyIiwic3BsaXQiLCJkZWxpbWl0ZXJzIiwibWF0Y2giLCJsaXN0IiwiaSIsInBhcnNlSW5kZXgiLCJpbmRleCIsInB1c2giLCJsZW5ndGgiLCJsaW5lIiwidGVzdCIsImhlYWRlciIsImV4ZWMiLCJwYXJzZUZpbGVIZWFkZXIiLCJodW5rcyIsInBhcnNlSHVuayIsInN0cmljdCIsIkVycm9yIiwiSlNPTiIsInN0cmluZ2lmeSIsImZpbGVIZWFkZXIiLCJrZXlQcmVmaXgiLCJkYXRhIiwiZmlsZU5hbWUiLCJyZXBsYWNlIiwic3Vic3RyIiwidHJpbSIsImNodW5rSGVhZGVySW5kZXgiLCJjaHVua0hlYWRlckxpbmUiLCJjaHVua0hlYWRlciIsImh1bmsiLCJvbGRTdGFydCIsIm9sZExpbmVzIiwibmV3U3RhcnQiLCJuZXdMaW5lcyIsImxpbmVzIiwibGluZWRlbGltaXRlcnMiLCJhZGRDb3VudCIsInJlbW92ZUNvdW50IiwiaW5kZXhPZiIsIm9wZXJhdGlvbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQU8sU0FBU0EsVUFBVCxDQUFvQkMsT0FBcEIsRUFBMkM7QUFBQTtBQUFBO0FBQUE7QUFBZEMsRUFBQUEsT0FBYyx1RUFBSixFQUFJO0FBQ2hELE1BQUlDLE9BQU8sR0FBR0YsT0FBTyxDQUFDRyxLQUFSLENBQWMscUJBQWQsQ0FBZDtBQUFBLE1BQ0lDLFVBQVUsR0FBR0osT0FBTyxDQUFDSyxLQUFSLENBQWMsc0JBQWQsS0FBeUMsRUFEMUQ7QUFBQSxNQUVJQyxJQUFJLEdBQUcsRUFGWDtBQUFBLE1BR0lDLENBQUMsR0FBRyxDQUhSOztBQUtBLFdBQVNDLFVBQVQsR0FBc0I7QUFDcEIsUUFBSUMsS0FBSyxHQUFHLEVBQVo7QUFDQUgsSUFBQUEsSUFBSSxDQUFDSSxJQUFMLENBQVVELEtBQVYsRUFGb0IsQ0FJcEI7O0FB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QUwsS0FBa0IsQ0FBbkMsRUFBc0M7QUFDcENKLE1BQUFBLElBQUksQ0FBQ0ksUUFBTCxHQUFnQixDQUFoQjtBQUNEOztBQUNELFFBQUksQ0FBQ0ksV0FBRCxJQUFnQlIsSUFBSSxDQUFDRSxRQUFMLEtBQWtCLENBQXRDLEVBQXlDO0FBQ3ZDRixNQUFBQSxJQUFJLENBQUNFLFFBQUwsR0FBZ0IsQ0FBaEI7QUFDRCxLQTVEa0IsQ0E4RG5COzs7QUFDQSxRQUFJbEMsT0FBTyxDQUFDa0IsTUFBWixFQUFvQjtBQUNsQixVQUFJcUIsUUFBUSxLQUFLUCxJQUFJLENBQUNJLFFBQXRCLEVBQWdDO0FBQzlCLGNBQU0sSUFBSWpCLEtBQUosQ0FBVSxzREFBc0RVLGdCQUFnQixHQUFHLENBQXpFLENBQVYsQ0FBTjtBQUNEOztBQUNELFVBQUlXLFdBQVcsS0FBS1IsSUFBSSxDQUFDRSxRQUF6QixFQUFtQztBQUNqQyxjQUFNLElBQUlmLEtBQUosQ0FBVSx3REFBd0RVLGdCQUFnQixHQUFHLENBQTNFLENBQVYsQ0FBTjtBQUNEO0FBQ0Y7O0FBRUQsV0FBT0csSUFBUDtBQUNEOztBQUVELFNBQU8xQixDQUFDLEdBQUdMLE9BQU8sQ0FBQ1MsTUFBbkIsRUFBMkI7QUFDekJILElBQUFBLFVBQVU7QUFDWDs7QUFFRCxTQUFPRixJQUFQO0FBQ0QiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gcGFyc2VQYXRjaCh1bmlEaWZmLCBvcHRpb25zID0ge30pIHtcbiAgbGV0IGRpZmZzdHIgPSB1bmlEaWZmLnNwbGl0KC9cXHJcXG58W1xcblxcdlxcZlxcclxceDg1XS8pLFxuICAgICAgZGVsaW1pdGVycyA9IHVuaURpZmYubWF0Y2goL1xcclxcbnxbXFxuXFx2XFxmXFxyXFx4ODVdL2cpIHx8IFtdLFxuICAgICAgbGlzdCA9IFtdLFxuICAgICAgaSA9IDA7XG5cbiAgZnVuY3Rpb24gcGFyc2VJbmRleCgpIHtcbiAgICBsZXQgaW5kZXggPSB7fTtcbiAgICBsaXN0LnB1c2goaW5kZXgpO1xuXG4gICAgLy8gUGFyc2UgZGlmZiBtZXRhZGF0YVxuICAgIHdoaWxlIChpIDwgZGlmZnN0ci5sZW5ndGgpIHtcbiAgICAgIGxldCBsaW5lID0gZGlmZnN0cltpXTtcblxuICAgICAgLy8gRmlsZSBoZWFkZXIgZm91bmQsIGVuZCBwYXJzaW5nIGRpZmYgbWV0YWRhdGFcbiAgICAgIGlmICgoL14oXFwtXFwtXFwtfFxcK1xcK1xcK3xAQClcXHMvKS50ZXN0KGxpbmUpKSB7XG4gICAgICAgIGJyZWFrO1xuICAgICAgfVxuXG4gICAgICAvLyBEaWZmIGluZGV4XG4gICAgICBsZXQgaGVhZGVyID0gKC9eKD86SW5kZXg6fGRpZmYoPzogLXIgXFx3KykrKVxccysoLis/KVxccyokLykuZXhlYyhsaW5lKTtcbiAgICAgIGlmIChoZWFkZXIpIHtcbiAgICAgICAgaW5kZXguaW5kZXggPSBoZWFkZXJbMV07XG4gICAgICB9XG5cbiAgICAgIGkrKztcbiAgICB9XG5cbiAgICAvLyBQYXJzZSBmaWxlIGhlYWRlcnMgaWYgdGhleSBhcmUgZGVmaW5lZC4gVW5pZmllZCBkaWZmIHJlcXVpcmVzIHRoZW0sIGJ1dFxuICAgIC8vIHRoZXJlJ3Mgbm8gdGVjaG5pY2FsIGlzc3VlcyB0byBoYXZlIGFuIGlzb2xhdGVkIGh1bmsgd2l0aG91dCBmaWxlIGhlYWRlclxuICAgIHBhcnNlRmlsZUhlYWRlcihpbmRleCk7XG4gICAgcGFyc2VGaWxlSGVhZGVyKGluZGV4KTtcblxuICAgIC8vIFBhcnNlIGh1bmtzXG4gICAgaW5kZXguaHVua3MgPSBbXTtcblxuICAgIHdoaWxlIChpIDwgZGlmZnN0ci5sZW5ndGgpIHtcbiAgICAgIGxldCBsaW5lID0gZGlmZnN0cltpXTtcblxuICAgICAgaWYgKCgvXihJbmRleDp8ZGlmZnxcXC1cXC1cXC18XFwrXFwrXFwrKVxccy8pLnRlc3QobGluZSkpIHtcbiAgICAgICAgYnJlYWs7XG4gICAgICB9IGVsc2UgaWYgKCgvXkBALykudGVzdChsaW5lKSkge1xuICAgICAgICBpbmRleC5odW5rcy5wdXNoKHBhcnNlSHVuaygpKTtcbiAgICAgIH0gZWxzZSBpZiAobGluZSAmJiBvcHRpb25zLnN0cmljdCkge1xuICAgICAgICAvLyBJZ25vcmUgdW5leHBlY3RlZCBjb250ZW50IHVubGVzcyBpbiBzdHJpY3QgbW9kZVxuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ1Vua25vd24gbGluZSAnICsgKGkgKyAxKSArICcgJyArIEpTT04uc3RyaW5naWZ5KGxpbmUpKTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIGkrKztcbiAgICAgIH1cbiAgICB9XG4gIH1cblxuICAvLyBQYXJzZXMgdGhlIC0tLSBhbmQgKysrIGhlYWRlcnMsIGlmIG5vbmUgYXJlIGZvdW5kLCBubyBsaW5lc1xuICAvLyBhcmUgY29uc3VtZWQuXG4gIGZ1bmN0aW9uIHBhcnNlRmlsZUhlYWRlcihpbmRleCkge1xuICAgIGNvbnN0IGZpbGVIZWFkZXIgPSAoL14oLS0tfFxcK1xcK1xcKylcXHMrKC4qKSQvKS5leGVjKGRpZmZzdHJbaV0pO1xuICAgIGlmIChmaWxlSGVhZGVyKSB7XG4gICAgICBsZXQga2V5UHJlZml4ID0gZmlsZUhlYWRlclsxXSA9PT0gJy0tLScgPyAnb2xkJyA6ICduZXcnO1xuICAgICAgY29uc3QgZGF0YSA9IGZpbGVIZWFkZXJbMl0uc3BsaXQoJ1xcdCcsIDIpO1xuICAgICAgbGV0IGZpbGVOYW1lID0gZGF0YVswXS5yZXBsYWNlKC9cXFxcXFxcXC9nLCAnXFxcXCcpO1xuICAgICAgaWYgKCgvXlwiLipcIiQvKS50ZXN0KGZpbGVOYW1lKSkge1xuICAgICAgICBmaWxlTmFtZSA9IGZpbGVOYW1lLnN1YnN0cigxLCBmaWxlTmFtZS5sZW5ndGggLSAyKTtcbiAgICAgIH1cbiAgICAgIGluZGV4W2tleVByZWZpeCArICdGaWxlTmFtZSddID0gZmlsZU5hbWU7XG4gICAgICBpbmRleFtrZXlQcmVmaXggKyAnSGVhZGVyJ10gPSAoZGF0YVsxXSB8fCAnJykudHJpbSgpO1xuXG4gICAgICBpKys7XG4gICAgfVxuICB9XG5cbiAgLy8gUGFyc2VzIGEgaHVua1xuICAvLyBUaGlzIGFzc3VtZXMgdGhhdCB3ZSBhcmUgYXQgdGhlIHN0YXJ0IG9mIGEgaHVuay5cbiAgZnVuY3Rpb24gcGFyc2VIdW5rKCkge1xuICAgIGxldCBjaHVua0hlYWRlckluZGV4ID0gaSxcbiAgICAgICAgY2h1bmtIZWFkZXJMaW5lID0gZGlmZnN0cltpKytdLFxuICAgICAgICBjaHVua0hlYWRlciA9IGNodW5rSGVhZGVyTGluZS5zcGxpdCgvQEAgLShcXGQrKSg/OiwoXFxkKykpPyBcXCsoXFxkKykoPzosKFxcZCspKT8gQEAvKTtcblxuICAgIGxldCBodW5rID0ge1xuICAgICAgb2xkU3RhcnQ6ICtjaHVua0hlYWRlclsxXSxcbiAgICAgIG9sZExpbmVzOiB0eXBlb2YgY2h1bmtIZWFkZXJbMl0gPT09ICd1bmRlZmluZWQnID8gMSA6ICtjaHVua0hlYWRlclsyXSxcbiAgICAgIG5ld1N0YXJ0OiArY2h1bmtIZWFkZXJbM10sXG4gICAgICBuZXdMaW5lczogdHlwZW9mIGNodW5rSGVhZGVyWzRdID09PSAndW5kZWZpbmVkJyA/IDEgOiArY2h1bmtIZWFkZXJbNF0sXG4gICAgICBsaW5lczogW10sXG4gICAgICBsaW5lZGVsaW1pdGVyczogW11cbiAgICB9O1xuXG4gICAgLy8gVW5pZmllZCBEaWZmIEZvcm1hdCBxdWlyazogSWYgdGhlIGNodW5rIHNpemUgaXMgMCxcbiAgICAvLyB0aGUgZmlyc3QgbnVtYmVyIGlzIG9uZSBsb3dlciB0aGFuIG9uZSB3b3VsZCBleHBlY3QuXG4gICAgLy8gaHR0cHM6Ly93d3cuYXJ0aW1hLmNvbS93ZWJsb2dzL3ZpZXdwb3N0LmpzcD90aHJlYWQ9MTY0MjkzXG4gICAgaWYgKGh1bmsub2xkTGluZXMgPT09IDApIHtcbiAgICAgIGh1bmsub2xkU3RhcnQgKz0gMTtcbiAgICB9XG4gICAgaWYgKGh1bmsubmV3TGluZXMgPT09IDApIHtcbiAgICAgIGh1bmsubmV3U3RhcnQgKz0gMTtcbiAgICB9XG5cbiAgICBsZXQgYWRkQ291bnQgPSAwLFxuICAgICAgICByZW1vdmVDb3VudCA9IDA7XG4gICAgZm9yICg7IGkgPCBkaWZmc3RyLmxlbmd0aDsgaSsrKSB7XG4gICAgICAvLyBMaW5lcyBzdGFydGluZyB3aXRoICctLS0nIGNvdWxkIGJlIG1pc3Rha2VuIGZvciB0aGUgXCJyZW1vdmUgbGluZVwiIG9wZXJhdGlvblxuICAgICAgLy8gQnV0IHRoZXkgY291bGQgYmUgdGhlIGhlYWRlciBmb3IgdGhlIG5leHQgZmlsZS4gVGhlcmVmb3JlIHBydW5lIHN1Y2ggY2FzZXMgb3V0LlxuICAgICAgaWYgKGRpZmZzdHJbaV0uaW5kZXhPZignLS0tICcpID09PSAwXG4gICAgICAgICAgICAmJiAoaSArIDIgPCBkaWZmc3RyLmxlbmd0aClcbiAgICAgICAgICAgICYmIGRpZmZzdHJbaSArIDFdLmluZGV4T2YoJysrKyAnKSA9PT0gMFxuICAgICAgICAgICAgJiYgZGlmZnN0cltpICsgMl0uaW5kZXhPZignQEAnKSA9PT0gMCkge1xuICAgICAgICAgIGJyZWFrO1xuICAgICAgfVxuICAgICAgbGV0IG9wZXJhdGlvbiA9IChkaWZmc3RyW2ldLmxlbmd0aCA9PSAwICYmIGkgIT0gKGRpZmZzdHIubGVuZ3RoIC0gMSkpID8gJyAnIDogZGlmZnN0cltpXVswXTtcblxuICAgICAgaWYgKG9wZXJhdGlvbiA9PT0gJysnIHx8IG9wZXJhdGlvbiA9PT0gJy0nIHx8IG9wZXJhdGlvbiA9PT0gJyAnIHx8IG9wZXJhdGlvbiA9PT0gJ1xcXFwnKSB7XG4gICAgICAgIGh1bmsubGluZXMucHVzaChkaWZmc3RyW2ldKTtcbiAgICAgICAgaHVuay5saW5lZGVsaW1pdGVycy5wdXNoKGRlbGltaXRlcnNbaV0gfHwgJ1xcbicpO1xuXG4gICAgICAgIGlmIChvcGVyYXRpb24gPT09ICcrJykge1xuICAgICAgICAgIGFkZENvdW50Kys7XG4gICAgICAgIH0gZWxzZSBpZiAob3BlcmF0aW9uID09PSAnLScpIHtcbiAgICAgICAgICByZW1vdmVDb3VudCsrO1xuICAgICAgICB9IGVsc2UgaWYgKG9wZXJhdGlvbiA9PT0gJyAnKSB7XG4gICAgICAgICAgYWRkQ291bnQrKztcbiAgICAgICAgICByZW1vdmVDb3VudCsrO1xuICAgICAgICB9XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBicmVhaztcbiAgICAgIH1cbiAgICB9XG5cbiAgICAvLyBIYW5kbGUgdGhlIGVtcHR5IGJsb2NrIGNvdW50IGNhc2VcbiAgICBpZiAoIWFkZENvdW50ICYmIGh1bmsubmV3TGluZXMgPT09IDEpIHtcbiAgICAgIGh1bmsubmV3TGluZXMgPSAwO1xuICAgIH1cbiAgICBpZiAoIXJlbW92ZUNvdW50ICYmIGh1bmsub2xkTGluZXMgPT09IDEpIHtcbiAgICAgIGh1bmsub2xkTGluZXMgPSAwO1xuICAgIH1cblxuICAgIC8vIFBlcmZvcm0gb3B0aW9uYWwgc2FuaXR5IGNoZWNraW5nXG4gICAgaWYgKG9wdGlvbnMuc3RyaWN0KSB7XG4gICAgICBpZiAoYWRkQ291bnQgIT09IGh1bmsubmV3TGluZXMpIHtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdBZGRlZCBsaW5lIGNvdW50IGRpZCBub3QgbWF0Y2ggZm9yIGh1bmsgYXQgbGluZSAnICsgKGNodW5rSGVhZGVySW5kZXggKyAxKSk7XG4gICAgICB9XG4gICAgICBpZiAocmVtb3ZlQ291bnQgIT09IGh1bmsub2xkTGluZXMpIHtcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdSZW1vdmVkIGxpbmUgY291bnQgZGlkIG5vdCBtYXRjaCBmb3IgaHVuayBhdCBsaW5lICcgKyAoY2h1bmtIZWFkZXJJbmRleCArIDEpKTtcbiAgICAgIH1cbiAgICB9XG5cbiAgICByZXR1cm4gaHVuaztcbiAgfVxuXG4gIHdoaWxlIChpIDwgZGlmZnN0ci5sZW5ndGgpIHtcbiAgICBwYXJzZUluZGV4KCk7XG4gIH1cblxuICByZXR1cm4gbGlzdDtcbn1cbiJdfQ==
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJwYXJzZVBhdGNoIiwidW5pRGlmZiIsImRpZmZzdHIiLCJzcGxpdCIsImxpc3QiLCJpIiwicGFyc2VJbmRleCIsImluZGV4IiwicHVzaCIsImxlbmd0aCIsImxpbmUiLCJ0ZXN0IiwiaGVhZGVyIiwiZXhlYyIsInBhcnNlRmlsZUhlYWRlciIsImh1bmtzIiwicGFyc2VIdW5rIiwiRXJyb3IiLCJKU09OIiwic3RyaW5naWZ5IiwiZmlsZUhlYWRlciIsImtleVByZWZpeCIsImRhdGEiLCJmaWxlTmFtZSIsInJlcGxhY2UiLCJzdWJzdHIiLCJ0cmltIiwiY2h1bmtIZWFkZXJJbmRleCIsImNodW5rSGVhZGVyTGluZSIsImNodW5rSGVhZGVyIiwiaHVuayIsIm9sZFN0YXJ0Iiwib2xkTGluZXMiLCJuZXdTdGFydCIsIm5ld0xpbmVzIiwibGluZXMiLCJhZGRDb3VudCIsInJlbW92ZUNvdW50IiwiX2RpZmZzdHIkaSIsInN0YXJ0c1dpdGgiLCJvcGVyYXRpb24iLCJjb25jYXQiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvcGF0Y2gvcGFyc2UuanMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGZ1bmN0aW9uIHBhcnNlUGF0Y2godW5pRGlmZikge1xuICBsZXQgZGlmZnN0ciA9IHVuaURpZmYuc3BsaXQoL1xcbi8pLFxuICAgICAgbGlzdCA9IFtdLFxuICAgICAgaSA9IDA7XG5cbiAgZnVuY3Rpb24gcGFyc2VJbmRleCgpIHtcbiAgICBsZXQgaW5kZXggPSB7fTtcbiAgICBsaXN0LnB1c2goaW5kZXgpO1xuXG4gICAgLy8gUGFyc2UgZGlmZiBtZXRhZGF0YVxuICAgIHdoaWxlIChpIDwgZGlmZnN0ci5sZW5ndGgpIHtcbiAgICAgIGxldCBsaW5lID0gZGlmZnN0cltpXTtcblxuICAgICAgLy8gRmlsZSBoZWFkZXIgZm91bmQsIGVuZCBwYXJzaW5nIGRpZmYgbWV0YWRhdGFcbiAgICAgIGlmICgoL14oXFwtXFwtXFwtfFxcK1xcK1xcK3xAQClcXHMvKS50ZXN0KGxpbmUpKSB7XG4gICAgICAgIGJyZWFrO1xuICAgICAgfVxuXG4gICAgICAvLyBEaWZmIGluZGV4XG4gICAgICBsZXQgaGVhZGVyID0gKC9eKD86SW5kZXg6fGRpZmYoPzogLXIgXFx3KykrKVxccysoLis/KVxccyokLykuZXhlYyhsaW5lKTtcbiAgICAgIGlmIChoZWFkZXIpIHtcbiAgICAgICAgaW5kZXguaW5kZXggPSBoZWFkZXJbMV07XG4gICAgICB9XG5cbiAgICAgIGkrKztcbiAgICB9XG5cbiAgICAvLyBQYXJzZSBmaWxlIGhlYWRlcnMgaWYgdGhleSBhcmUgZGVmaW5lZC4gVW5pZmllZCBkaWZmIHJlcXVpcmVzIHRoZW0sIGJ1dFxuICAgIC8vIHRoZXJlJ3Mgbm8gdGVjaG5pY2FsIGlzc3VlcyB0byBoYXZlIGFuIGlzb2xhdGVkIGh1bmsgd2l0aG91dCBmaWxlIGhlYWRlclxuICAgIHBhcnNlRmlsZUhlYWRlcihpbmRleCk7XG4gICAgcGFyc2VGaWxlSGVhZGVyKGluZGV4KTtcblxuICAgIC8vIFBhcnNlIGh1bmtzXG4gICAgaW5kZXguaHVua3MgPSBbXTtcblxuICAgIHdoaWxlIChpIDwgZGlmZnN0ci5sZW5ndGgpIHtcbiAgICAgIGxldCBsaW5lID0gZGlmZnN0cltpXTtcbiAgICAgIGlmICgoL14oSW5kZXg6XFxzfGRpZmZcXHN8XFwtXFwtXFwtXFxzfFxcK1xcK1xcK1xcc3w9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09KS8pLnRlc3QobGluZSkpIHtcbiAgICAgICAgYnJlYWs7XG4gICAgICB9IGVsc2UgaWYgKCgvXkBALykudGVzdChsaW5lKSkge1xuICAgICAgICBpbmRleC5odW5rcy5wdXNoKHBhcnNlSHVuaygpKTtcbiAgICAgIH0gZWxzZSBpZiAobGluZSkge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ1Vua25vd24gbGluZSAnICsgKGkgKyAxKSArICcgJyArIEpTT04uc3RyaW5naWZ5KGxpbmUpKTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIGkrKztcbiAgICAgIH1cbiAgICB9XG4gIH1cblxuICAvLyBQYXJzZXMgdGhlIC0tLSBhbmQgKysrIGhlYWRlcnMsIGlmIG5vbmUgYXJlIGZvdW5kLCBubyBsaW5lc1xuICAvLyBhcmUgY29uc3VtZWQuXG4gIGZ1bmN0aW9uIHBhcnNlRmlsZUhlYWRlcihpbmRleCkge1xuICAgIGNvbnN0IGZpbGVIZWFkZXIgPSAoL14oLS0tfFxcK1xcK1xcKylcXHMrKC4qKVxccj8kLykuZXhlYyhkaWZmc3RyW2ldKTtcbiAgICBpZiAoZmlsZUhlYWRlcikge1xuICAgICAgbGV0IGtleVByZWZpeCA9IGZpbGVIZWFkZXJbMV0gPT09ICctLS0nID8gJ29sZCcgOiAnbmV3JztcbiAgICAgIGNvbnN0IGRhdGEgPSBmaWxlSGVhZGVyWzJdLnNwbGl0KCdcXHQnLCAyKTtcbiAgICAgIGxldCBmaWxlTmFtZSA9IGRhdGFbMF0ucmVwbGFjZSgvXFxcXFxcXFwvZywgJ1xcXFwnKTtcbiAgICAgIGlmICgoL15cIi4qXCIkLykudGVzdChmaWxlTmFtZSkpIHtcbiAgICAgICAgZmlsZU5hbWUgPSBmaWxlTmFtZS5zdWJzdHIoMSwgZmlsZU5hbWUubGVuZ3RoIC0gMik7XG4gICAgICB9XG4gICAgICBpbmRleFtrZXlQcmVmaXggKyAnRmlsZU5hbWUnXSA9IGZpbGVOYW1lO1xuICAgICAgaW5kZXhba2V5UHJlZml4ICsgJ0hlYWRlciddID0gKGRhdGFbMV0gfHwgJycpLnRyaW0oKTtcblxuICAgICAgaSsrO1xuICAgIH1cbiAgfVxuXG4gIC8vIFBhcnNlcyBhIGh1bmtcbiAgLy8gVGhpcyBhc3N1bWVzIHRoYXQgd2UgYXJlIGF0IHRoZSBzdGFydCBvZiBhIGh1bmsuXG4gIGZ1bmN0aW9uIHBhcnNlSHVuaygpIHtcbiAgICBsZXQgY2h1bmtIZWFkZXJJbmRleCA9IGksXG4gICAgICAgIGNodW5rSGVhZGVyTGluZSA9IGRpZmZzdHJbaSsrXSxcbiAgICAgICAgY2h1bmtIZWFkZXIgPSBjaHVua0hlYWRlckxpbmUuc3BsaXQoL0BAIC0oXFxkKykoPzosKFxcZCspKT8gXFwrKFxcZCspKD86LChcXGQrKSk/IEBALyk7XG5cbiAgICBsZXQgaHVuayA9IHtcbiAgICAgIG9sZFN0YXJ0OiArY2h1bmtIZWFkZXJbMV0sXG4gICAgICBvbGRMaW5lczogdHlwZW9mIGNodW5rSGVhZGVyWzJdID09PSAndW5kZWZpbmVkJyA/IDEgOiArY2h1bmtIZWFkZXJbMl0sXG4gICAgICBuZXdTdGFydDogK2NodW5rSGVhZGVyWzNdLFxuICAgICAgbmV3TGluZXM6IHR5cGVvZiBjaHVua0hlYWRlcls0XSA9PT0gJ3VuZGVmaW5lZCcgPyAxIDogK2NodW5rSGVhZGVyWzRdLFxuICAgICAgbGluZXM6IFtdXG4gICAgfTtcblxuICAgIC8vIFVuaWZpZWQgRGlmZiBGb3JtYXQgcXVpcms6IElmIHRoZSBjaHVuayBzaXplIGlzIDAsXG4gICAgLy8gdGhlIGZpcnN0IG51bWJlciBpcyBvbmUgbG93ZXIgdGhhbiBvbmUgd291bGQgZXhwZWN0LlxuICAgIC8vIGh0dHBzOi8vd3d3LmFydGltYS5jb20vd2VibG9ncy92aWV3cG9zdC5qc3A/dGhyZWFkPTE2NDI5M1xuICAgIGlmIChodW5rLm9sZExpbmVzID09PSAwKSB7XG4gICAgICBodW5rLm9sZFN0YXJ0ICs9IDE7XG4gICAgfVxuICAgIGlmIChodW5rLm5ld0xpbmVzID09PSAwKSB7XG4gICAgICBodW5rLm5ld1N0YXJ0ICs9IDE7XG4gICAgfVxuXG4gICAgbGV0IGFkZENvdW50ID0gMCxcbiAgICAgICAgcmVtb3ZlQ291bnQgPSAwO1xuICAgIGZvciAoXG4gICAgICA7XG4gICAgICBpIDwgZGlmZnN0ci5sZW5ndGggJiYgKHJlbW92ZUNvdW50IDwgaHVuay5vbGRMaW5lcyB8fCBhZGRDb3VudCA8IGh1bmsubmV3TGluZXMgfHwgZGlmZnN0cltpXT8uc3RhcnRzV2l0aCgnXFxcXCcpKTtcbiAgICAgIGkrK1xuICAgICkge1xuICAgICAgbGV0IG9wZXJhdGlvbiA9IChkaWZmc3RyW2ldLmxlbmd0aCA9PSAwICYmIGkgIT0gKGRpZmZzdHIubGVuZ3RoIC0gMSkpID8gJyAnIDogZGlmZnN0cltpXVswXTtcbiAgICAgIGlmIChvcGVyYXRpb24gPT09ICcrJyB8fCBvcGVyYXRpb24gPT09ICctJyB8fCBvcGVyYXRpb24gPT09ICcgJyB8fCBvcGVyYXRpb24gPT09ICdcXFxcJykge1xuICAgICAgICBodW5rLmxpbmVzLnB1c2goZGlmZnN0cltpXSk7XG5cbiAgICAgICAgaWYgKG9wZXJhdGlvbiA9PT0gJysnKSB7XG4gICAgICAgICAgYWRkQ291bnQrKztcbiAgICAgICAgfSBlbHNlIGlmIChvcGVyYXRpb24gPT09ICctJykge1xuICAgICAgICAgIHJlbW92ZUNvdW50Kys7XG4gICAgICAgIH0gZWxzZSBpZiAob3BlcmF0aW9uID09PSAnICcpIHtcbiAgICAgICAgICBhZGRDb3VudCsrO1xuICAgICAgICAgIHJlbW92ZUNvdW50Kys7XG4gICAgICAgIH1cbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcihgSHVuayBhdCBsaW5lICR7Y2h1bmtIZWFkZXJJbmRleCArIDF9IGNvbnRhaW5lZCBpbnZhbGlkIGxpbmUgJHtkaWZmc3RyW2ldfWApO1xuICAgICAgfVxuICAgIH1cblxuICAgIC8vIEhhbmRsZSB0aGUgZW1wdHkgYmxvY2sgY291bnQgY2FzZVxuICAgIGlmICghYWRkQ291bnQgJiYgaHVuay5uZXdMaW5lcyA9PT0gMSkge1xuICAgICAgaHVuay5uZXdMaW5lcyA9IDA7XG4gICAgfVxuICAgIGlmICghcmVtb3ZlQ291bnQgJiYgaHVuay5vbGRMaW5lcyA9PT0gMSkge1xuICAgICAgaHVuay5vbGRMaW5lcyA9IDA7XG4gICAgfVxuXG4gICAgLy8gUGVyZm9ybSBzYW5pdHkgY2hlY2tpbmdcbiAgICBpZiAoYWRkQ291bnQgIT09IGh1bmsubmV3TGluZXMpIHtcbiAgICAgIHRocm93IG5ldyBFcnJvcignQWRkZWQgbGluZSBjb3VudCBkaWQgbm90IG1hdGNoIGZvciBodW5rIGF0IGxpbmUgJyArIChjaHVua0hlYWRlckluZGV4ICsgMSkpO1xuICAgIH1cbiAgICBpZiAocmVtb3ZlQ291bnQgIT09IGh1bmsub2xkTGluZXMpIHtcbiAgICAgIHRocm93IG5ldyBFcnJvcignUmVtb3ZlZCBsaW5lIGNvdW50IGRpZCBub3QgbWF0Y2ggZm9yIGh1bmsgYXQgbGluZSAnICsgKGNodW5rSGVhZGVySW5kZXggKyAxKSk7XG4gICAgfVxuXG4gICAgcmV0dXJuIGh1bms7XG4gIH1cblxuICB3aGlsZSAoaSA8IGRpZmZzdHIubGVuZ3RoKSB7XG4gICAgcGFyc2VJbmRleCgpO1xuICB9XG5cbiAgcmV0dXJuIGxpc3Q7XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQU8sU0FBU0EsVUFBVUEsQ0FBQ0MsT0FBTyxFQUFFO0VBQ2xDLElBQUlDLE9BQU8sR0FBR0QsT0FBTyxDQUFDRSxLQUFLLENBQUMsSUFBSSxDQUFDO0lBQzdCQyxJQUFJLEdBQUcsRUFBRTtJQUNUQyxDQUFDLEdBQUcsQ0FBQztFQUVULFNBQVNDLFVBQVVBLENBQUEsRUFBRztJQUNwQixJQUFJQyxLQUFLLEdBQUcsQ0FBQyxDQUFDO0lBQ2RILElBQUksQ0FBQ0ksSUFBSSxDQUFDRCxLQUFLLENBQUM7O0lBRWhCO0lBQ0EsT0FBT0YsQ0FBQyxHQUFHSCxPQUFPLENBQUNPLE1BQU0sRUFBRTtNQUN6QixJQUFJQyxJQUFJLEdBQUdSLE9BQU8sQ0FBQ0csQ0FBQyxDQUFDOztNQUVyQjtNQUNBLElBQUssdUJBQXVCLENBQUVNLElBQUksQ0FBQ0QsSUFBSSxDQUFDLEVBQUU7UUFDeEM7TUFDRjs7TUFFQTtNQUNBLElBQUlFLE1BQU0sR0FBSSwwQ0FBMEMsQ0FBRUMsSUFBSSxDQUFDSCxJQUFJLENBQUM7TUFDcEUsSUFBSUUsTUFBTSxFQUFFO1FBQ1ZMLEtBQUssQ0FBQ0EsS0FBSyxHQUFHSyxNQUFNLENBQUMsQ0FBQyxDQUFDO01BQ3pCO01BRUFQLENBQUMsRUFBRTtJQUNMOztJQUVBO0lBQ0E7SUFDQVMsZUFBZSxDQUFDUCxLQUFLLENBQUM7SUFDdEJPLGVBQWUsQ0FBQ1AsS0FBSyxDQUFDOztJQUV0QjtJQUNBQSxLQUFLLENBQUNRLEtBQUssR0FBRyxFQUFFO0lBRWhCLE9BQU9WLENBQUMsR0FBR0gsT0FBTyxDQUFDTyxNQUFNLEVBQUU7TUFDekIsSUFBSUMsS0FBSSxHQUFHUixPQUFPLENBQUNHLENBQUMsQ0FBQztNQUNyQixJQUFLLDBHQUEwRyxDQUFFTSxJQUFJLENBQUNELEtBQUksQ0FBQyxFQUFFO1FBQzNIO01BQ0YsQ0FBQyxNQUFNLElBQUssS0FBSyxDQUFFQyxJQUFJLENBQUNELEtBQUksQ0FBQyxFQUFFO1FBQzdCSCxLQUFLLENBQUNRLEtBQUssQ0FBQ1AsSUFBSSxDQUFDUSxTQUFTLENBQUMsQ0FBQyxDQUFDO01BQy9CLENBQUMsTUFBTSxJQUFJTixLQUFJLEVBQUU7UUFDZixNQUFNLElBQUlPLEtBQUssQ0FBQyxlQUFlLElBQUlaLENBQUMsR0FBRyxDQUFDLENBQUMsR0FBRyxHQUFHLEdBQUdhLElBQUksQ0FBQ0MsU0FBUyxDQUFDVCxLQUFJLENBQUMsQ0FBQztNQUN6RSxDQUFDLE1BQU07UUFDTEwsQ0FBQyxFQUFFO01BQ0w7SUFDRjtFQUNGOztFQUVBO0VBQ0E7RUFDQSxTQUFTUyxlQUFlQSxDQUFDUCxLQUFLLEVBQUU7SUFDOUIsSUFBTWEsVUFBVSxHQUFJLDBCQUEwQixDQUFFUCxJQUFJLENBQUNYLE9BQU8sQ0FBQ0csQ0FBQyxDQUFDLENBQUM7SUFDaEUsSUFBSWUsVUFBVSxFQUFFO01BQ2QsSUFBSUMsU0FBUyxHQUFHRCxVQUFVLENBQUMsQ0FBQyxDQUFDLEtBQUssS0FBSyxHQUFHLEtBQUssR0FBRyxLQUFLO01BQ3ZELElBQU1FLElBQUksR0FBR0YsVUFBVSxDQUFDLENBQUMsQ0FBQyxDQUFDakIsS0FBSyxDQUFDLElBQUksRUFBRSxDQUFDLENBQUM7TUFDekMsSUFBSW9CLFFBQVEsR0FBR0QsSUFBSSxDQUFDLENBQUMsQ0FBQyxDQUFDRSxPQUFPLENBQUMsT0FBTyxFQUFFLElBQUksQ0FBQztNQUM3QyxJQUFLLFFBQVEsQ0FBRWIsSUFBSSxDQUFDWSxRQUFRLENBQUMsRUFBRTtRQUM3QkEsUUFBUSxHQUFHQSxRQUFRLENBQUNFLE1BQU0sQ0FBQyxDQUFDLEVBQUVGLFFBQVEsQ0FBQ2QsTUFBTSxHQUFHLENBQUMsQ0FBQztNQUNwRDtNQUNBRixLQUFLLENBQUNjLFNBQVMsR0FBRyxVQUFVLENBQUMsR0FBR0UsUUFBUTtNQUN4Q2hCLEtBQUssQ0FBQ2MsU0FBUyxHQUFHLFFBQVEsQ0FBQyxHQUFHLENBQUNDLElBQUksQ0FBQyxDQUFDLENBQUMsSUFBSSxFQUFFLEVBQUVJLElBQUksQ0FBQyxDQUFDO01BRXBEckIsQ0FBQyxFQUFFO0lBQ0w7RUFDRjs7RUFFQTtFQUNBO0VBQ0EsU0FBU1csU0FBU0EsQ0FBQSxFQUFHO0lBQ25CLElBQUlXLGdCQUFnQixHQUFHdEIsQ0FBQztNQUNwQnVCLGVBQWUsR0FBRzFCLE9BQU8sQ0FBQ0csQ0FBQyxFQUFFLENBQUM7TUFDOUJ3QixXQUFXLEdBQUdELGVBQWUsQ0FBQ3pCLEtBQUssQ0FBQyw0Q0FBNEMsQ0FBQztJQUVyRixJQUFJMkIsSUFBSSxHQUFHO01BQ1RDLFFBQVEsRUFBRSxDQUFDRixXQUFXLENBQUMsQ0FBQyxDQUFDO01BQ3pCRyxRQUFRLEVBQUUsT0FBT0gsV0FBVyxDQUFDLENBQUMsQ0FBQyxLQUFLLFdBQVcsR0FBRyxDQUFDLEdBQUcsQ0FBQ0EsV0FBVyxDQUFDLENBQUMsQ0FBQztNQUNyRUksUUFBUSxFQUFFLENBQUNKLFdBQVcsQ0FBQyxDQUFDLENBQUM7TUFDekJLLFFBQVEsRUFBRSxPQUFPTCxXQUFXLENBQUMsQ0FBQyxDQUFDLEtBQUssV0FBVyxHQUFHLENBQUMsR0FBRyxDQUFDQSxXQUFXLENBQUMsQ0FBQyxDQUFDO01BQ3JFTSxLQUFLLEVBQUU7SUFDVCxDQUFDOztJQUVEO0lBQ0E7SUFDQTtJQUNBLElBQUlMLElBQUksQ0FBQ0UsUUFBUSxLQUFLLENBQUMsRUFBRTtNQUN2QkYsSUFBSSxDQUFDQyxRQUFRLElBQUksQ0FBQztJQUNwQjtJQUNBLElBQUlELElBQUksQ0FBQ0ksUUFBUSxLQUFLLENBQUMsRUFBRTtNQUN2QkosSUFBSSxDQUFDRyxRQUFRLElBQUksQ0FBQztJQUNwQjtJQUVBLElBQUlHLFFBQVEsR0FBRyxDQUFDO01BQ1pDLFdBQVcsR0FBRyxDQUFDO0lBQ25CLE9BRUVoQyxDQUFDLEdBQUdILE9BQU8sQ0FBQ08sTUFBTSxLQUFLNEIsV0FBVyxHQUFHUCxJQUFJLENBQUNFLFFBQVEsSUFBSUksUUFBUSxHQUFHTixJQUFJLENBQUNJLFFBQVE7SUFBQTtJQUFBLENBQUFJLFVBQUE7SUFBQTtJQUFJcEMsT0FBTyxDQUFDRyxDQUFDLENBQUMsY0FBQWlDLFVBQUE7SUFBVjtJQUFBQTtJQUFBO0lBQUEsQ0FBWUMsVUFBVSxDQUFDLElBQUksQ0FBQyxDQUFDLEVBQy9HbEMsQ0FBQyxFQUFFLEVBQ0g7TUFBQTtNQUFBLElBQUFpQyxVQUFBO01BQUE7TUFDQSxJQUFJRSxTQUFTLEdBQUl0QyxPQUFPLENBQUNHLENBQUMsQ0FBQyxDQUFDSSxNQUFNLElBQUksQ0FBQyxJQUFJSixDQUFDLElBQUtILE9BQU8sQ0FBQ08sTUFBTSxHQUFHLENBQUUsR0FBSSxHQUFHLEdBQUdQLE9BQU8sQ0FBQ0csQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO01BQzNGLElBQUltQyxTQUFTLEtBQUssR0FBRyxJQUFJQSxTQUFTLEtBQUssR0FBRyxJQUFJQSxTQUFTLEtBQUssR0FBRyxJQUFJQSxTQUFTLEtBQUssSUFBSSxFQUFFO1FBQ3JGVixJQUFJLENBQUNLLEtBQUssQ0FBQzNCLElBQUksQ0FBQ04sT0FBTyxDQUFDRyxDQUFDLENBQUMsQ0FBQztRQUUzQixJQUFJbUMsU0FBUyxLQUFLLEdBQUcsRUFBRTtVQUNyQkosUUFBUSxFQUFFO1FBQ1osQ0FBQyxNQUFNLElBQUlJLFNBQVMsS0FBSyxHQUFHLEVBQUU7VUFDNUJILFdBQVcsRUFBRTtRQUNmLENBQUMsTUFBTSxJQUFJRyxTQUFTLEtBQUssR0FBRyxFQUFFO1VBQzVCSixRQUFRLEVBQUU7VUFDVkMsV0FBVyxFQUFFO1FBQ2Y7TUFDRixDQUFDLE1BQU07UUFDTCxNQUFNLElBQUlwQixLQUFLO1FBQUE7UUFBQSxnQkFBQXdCLE1BQUE7UUFBQTtRQUFpQmQsZ0JBQWdCLEdBQUcsQ0FBQyw4QkFBQWMsTUFBQSxDQUEyQnZDLE9BQU8sQ0FBQ0csQ0FBQyxDQUFDLENBQUUsQ0FBQztNQUM5RjtJQUNGOztJQUVBO0lBQ0EsSUFBSSxDQUFDK0IsUUFBUSxJQUFJTixJQUFJLENBQUNJLFFBQVEsS0FBSyxDQUFDLEVBQUU7TUFDcENKLElBQUksQ0FBQ0ksUUFBUSxHQUFHLENBQUM7SUFDbkI7SUFDQSxJQUFJLENBQUNHLFdBQVcsSUFBSVAsSUFBSSxDQUFDRSxRQUFRLEtBQUssQ0FBQyxFQUFFO01BQ3ZDRixJQUFJLENBQUNFLFFBQVEsR0FBRyxDQUFDO0lBQ25COztJQUVBO0lBQ0EsSUFBSUksUUFBUSxLQUFLTixJQUFJLENBQUNJLFFBQVEsRUFBRTtNQUM5QixNQUFNLElBQUlqQixLQUFLLENBQUMsa0RBQWtELElBQUlVLGdCQUFnQixHQUFHLENBQUMsQ0FBQyxDQUFDO0lBQzlGO0lBQ0EsSUFBSVUsV0FBVyxLQUFLUCxJQUFJLENBQUNFLFFBQVEsRUFBRTtNQUNqQyxNQUFNLElBQUlmLEtBQUssQ0FBQyxvREFBb0QsSUFBSVUsZ0JBQWdCLEdBQUcsQ0FBQyxDQUFDLENBQUM7SUFDaEc7SUFFQSxPQUFPRyxJQUFJO0VBQ2I7RUFFQSxPQUFPekIsQ0FBQyxHQUFHSCxPQUFPLENBQUNPLE1BQU0sRUFBRTtJQUN6QkgsVUFBVSxDQUFDLENBQUM7RUFDZDtFQUVBLE9BQU9GLElBQUk7QUFDYiIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/util/array.js":
+/***/ "./node_modules/diff/lib/patch/reverse.js"
+/*!************************************************!*\
+  !*** ./node_modules/diff/lib/patch/reverse.js ***!
+  \************************************************/
+(__unused_webpack_module, exports) {
+
+/*istanbul ignore start*/
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.reversePatch = reversePatch;
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/*istanbul ignore end*/
+function reversePatch(structuredPatch) {
+  if (Array.isArray(structuredPatch)) {
+    return structuredPatch.map(reversePatch).reverse();
+  }
+  return (
+    /*istanbul ignore start*/
+    _objectSpread(_objectSpread({},
+    /*istanbul ignore end*/
+    structuredPatch), {}, {
+      oldFileName: structuredPatch.newFileName,
+      oldHeader: structuredPatch.newHeader,
+      newFileName: structuredPatch.oldFileName,
+      newHeader: structuredPatch.oldHeader,
+      hunks: structuredPatch.hunks.map(function (hunk) {
+        return {
+          oldLines: hunk.newLines,
+          oldStart: hunk.newStart,
+          newLines: hunk.oldLines,
+          newStart: hunk.oldStart,
+          lines: hunk.lines.map(function (l) {
+            if (l.startsWith('-')) {
+              return (
+                /*istanbul ignore start*/
+                "+".concat(
+                /*istanbul ignore end*/
+                l.slice(1))
+              );
+            }
+            if (l.startsWith('+')) {
+              return (
+                /*istanbul ignore start*/
+                "-".concat(
+                /*istanbul ignore end*/
+                l.slice(1))
+              );
+            }
+            return l;
+          })
+        };
+      })
+    })
+  );
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJyZXZlcnNlUGF0Y2giLCJzdHJ1Y3R1cmVkUGF0Y2giLCJBcnJheSIsImlzQXJyYXkiLCJtYXAiLCJyZXZlcnNlIiwiX29iamVjdFNwcmVhZCIsIm9sZEZpbGVOYW1lIiwibmV3RmlsZU5hbWUiLCJvbGRIZWFkZXIiLCJuZXdIZWFkZXIiLCJodW5rcyIsImh1bmsiLCJvbGRMaW5lcyIsIm5ld0xpbmVzIiwib2xkU3RhcnQiLCJuZXdTdGFydCIsImxpbmVzIiwibCIsInN0YXJ0c1dpdGgiLCJjb25jYXQiLCJzbGljZSJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9wYXRjaC9yZXZlcnNlLmpzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBmdW5jdGlvbiByZXZlcnNlUGF0Y2goc3RydWN0dXJlZFBhdGNoKSB7XG4gIGlmIChBcnJheS5pc0FycmF5KHN0cnVjdHVyZWRQYXRjaCkpIHtcbiAgICByZXR1cm4gc3RydWN0dXJlZFBhdGNoLm1hcChyZXZlcnNlUGF0Y2gpLnJldmVyc2UoKTtcbiAgfVxuXG4gIHJldHVybiB7XG4gICAgLi4uc3RydWN0dXJlZFBhdGNoLFxuICAgIG9sZEZpbGVOYW1lOiBzdHJ1Y3R1cmVkUGF0Y2gubmV3RmlsZU5hbWUsXG4gICAgb2xkSGVhZGVyOiBzdHJ1Y3R1cmVkUGF0Y2gubmV3SGVhZGVyLFxuICAgIG5ld0ZpbGVOYW1lOiBzdHJ1Y3R1cmVkUGF0Y2gub2xkRmlsZU5hbWUsXG4gICAgbmV3SGVhZGVyOiBzdHJ1Y3R1cmVkUGF0Y2gub2xkSGVhZGVyLFxuICAgIGh1bmtzOiBzdHJ1Y3R1cmVkUGF0Y2guaHVua3MubWFwKGh1bmsgPT4ge1xuICAgICAgcmV0dXJuIHtcbiAgICAgICAgb2xkTGluZXM6IGh1bmsubmV3TGluZXMsXG4gICAgICAgIG9sZFN0YXJ0OiBodW5rLm5ld1N0YXJ0LFxuICAgICAgICBuZXdMaW5lczogaHVuay5vbGRMaW5lcyxcbiAgICAgICAgbmV3U3RhcnQ6IGh1bmsub2xkU3RhcnQsXG4gICAgICAgIGxpbmVzOiBodW5rLmxpbmVzLm1hcChsID0+IHtcbiAgICAgICAgICBpZiAobC5zdGFydHNXaXRoKCctJykpIHsgcmV0dXJuIGArJHtsLnNsaWNlKDEpfWA7IH1cbiAgICAgICAgICBpZiAobC5zdGFydHNXaXRoKCcrJykpIHsgcmV0dXJuIGAtJHtsLnNsaWNlKDEpfWA7IH1cbiAgICAgICAgICByZXR1cm4gbDtcbiAgICAgICAgfSlcbiAgICAgIH07XG4gICAgfSlcbiAgfTtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBTyxTQUFTQSxZQUFZQSxDQUFDQyxlQUFlLEVBQUU7RUFDNUMsSUFBSUMsS0FBSyxDQUFDQyxPQUFPLENBQUNGLGVBQWUsQ0FBQyxFQUFFO0lBQ2xDLE9BQU9BLGVBQWUsQ0FBQ0csR0FBRyxDQUFDSixZQUFZLENBQUMsQ0FBQ0ssT0FBTyxDQUFDLENBQUM7RUFDcEQ7RUFFQTtJQUFBO0lBQUFDLGFBQUEsQ0FBQUEsYUFBQTtJQUFBO0lBQ0tMLGVBQWU7TUFDbEJNLFdBQVcsRUFBRU4sZUFBZSxDQUFDTyxXQUFXO01BQ3hDQyxTQUFTLEVBQUVSLGVBQWUsQ0FBQ1MsU0FBUztNQUNwQ0YsV0FBVyxFQUFFUCxlQUFlLENBQUNNLFdBQVc7TUFDeENHLFNBQVMsRUFBRVQsZUFBZSxDQUFDUSxTQUFTO01BQ3BDRSxLQUFLLEVBQUVWLGVBQWUsQ0FBQ1UsS0FBSyxDQUFDUCxHQUFHLENBQUMsVUFBQVEsSUFBSSxFQUFJO1FBQ3ZDLE9BQU87VUFDTEMsUUFBUSxFQUFFRCxJQUFJLENBQUNFLFFBQVE7VUFDdkJDLFFBQVEsRUFBRUgsSUFBSSxDQUFDSSxRQUFRO1VBQ3ZCRixRQUFRLEVBQUVGLElBQUksQ0FBQ0MsUUFBUTtVQUN2QkcsUUFBUSxFQUFFSixJQUFJLENBQUNHLFFBQVE7VUFDdkJFLEtBQUssRUFBRUwsSUFBSSxDQUFDSyxLQUFLLENBQUNiLEdBQUcsQ0FBQyxVQUFBYyxDQUFDLEVBQUk7WUFDekIsSUFBSUEsQ0FBQyxDQUFDQyxVQUFVLENBQUMsR0FBRyxDQUFDLEVBQUU7Y0FBRTtnQkFBQTtnQkFBQSxJQUFBQyxNQUFBO2dCQUFBO2dCQUFXRixDQUFDLENBQUNHLEtBQUssQ0FBQyxDQUFDLENBQUM7Y0FBQTtZQUFJO1lBQ2xELElBQUlILENBQUMsQ0FBQ0MsVUFBVSxDQUFDLEdBQUcsQ0FBQyxFQUFFO2NBQUU7Z0JBQUE7Z0JBQUEsSUFBQUMsTUFBQTtnQkFBQTtnQkFBV0YsQ0FBQyxDQUFDRyxLQUFLLENBQUMsQ0FBQyxDQUFDO2NBQUE7WUFBSTtZQUNsRCxPQUFPSCxDQUFDO1VBQ1YsQ0FBQztRQUNILENBQUM7TUFDSCxDQUFDO0lBQUM7RUFBQTtBQUVOIiwiaWdub3JlTGlzdCI6W119
+
+
+/***/ },
+
+/***/ "./node_modules/diff/lib/util/array.js"
 /*!*********************************************!*\
   !*** ./node_modules/diff/lib/util/array.js ***!
   \*********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -15537,39 +15617,34 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.arrayEqual = arrayEqual;
 exports.arrayStartsWith = arrayStartsWith;
-
 /*istanbul ignore end*/
 function arrayEqual(a, b) {
   if (a.length !== b.length) {
     return false;
   }
-
   return arrayStartsWith(a, b);
 }
-
 function arrayStartsWith(array, start) {
   if (start.length > array.length) {
     return false;
   }
-
   for (var i = 0; i < start.length; i++) {
     if (start[i] !== array[i]) {
       return false;
     }
   }
-
   return true;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL2FycmF5LmpzIl0sIm5hbWVzIjpbImFycmF5RXF1YWwiLCJhIiwiYiIsImxlbmd0aCIsImFycmF5U3RhcnRzV2l0aCIsImFycmF5Iiwic3RhcnQiLCJpIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQU8sU0FBU0EsVUFBVCxDQUFvQkMsQ0FBcEIsRUFBdUJDLENBQXZCLEVBQTBCO0FBQy9CLE1BQUlELENBQUMsQ0FBQ0UsTUFBRixLQUFhRCxDQUFDLENBQUNDLE1BQW5CLEVBQTJCO0FBQ3pCLFdBQU8sS0FBUDtBQUNEOztBQUVELFNBQU9DLGVBQWUsQ0FBQ0gsQ0FBRCxFQUFJQyxDQUFKLENBQXRCO0FBQ0Q7O0FBRU0sU0FBU0UsZUFBVCxDQUF5QkMsS0FBekIsRUFBZ0NDLEtBQWhDLEVBQXVDO0FBQzVDLE1BQUlBLEtBQUssQ0FBQ0gsTUFBTixHQUFlRSxLQUFLLENBQUNGLE1BQXpCLEVBQWlDO0FBQy9CLFdBQU8sS0FBUDtBQUNEOztBQUVELE9BQUssSUFBSUksQ0FBQyxHQUFHLENBQWIsRUFBZ0JBLENBQUMsR0FBR0QsS0FBSyxDQUFDSCxNQUExQixFQUFrQ0ksQ0FBQyxFQUFuQyxFQUF1QztBQUNyQyxRQUFJRCxLQUFLLENBQUNDLENBQUQsQ0FBTCxLQUFhRixLQUFLLENBQUNFLENBQUQsQ0FBdEIsRUFBMkI7QUFDekIsYUFBTyxLQUFQO0FBQ0Q7QUFDRjs7QUFFRCxTQUFPLElBQVA7QUFDRCIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBmdW5jdGlvbiBhcnJheUVxdWFsKGEsIGIpIHtcbiAgaWYgKGEubGVuZ3RoICE9PSBiLmxlbmd0aCkge1xuICAgIHJldHVybiBmYWxzZTtcbiAgfVxuXG4gIHJldHVybiBhcnJheVN0YXJ0c1dpdGgoYSwgYik7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBhcnJheVN0YXJ0c1dpdGgoYXJyYXksIHN0YXJ0KSB7XG4gIGlmIChzdGFydC5sZW5ndGggPiBhcnJheS5sZW5ndGgpIHtcbiAgICByZXR1cm4gZmFsc2U7XG4gIH1cblxuICBmb3IgKGxldCBpID0gMDsgaSA8IHN0YXJ0Lmxlbmd0aDsgaSsrKSB7XG4gICAgaWYgKHN0YXJ0W2ldICE9PSBhcnJheVtpXSkge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cbiAgfVxuXG4gIHJldHVybiB0cnVlO1xufVxuIl19
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJhcnJheUVxdWFsIiwiYSIsImIiLCJsZW5ndGgiLCJhcnJheVN0YXJ0c1dpdGgiLCJhcnJheSIsInN0YXJ0IiwiaSJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL2FycmF5LmpzIl0sInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBmdW5jdGlvbiBhcnJheUVxdWFsKGEsIGIpIHtcbiAgaWYgKGEubGVuZ3RoICE9PSBiLmxlbmd0aCkge1xuICAgIHJldHVybiBmYWxzZTtcbiAgfVxuXG4gIHJldHVybiBhcnJheVN0YXJ0c1dpdGgoYSwgYik7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBhcnJheVN0YXJ0c1dpdGgoYXJyYXksIHN0YXJ0KSB7XG4gIGlmIChzdGFydC5sZW5ndGggPiBhcnJheS5sZW5ndGgpIHtcbiAgICByZXR1cm4gZmFsc2U7XG4gIH1cblxuICBmb3IgKGxldCBpID0gMDsgaSA8IHN0YXJ0Lmxlbmd0aDsgaSsrKSB7XG4gICAgaWYgKHN0YXJ0W2ldICE9PSBhcnJheVtpXSkge1xuICAgICAgcmV0dXJuIGZhbHNlO1xuICAgIH1cbiAgfVxuXG4gIHJldHVybiB0cnVlO1xufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7QUFBTyxTQUFTQSxVQUFVQSxDQUFDQyxDQUFDLEVBQUVDLENBQUMsRUFBRTtFQUMvQixJQUFJRCxDQUFDLENBQUNFLE1BQU0sS0FBS0QsQ0FBQyxDQUFDQyxNQUFNLEVBQUU7SUFDekIsT0FBTyxLQUFLO0VBQ2Q7RUFFQSxPQUFPQyxlQUFlLENBQUNILENBQUMsRUFBRUMsQ0FBQyxDQUFDO0FBQzlCO0FBRU8sU0FBU0UsZUFBZUEsQ0FBQ0MsS0FBSyxFQUFFQyxLQUFLLEVBQUU7RUFDNUMsSUFBSUEsS0FBSyxDQUFDSCxNQUFNLEdBQUdFLEtBQUssQ0FBQ0YsTUFBTSxFQUFFO0lBQy9CLE9BQU8sS0FBSztFQUNkO0VBRUEsS0FBSyxJQUFJSSxDQUFDLEdBQUcsQ0FBQyxFQUFFQSxDQUFDLEdBQUdELEtBQUssQ0FBQ0gsTUFBTSxFQUFFSSxDQUFDLEVBQUUsRUFBRTtJQUNyQyxJQUFJRCxLQUFLLENBQUNDLENBQUMsQ0FBQyxLQUFLRixLQUFLLENBQUNFLENBQUMsQ0FBQyxFQUFFO01BQ3pCLE9BQU8sS0FBSztJQUNkO0VBQ0Y7RUFFQSxPQUFPLElBQUk7QUFDYiIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/util/distance-iterator.js":
+/***/ "./node_modules/diff/lib/util/distance-iterator.js"
 /*!*********************************************************!*\
   !*** ./node_modules/diff/lib/util/distance-iterator.js ***!
   \*********************************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -15578,7 +15653,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports["default"] = _default;
-
 /*istanbul ignore end*/
 // Iterator that traverses in the range of [min, max], stepping
 // by distance from a given start position. I.e. for [0, 4], with
@@ -15589,54 +15663,52 @@ _default
 /*istanbul ignore end*/
 (start, minLine, maxLine) {
   var wantForward = true,
-      backwardExhausted = false,
-      forwardExhausted = false,
-      localOffset = 1;
+    backwardExhausted = false,
+    forwardExhausted = false,
+    localOffset = 1;
   return function iterator() {
     if (wantForward && !forwardExhausted) {
       if (backwardExhausted) {
         localOffset++;
       } else {
         wantForward = false;
-      } // Check if trying to fit beyond text length, and if not, check it fits
-      // after offset location (or desired location on first iteration)
-
-
-      if (start + localOffset <= maxLine) {
-        return localOffset;
       }
 
+      // Check if trying to fit beyond text length, and if not, check it fits
+      // after offset location (or desired location on first iteration)
+      if (start + localOffset <= maxLine) {
+        return start + localOffset;
+      }
       forwardExhausted = true;
     }
-
     if (!backwardExhausted) {
       if (!forwardExhausted) {
         wantForward = true;
-      } // Check if trying to fit before text beginning, and if not, check it fits
-      // before offset location
-
-
-      if (minLine <= start - localOffset) {
-        return -localOffset++;
       }
 
+      // Check if trying to fit before text beginning, and if not, check it fits
+      // before offset location
+      if (minLine <= start - localOffset) {
+        return start - localOffset++;
+      }
       backwardExhausted = true;
       return iterator();
-    } // We tried to fit hunk before text beginning and beyond text length, then
-    // hunk can't fit on the text. Return undefined
+    }
 
+    // We tried to fit hunk before text beginning and beyond text length, then
+    // hunk can't fit on the text. Return undefined
   };
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL2Rpc3RhbmNlLWl0ZXJhdG9yLmpzIl0sIm5hbWVzIjpbInN0YXJ0IiwibWluTGluZSIsIm1heExpbmUiLCJ3YW50Rm9yd2FyZCIsImJhY2t3YXJkRXhoYXVzdGVkIiwiZm9yd2FyZEV4aGF1c3RlZCIsImxvY2FsT2Zmc2V0IiwiaXRlcmF0b3IiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNlO0FBQUE7QUFBQTtBQUFBO0FBQUEsQ0FBU0EsS0FBVCxFQUFnQkMsT0FBaEIsRUFBeUJDLE9BQXpCLEVBQWtDO0FBQy9DLE1BQUlDLFdBQVcsR0FBRyxJQUFsQjtBQUFBLE1BQ0lDLGlCQUFpQixHQUFHLEtBRHhCO0FBQUEsTUFFSUMsZ0JBQWdCLEdBQUcsS0FGdkI7QUFBQSxNQUdJQyxXQUFXLEdBQUcsQ0FIbEI7QUFLQSxTQUFPLFNBQVNDLFFBQVQsR0FBb0I7QUFDekIsUUFBSUosV0FBVyxJQUFJLENBQUNFLGdCQUFwQixFQUFzQztBQUNwQyxVQUFJRCxpQkFBSixFQUF1QjtBQUNyQkUsUUFBQUEsV0FBVztBQUNaLE9BRkQsTUFFTztBQUNMSCxRQUFBQSxXQUFXLEdBQUcsS0FBZDtBQUNELE9BTG1DLENBT3BDO0FBQ0E7OztBQUNBLFVBQUlILEtBQUssR0FBR00sV0FBUixJQUF1QkosT0FBM0IsRUFBb0M7QUFDbEMsZUFBT0ksV0FBUDtBQUNEOztBQUVERCxNQUFBQSxnQkFBZ0IsR0FBRyxJQUFuQjtBQUNEOztBQUVELFFBQUksQ0FBQ0QsaUJBQUwsRUFBd0I7QUFDdEIsVUFBSSxDQUFDQyxnQkFBTCxFQUF1QjtBQUNyQkYsUUFBQUEsV0FBVyxHQUFHLElBQWQ7QUFDRCxPQUhxQixDQUt0QjtBQUNBOzs7QUFDQSxVQUFJRixPQUFPLElBQUlELEtBQUssR0FBR00sV0FBdkIsRUFBb0M7QUFDbEMsZUFBTyxDQUFDQSxXQUFXLEVBQW5CO0FBQ0Q7O0FBRURGLE1BQUFBLGlCQUFpQixHQUFHLElBQXBCO0FBQ0EsYUFBT0csUUFBUSxFQUFmO0FBQ0QsS0E5QndCLENBZ0N6QjtBQUNBOztBQUNELEdBbENEO0FBbUNEIiwic291cmNlc0NvbnRlbnQiOlsiLy8gSXRlcmF0b3IgdGhhdCB0cmF2ZXJzZXMgaW4gdGhlIHJhbmdlIG9mIFttaW4sIG1heF0sIHN0ZXBwaW5nXG4vLyBieSBkaXN0YW5jZSBmcm9tIGEgZ2l2ZW4gc3RhcnQgcG9zaXRpb24uIEkuZS4gZm9yIFswLCA0XSwgd2l0aFxuLy8gc3RhcnQgb2YgMiwgdGhpcyB3aWxsIGl0ZXJhdGUgMiwgMywgMSwgNCwgMC5cbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKHN0YXJ0LCBtaW5MaW5lLCBtYXhMaW5lKSB7XG4gIGxldCB3YW50Rm9yd2FyZCA9IHRydWUsXG4gICAgICBiYWNrd2FyZEV4aGF1c3RlZCA9IGZhbHNlLFxuICAgICAgZm9yd2FyZEV4aGF1c3RlZCA9IGZhbHNlLFxuICAgICAgbG9jYWxPZmZzZXQgPSAxO1xuXG4gIHJldHVybiBmdW5jdGlvbiBpdGVyYXRvcigpIHtcbiAgICBpZiAod2FudEZvcndhcmQgJiYgIWZvcndhcmRFeGhhdXN0ZWQpIHtcbiAgICAgIGlmIChiYWNrd2FyZEV4aGF1c3RlZCkge1xuICAgICAgICBsb2NhbE9mZnNldCsrO1xuICAgICAgfSBlbHNlIHtcbiAgICAgICAgd2FudEZvcndhcmQgPSBmYWxzZTtcbiAgICAgIH1cblxuICAgICAgLy8gQ2hlY2sgaWYgdHJ5aW5nIHRvIGZpdCBiZXlvbmQgdGV4dCBsZW5ndGgsIGFuZCBpZiBub3QsIGNoZWNrIGl0IGZpdHNcbiAgICAgIC8vIGFmdGVyIG9mZnNldCBsb2NhdGlvbiAob3IgZGVzaXJlZCBsb2NhdGlvbiBvbiBmaXJzdCBpdGVyYXRpb24pXG4gICAgICBpZiAoc3RhcnQgKyBsb2NhbE9mZnNldCA8PSBtYXhMaW5lKSB7XG4gICAgICAgIHJldHVybiBsb2NhbE9mZnNldDtcbiAgICAgIH1cblxuICAgICAgZm9yd2FyZEV4aGF1c3RlZCA9IHRydWU7XG4gICAgfVxuXG4gICAgaWYgKCFiYWNrd2FyZEV4aGF1c3RlZCkge1xuICAgICAgaWYgKCFmb3J3YXJkRXhoYXVzdGVkKSB7XG4gICAgICAgIHdhbnRGb3J3YXJkID0gdHJ1ZTtcbiAgICAgIH1cblxuICAgICAgLy8gQ2hlY2sgaWYgdHJ5aW5nIHRvIGZpdCBiZWZvcmUgdGV4dCBiZWdpbm5pbmcsIGFuZCBpZiBub3QsIGNoZWNrIGl0IGZpdHNcbiAgICAgIC8vIGJlZm9yZSBvZmZzZXQgbG9jYXRpb25cbiAgICAgIGlmIChtaW5MaW5lIDw9IHN0YXJ0IC0gbG9jYWxPZmZzZXQpIHtcbiAgICAgICAgcmV0dXJuIC1sb2NhbE9mZnNldCsrO1xuICAgICAgfVxuXG4gICAgICBiYWNrd2FyZEV4aGF1c3RlZCA9IHRydWU7XG4gICAgICByZXR1cm4gaXRlcmF0b3IoKTtcbiAgICB9XG5cbiAgICAvLyBXZSB0cmllZCB0byBmaXQgaHVuayBiZWZvcmUgdGV4dCBiZWdpbm5pbmcgYW5kIGJleW9uZCB0ZXh0IGxlbmd0aCwgdGhlblxuICAgIC8vIGh1bmsgY2FuJ3QgZml0IG9uIHRoZSB0ZXh0LiBSZXR1cm4gdW5kZWZpbmVkXG4gIH07XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJfZGVmYXVsdCIsInN0YXJ0IiwibWluTGluZSIsIm1heExpbmUiLCJ3YW50Rm9yd2FyZCIsImJhY2t3YXJkRXhoYXVzdGVkIiwiZm9yd2FyZEV4aGF1c3RlZCIsImxvY2FsT2Zmc2V0IiwiaXRlcmF0b3IiXSwic291cmNlcyI6WyIuLi8uLi9zcmMvdXRpbC9kaXN0YW5jZS1pdGVyYXRvci5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyIvLyBJdGVyYXRvciB0aGF0IHRyYXZlcnNlcyBpbiB0aGUgcmFuZ2Ugb2YgW21pbiwgbWF4XSwgc3RlcHBpbmdcbi8vIGJ5IGRpc3RhbmNlIGZyb20gYSBnaXZlbiBzdGFydCBwb3NpdGlvbi4gSS5lLiBmb3IgWzAsIDRdLCB3aXRoXG4vLyBzdGFydCBvZiAyLCB0aGlzIHdpbGwgaXRlcmF0ZSAyLCAzLCAxLCA0LCAwLlxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oc3RhcnQsIG1pbkxpbmUsIG1heExpbmUpIHtcbiAgbGV0IHdhbnRGb3J3YXJkID0gdHJ1ZSxcbiAgICAgIGJhY2t3YXJkRXhoYXVzdGVkID0gZmFsc2UsXG4gICAgICBmb3J3YXJkRXhoYXVzdGVkID0gZmFsc2UsXG4gICAgICBsb2NhbE9mZnNldCA9IDE7XG5cbiAgcmV0dXJuIGZ1bmN0aW9uIGl0ZXJhdG9yKCkge1xuICAgIGlmICh3YW50Rm9yd2FyZCAmJiAhZm9yd2FyZEV4aGF1c3RlZCkge1xuICAgICAgaWYgKGJhY2t3YXJkRXhoYXVzdGVkKSB7XG4gICAgICAgIGxvY2FsT2Zmc2V0Kys7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICB3YW50Rm9yd2FyZCA9IGZhbHNlO1xuICAgICAgfVxuXG4gICAgICAvLyBDaGVjayBpZiB0cnlpbmcgdG8gZml0IGJleW9uZCB0ZXh0IGxlbmd0aCwgYW5kIGlmIG5vdCwgY2hlY2sgaXQgZml0c1xuICAgICAgLy8gYWZ0ZXIgb2Zmc2V0IGxvY2F0aW9uIChvciBkZXNpcmVkIGxvY2F0aW9uIG9uIGZpcnN0IGl0ZXJhdGlvbilcbiAgICAgIGlmIChzdGFydCArIGxvY2FsT2Zmc2V0IDw9IG1heExpbmUpIHtcbiAgICAgICAgcmV0dXJuIHN0YXJ0ICsgbG9jYWxPZmZzZXQ7XG4gICAgICB9XG5cbiAgICAgIGZvcndhcmRFeGhhdXN0ZWQgPSB0cnVlO1xuICAgIH1cblxuICAgIGlmICghYmFja3dhcmRFeGhhdXN0ZWQpIHtcbiAgICAgIGlmICghZm9yd2FyZEV4aGF1c3RlZCkge1xuICAgICAgICB3YW50Rm9yd2FyZCA9IHRydWU7XG4gICAgICB9XG5cbiAgICAgIC8vIENoZWNrIGlmIHRyeWluZyB0byBmaXQgYmVmb3JlIHRleHQgYmVnaW5uaW5nLCBhbmQgaWYgbm90LCBjaGVjayBpdCBmaXRzXG4gICAgICAvLyBiZWZvcmUgb2Zmc2V0IGxvY2F0aW9uXG4gICAgICBpZiAobWluTGluZSA8PSBzdGFydCAtIGxvY2FsT2Zmc2V0KSB7XG4gICAgICAgIHJldHVybiBzdGFydCAtIGxvY2FsT2Zmc2V0Kys7XG4gICAgICB9XG5cbiAgICAgIGJhY2t3YXJkRXhoYXVzdGVkID0gdHJ1ZTtcbiAgICAgIHJldHVybiBpdGVyYXRvcigpO1xuICAgIH1cblxuICAgIC8vIFdlIHRyaWVkIHRvIGZpdCBodW5rIGJlZm9yZSB0ZXh0IGJlZ2lubmluZyBhbmQgYmV5b25kIHRleHQgbGVuZ3RoLCB0aGVuXG4gICAgLy8gaHVuayBjYW4ndCBmaXQgb24gdGhlIHRleHQuIFJldHVybiB1bmRlZmluZWRcbiAgfTtcbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7QUFBQTtBQUNBO0FBQ0E7QUFDZTtBQUFBO0FBQUFBO0FBQUFBO0FBQUEsQ0FBU0MsS0FBSyxFQUFFQyxPQUFPLEVBQUVDLE9BQU8sRUFBRTtFQUMvQyxJQUFJQyxXQUFXLEdBQUcsSUFBSTtJQUNsQkMsaUJBQWlCLEdBQUcsS0FBSztJQUN6QkMsZ0JBQWdCLEdBQUcsS0FBSztJQUN4QkMsV0FBVyxHQUFHLENBQUM7RUFFbkIsT0FBTyxTQUFTQyxRQUFRQSxDQUFBLEVBQUc7SUFDekIsSUFBSUosV0FBVyxJQUFJLENBQUNFLGdCQUFnQixFQUFFO01BQ3BDLElBQUlELGlCQUFpQixFQUFFO1FBQ3JCRSxXQUFXLEVBQUU7TUFDZixDQUFDLE1BQU07UUFDTEgsV0FBVyxHQUFHLEtBQUs7TUFDckI7O01BRUE7TUFDQTtNQUNBLElBQUlILEtBQUssR0FBR00sV0FBVyxJQUFJSixPQUFPLEVBQUU7UUFDbEMsT0FBT0YsS0FBSyxHQUFHTSxXQUFXO01BQzVCO01BRUFELGdCQUFnQixHQUFHLElBQUk7SUFDekI7SUFFQSxJQUFJLENBQUNELGlCQUFpQixFQUFFO01BQ3RCLElBQUksQ0FBQ0MsZ0JBQWdCLEVBQUU7UUFDckJGLFdBQVcsR0FBRyxJQUFJO01BQ3BCOztNQUVBO01BQ0E7TUFDQSxJQUFJRixPQUFPLElBQUlELEtBQUssR0FBR00sV0FBVyxFQUFFO1FBQ2xDLE9BQU9OLEtBQUssR0FBR00sV0FBVyxFQUFFO01BQzlCO01BRUFGLGlCQUFpQixHQUFHLElBQUk7TUFDeEIsT0FBT0csUUFBUSxDQUFDLENBQUM7SUFDbkI7O0lBRUE7SUFDQTtFQUNGLENBQUM7QUFDSCIsImlnbm9yZUxpc3QiOltdfQ==
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/diff/lib/util/params.js":
+/***/ "./node_modules/diff/lib/util/params.js"
 /*!**********************************************!*\
   !*** ./node_modules/diff/lib/util/params.js ***!
   \**********************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*istanbul ignore start*/
 
@@ -15645,7 +15717,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.generateOptions = generateOptions;
-
 /*istanbul ignore end*/
 function generateOptions(options, defaults) {
   if (typeof options === 'function') {
@@ -15658,565 +15729,159 @@ function generateOptions(options, defaults) {
       }
     }
   }
-
   return defaults;
 }
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL3BhcmFtcy5qcyJdLCJuYW1lcyI6WyJnZW5lcmF0ZU9wdGlvbnMiLCJvcHRpb25zIiwiZGVmYXVsdHMiLCJjYWxsYmFjayIsIm5hbWUiLCJoYXNPd25Qcm9wZXJ0eSJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7O0FBQU8sU0FBU0EsZUFBVCxDQUF5QkMsT0FBekIsRUFBa0NDLFFBQWxDLEVBQTRDO0FBQ2pELE1BQUksT0FBT0QsT0FBUCxLQUFtQixVQUF2QixFQUFtQztBQUNqQ0MsSUFBQUEsUUFBUSxDQUFDQyxRQUFULEdBQW9CRixPQUFwQjtBQUNELEdBRkQsTUFFTyxJQUFJQSxPQUFKLEVBQWE7QUFDbEIsU0FBSyxJQUFJRyxJQUFULElBQWlCSCxPQUFqQixFQUEwQjtBQUN4QjtBQUNBLFVBQUlBLE9BQU8sQ0FBQ0ksY0FBUixDQUF1QkQsSUFBdkIsQ0FBSixFQUFrQztBQUNoQ0YsUUFBQUEsUUFBUSxDQUFDRSxJQUFELENBQVIsR0FBaUJILE9BQU8sQ0FBQ0csSUFBRCxDQUF4QjtBQUNEO0FBQ0Y7QUFDRjs7QUFDRCxTQUFPRixRQUFQO0FBQ0QiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gZ2VuZXJhdGVPcHRpb25zKG9wdGlvbnMsIGRlZmF1bHRzKSB7XG4gIGlmICh0eXBlb2Ygb3B0aW9ucyA9PT0gJ2Z1bmN0aW9uJykge1xuICAgIGRlZmF1bHRzLmNhbGxiYWNrID0gb3B0aW9ucztcbiAgfSBlbHNlIGlmIChvcHRpb25zKSB7XG4gICAgZm9yIChsZXQgbmFtZSBpbiBvcHRpb25zKSB7XG4gICAgICAvKiBpc3RhbmJ1bCBpZ25vcmUgZWxzZSAqL1xuICAgICAgaWYgKG9wdGlvbnMuaGFzT3duUHJvcGVydHkobmFtZSkpIHtcbiAgICAgICAgZGVmYXVsdHNbbmFtZV0gPSBvcHRpb25zW25hbWVdO1xuICAgICAgfVxuICAgIH1cbiAgfVxuICByZXR1cm4gZGVmYXVsdHM7XG59XG4iXX0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJnZW5lcmF0ZU9wdGlvbnMiLCJvcHRpb25zIiwiZGVmYXVsdHMiLCJjYWxsYmFjayIsIm5hbWUiLCJoYXNPd25Qcm9wZXJ0eSJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL3BhcmFtcy5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gZ2VuZXJhdGVPcHRpb25zKG9wdGlvbnMsIGRlZmF1bHRzKSB7XG4gIGlmICh0eXBlb2Ygb3B0aW9ucyA9PT0gJ2Z1bmN0aW9uJykge1xuICAgIGRlZmF1bHRzLmNhbGxiYWNrID0gb3B0aW9ucztcbiAgfSBlbHNlIGlmIChvcHRpb25zKSB7XG4gICAgZm9yIChsZXQgbmFtZSBpbiBvcHRpb25zKSB7XG4gICAgICAvKiBpc3RhbmJ1bCBpZ25vcmUgZWxzZSAqL1xuICAgICAgaWYgKG9wdGlvbnMuaGFzT3duUHJvcGVydHkobmFtZSkpIHtcbiAgICAgICAgZGVmYXVsdHNbbmFtZV0gPSBvcHRpb25zW25hbWVdO1xuICAgICAgfVxuICAgIH1cbiAgfVxuICByZXR1cm4gZGVmYXVsdHM7XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O0FBQU8sU0FBU0EsZUFBZUEsQ0FBQ0MsT0FBTyxFQUFFQyxRQUFRLEVBQUU7RUFDakQsSUFBSSxPQUFPRCxPQUFPLEtBQUssVUFBVSxFQUFFO0lBQ2pDQyxRQUFRLENBQUNDLFFBQVEsR0FBR0YsT0FBTztFQUM3QixDQUFDLE1BQU0sSUFBSUEsT0FBTyxFQUFFO0lBQ2xCLEtBQUssSUFBSUcsSUFBSSxJQUFJSCxPQUFPLEVBQUU7TUFDeEI7TUFDQSxJQUFJQSxPQUFPLENBQUNJLGNBQWMsQ0FBQ0QsSUFBSSxDQUFDLEVBQUU7UUFDaENGLFFBQVEsQ0FBQ0UsSUFBSSxDQUFDLEdBQUdILE9BQU8sQ0FBQ0csSUFBSSxDQUFDO01BQ2hDO0lBQ0Y7RUFDRjtFQUNBLE9BQU9GLFFBQVE7QUFDakIiLCJpZ25vcmVMaXN0IjpbXX0=
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/es-define-property/index.js":
-/*!**************************************************!*\
-  !*** ./node_modules/es-define-property/index.js ***!
-  \**************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/diff/lib/util/string.js"
+/*!**********************************************!*\
+  !*** ./node_modules/diff/lib/util/string.js ***!
+  \**********************************************/
+(__unused_webpack_module, exports) {
 
-
-
-var GetIntrinsic = __webpack_require__(/*! get-intrinsic */ "./node_modules/get-intrinsic/index.js");
-
-/** @type {import('.')} */
-var $defineProperty = GetIntrinsic('%Object.defineProperty%', true) || false;
-if ($defineProperty) {
-	try {
-		$defineProperty({}, 'a', { value: 1 });
-	} catch (e) {
-		// IE 8 has a broken defineProperty
-		$defineProperty = false;
-	}
-}
-
-module.exports = $defineProperty;
+/*istanbul ignore start*/
 
 
-/***/ }),
-
-/***/ "./node_modules/es-errors/eval.js":
-/*!****************************************!*\
-  !*** ./node_modules/es-errors/eval.js ***!
-  \****************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./eval')} */
-module.exports = EvalError;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/index.js":
-/*!*****************************************!*\
-  !*** ./node_modules/es-errors/index.js ***!
-  \*****************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('.')} */
-module.exports = Error;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/range.js":
-/*!*****************************************!*\
-  !*** ./node_modules/es-errors/range.js ***!
-  \*****************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./range')} */
-module.exports = RangeError;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/ref.js":
-/*!***************************************!*\
-  !*** ./node_modules/es-errors/ref.js ***!
-  \***************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./ref')} */
-module.exports = ReferenceError;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/syntax.js":
-/*!******************************************!*\
-  !*** ./node_modules/es-errors/syntax.js ***!
-  \******************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./syntax')} */
-module.exports = SyntaxError;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/type.js":
-/*!****************************************!*\
-  !*** ./node_modules/es-errors/type.js ***!
-  \****************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./type')} */
-module.exports = TypeError;
-
-
-/***/ }),
-
-/***/ "./node_modules/es-errors/uri.js":
-/*!***************************************!*\
-  !*** ./node_modules/es-errors/uri.js ***!
-  \***************************************/
-/***/ ((module) => {
-
-
-
-/** @type {import('./uri')} */
-module.exports = URIError;
-
-
-/***/ }),
-
-/***/ "./node_modules/events/events.js":
-/*!***************************************!*\
-  !*** ./node_modules/events/events.js ***!
-  \***************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.hasOnlyUnixLineEndings = hasOnlyUnixLineEndings;
+exports.hasOnlyWinLineEndings = hasOnlyWinLineEndings;
+exports.longestCommonPrefix = longestCommonPrefix;
+exports.longestCommonSuffix = longestCommonSuffix;
+exports.maximumOverlap = maximumOverlap;
+exports.removePrefix = removePrefix;
+exports.removeSuffix = removeSuffix;
+exports.replacePrefix = replacePrefix;
+exports.replaceSuffix = replaceSuffix;
+/*istanbul ignore end*/
+function longestCommonPrefix(str1, str2) {
+  var i;
+  for (i = 0; i < str1.length && i < str2.length; i++) {
+    if (str1[i] != str2[i]) {
+      return str1.slice(0, i);
     }
   }
+  return str1.slice(0, i);
+}
+function longestCommonSuffix(str1, str2) {
+  var i;
 
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
+  // Unlike longestCommonPrefix, we need a special case to handle all scenarios
+  // where we return the empty string since str1.slice(-0) will return the
+  // entire string.
+  if (!str1 || !str2 || str1[str1.length - 1] != str2[str2.length - 1]) {
+    return '';
   }
+  for (i = 0; i < str1.length && i < str2.length; i++) {
+    if (str1[str1.length - (i + 1)] != str2[str2.length - (i + 1)]) {
+      return str1.slice(-i);
+    }
+  }
+  return str1.slice(-i);
+}
+function replacePrefix(string, oldPrefix, newPrefix) {
+  if (string.slice(0, oldPrefix.length) != oldPrefix) {
+    throw Error(
+    /*istanbul ignore start*/
+    "string ".concat(
+    /*istanbul ignore end*/
+    JSON.stringify(string), " doesn't start with prefix ").concat(JSON.stringify(oldPrefix), "; this is a bug"));
+  }
+  return newPrefix + string.slice(oldPrefix.length);
+}
+function replaceSuffix(string, oldSuffix, newSuffix) {
+  if (!oldSuffix) {
+    return string + newSuffix;
+  }
+  if (string.slice(-oldSuffix.length) != oldSuffix) {
+    throw Error(
+    /*istanbul ignore start*/
+    "string ".concat(
+    /*istanbul ignore end*/
+    JSON.stringify(string), " doesn't end with suffix ").concat(JSON.stringify(oldSuffix), "; this is a bug"));
+  }
+  return string.slice(0, -oldSuffix.length) + newSuffix;
+}
+function removePrefix(string, oldPrefix) {
+  return replacePrefix(string, oldPrefix, '');
+}
+function removeSuffix(string, oldSuffix) {
+  return replaceSuffix(string, oldSuffix, '');
+}
+function maximumOverlap(string1, string2) {
+  return string2.slice(0, overlapCount(string1, string2));
+}
 
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
+// Nicked from https://stackoverflow.com/a/60422853/1709587
+function overlapCount(a, b) {
+  // Deal with cases where the strings differ in length
+  var startA = 0;
+  if (a.length > b.length) {
+    startA = a.length - b.length;
+  }
+  var endB = b.length;
+  if (a.length < b.length) {
+    endB = a.length;
+  }
+  // Create a back-reference for each index
+  //   that should be followed in case of a mismatch.
+  //   We only need B to make these references:
+  var map = Array(endB);
+  var k = 0; // Index that lags behind j
+  map[0] = 0;
+  for (var j = 1; j < endB; j++) {
+    if (b[j] == b[k]) {
+      map[j] = map[k]; // skip over the same character (optional optimisation)
     } else {
-      m = EventEmitter.defaultMaxListeners;
+      map[j] = k;
     }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+    while (k > 0 && b[j] != b[k]) {
+      k = map[k];
+    }
+    if (b[j] == b[k]) {
+      k++;
     }
   }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
+  // Phase 2: use these references while iterating over A
+  k = 0;
+  for (var i = startA; i < a.length; i++) {
+    while (k > 0 && a[i] != b[k]) {
+      k = map[k];
+    }
+    if (a[i] == b[k]) {
+      k++;
     }
   }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
+  return k;
 }
 
-function isNumber(arg) {
-  return typeof arg === 'number';
+/**
+ * Returns true if the string consistently uses Windows line endings.
+ */
+function hasOnlyWinLineEndings(string) {
+  return string.includes('\r\n') && !string.startsWith('\n') && !string.match(/[^\r]\n/);
 }
 
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
+/**
+ * Returns true if the string consistently uses Unix line endings.
+ */
+function hasOnlyUnixLineEndings(string) {
+  return !string.includes('\r\n') && string.includes('\n');
 }
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJsb25nZXN0Q29tbW9uUHJlZml4Iiwic3RyMSIsInN0cjIiLCJpIiwibGVuZ3RoIiwic2xpY2UiLCJsb25nZXN0Q29tbW9uU3VmZml4IiwicmVwbGFjZVByZWZpeCIsInN0cmluZyIsIm9sZFByZWZpeCIsIm5ld1ByZWZpeCIsIkVycm9yIiwiY29uY2F0IiwiSlNPTiIsInN0cmluZ2lmeSIsInJlcGxhY2VTdWZmaXgiLCJvbGRTdWZmaXgiLCJuZXdTdWZmaXgiLCJyZW1vdmVQcmVmaXgiLCJyZW1vdmVTdWZmaXgiLCJtYXhpbXVtT3ZlcmxhcCIsInN0cmluZzEiLCJzdHJpbmcyIiwib3ZlcmxhcENvdW50IiwiYSIsImIiLCJzdGFydEEiLCJlbmRCIiwibWFwIiwiQXJyYXkiLCJrIiwiaiIsImhhc09ubHlXaW5MaW5lRW5kaW5ncyIsImluY2x1ZGVzIiwic3RhcnRzV2l0aCIsIm1hdGNoIiwiaGFzT25seVVuaXhMaW5lRW5kaW5ncyJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy91dGlsL3N0cmluZy5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZnVuY3Rpb24gbG9uZ2VzdENvbW1vblByZWZpeChzdHIxLCBzdHIyKSB7XG4gIGxldCBpO1xuICBmb3IgKGkgPSAwOyBpIDwgc3RyMS5sZW5ndGggJiYgaSA8IHN0cjIubGVuZ3RoOyBpKyspIHtcbiAgICBpZiAoc3RyMVtpXSAhPSBzdHIyW2ldKSB7XG4gICAgICByZXR1cm4gc3RyMS5zbGljZSgwLCBpKTtcbiAgICB9XG4gIH1cbiAgcmV0dXJuIHN0cjEuc2xpY2UoMCwgaSk7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBsb25nZXN0Q29tbW9uU3VmZml4KHN0cjEsIHN0cjIpIHtcbiAgbGV0IGk7XG5cbiAgLy8gVW5saWtlIGxvbmdlc3RDb21tb25QcmVmaXgsIHdlIG5lZWQgYSBzcGVjaWFsIGNhc2UgdG8gaGFuZGxlIGFsbCBzY2VuYXJpb3NcbiAgLy8gd2hlcmUgd2UgcmV0dXJuIHRoZSBlbXB0eSBzdHJpbmcgc2luY2Ugc3RyMS5zbGljZSgtMCkgd2lsbCByZXR1cm4gdGhlXG4gIC8vIGVudGlyZSBzdHJpbmcuXG4gIGlmICghc3RyMSB8fCAhc3RyMiB8fCBzdHIxW3N0cjEubGVuZ3RoIC0gMV0gIT0gc3RyMltzdHIyLmxlbmd0aCAtIDFdKSB7XG4gICAgcmV0dXJuICcnO1xuICB9XG5cbiAgZm9yIChpID0gMDsgaSA8IHN0cjEubGVuZ3RoICYmIGkgPCBzdHIyLmxlbmd0aDsgaSsrKSB7XG4gICAgaWYgKHN0cjFbc3RyMS5sZW5ndGggLSAoaSArIDEpXSAhPSBzdHIyW3N0cjIubGVuZ3RoIC0gKGkgKyAxKV0pIHtcbiAgICAgIHJldHVybiBzdHIxLnNsaWNlKC1pKTtcbiAgICB9XG4gIH1cbiAgcmV0dXJuIHN0cjEuc2xpY2UoLWkpO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gcmVwbGFjZVByZWZpeChzdHJpbmcsIG9sZFByZWZpeCwgbmV3UHJlZml4KSB7XG4gIGlmIChzdHJpbmcuc2xpY2UoMCwgb2xkUHJlZml4Lmxlbmd0aCkgIT0gb2xkUHJlZml4KSB7XG4gICAgdGhyb3cgRXJyb3IoYHN0cmluZyAke0pTT04uc3RyaW5naWZ5KHN0cmluZyl9IGRvZXNuJ3Qgc3RhcnQgd2l0aCBwcmVmaXggJHtKU09OLnN0cmluZ2lmeShvbGRQcmVmaXgpfTsgdGhpcyBpcyBhIGJ1Z2ApO1xuICB9XG4gIHJldHVybiBuZXdQcmVmaXggKyBzdHJpbmcuc2xpY2Uob2xkUHJlZml4Lmxlbmd0aCk7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiByZXBsYWNlU3VmZml4KHN0cmluZywgb2xkU3VmZml4LCBuZXdTdWZmaXgpIHtcbiAgaWYgKCFvbGRTdWZmaXgpIHtcbiAgICByZXR1cm4gc3RyaW5nICsgbmV3U3VmZml4O1xuICB9XG5cbiAgaWYgKHN0cmluZy5zbGljZSgtb2xkU3VmZml4Lmxlbmd0aCkgIT0gb2xkU3VmZml4KSB7XG4gICAgdGhyb3cgRXJyb3IoYHN0cmluZyAke0pTT04uc3RyaW5naWZ5KHN0cmluZyl9IGRvZXNuJ3QgZW5kIHdpdGggc3VmZml4ICR7SlNPTi5zdHJpbmdpZnkob2xkU3VmZml4KX07IHRoaXMgaXMgYSBidWdgKTtcbiAgfVxuICByZXR1cm4gc3RyaW5nLnNsaWNlKDAsIC1vbGRTdWZmaXgubGVuZ3RoKSArIG5ld1N1ZmZpeDtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIHJlbW92ZVByZWZpeChzdHJpbmcsIG9sZFByZWZpeCkge1xuICByZXR1cm4gcmVwbGFjZVByZWZpeChzdHJpbmcsIG9sZFByZWZpeCwgJycpO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gcmVtb3ZlU3VmZml4KHN0cmluZywgb2xkU3VmZml4KSB7XG4gIHJldHVybiByZXBsYWNlU3VmZml4KHN0cmluZywgb2xkU3VmZml4LCAnJyk7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBtYXhpbXVtT3ZlcmxhcChzdHJpbmcxLCBzdHJpbmcyKSB7XG4gIHJldHVybiBzdHJpbmcyLnNsaWNlKDAsIG92ZXJsYXBDb3VudChzdHJpbmcxLCBzdHJpbmcyKSk7XG59XG5cbi8vIE5pY2tlZCBmcm9tIGh0dHBzOi8vc3RhY2tvdmVyZmxvdy5jb20vYS82MDQyMjg1My8xNzA5NTg3XG5mdW5jdGlvbiBvdmVybGFwQ291bnQoYSwgYikge1xuICAvLyBEZWFsIHdpdGggY2FzZXMgd2hlcmUgdGhlIHN0cmluZ3MgZGlmZmVyIGluIGxlbmd0aFxuICBsZXQgc3RhcnRBID0gMDtcbiAgaWYgKGEubGVuZ3RoID4gYi5sZW5ndGgpIHsgc3RhcnRBID0gYS5sZW5ndGggLSBiLmxlbmd0aDsgfVxuICBsZXQgZW5kQiA9IGIubGVuZ3RoO1xuICBpZiAoYS5sZW5ndGggPCBiLmxlbmd0aCkgeyBlbmRCID0gYS5sZW5ndGg7IH1cbiAgLy8gQ3JlYXRlIGEgYmFjay1yZWZlcmVuY2UgZm9yIGVhY2ggaW5kZXhcbiAgLy8gICB0aGF0IHNob3VsZCBiZSBmb2xsb3dlZCBpbiBjYXNlIG9mIGEgbWlzbWF0Y2guXG4gIC8vICAgV2Ugb25seSBuZWVkIEIgdG8gbWFrZSB0aGVzZSByZWZlcmVuY2VzOlxuICBsZXQgbWFwID0gQXJyYXkoZW5kQik7XG4gIGxldCBrID0gMDsgLy8gSW5kZXggdGhhdCBsYWdzIGJlaGluZCBqXG4gIG1hcFswXSA9IDA7XG4gIGZvciAobGV0IGogPSAxOyBqIDwgZW5kQjsgaisrKSB7XG4gICAgICBpZiAoYltqXSA9PSBiW2tdKSB7XG4gICAgICAgICAgbWFwW2pdID0gbWFwW2tdOyAvLyBza2lwIG92ZXIgdGhlIHNhbWUgY2hhcmFjdGVyIChvcHRpb25hbCBvcHRpbWlzYXRpb24pXG4gICAgICB9IGVsc2Uge1xuICAgICAgICAgIG1hcFtqXSA9IGs7XG4gICAgICB9XG4gICAgICB3aGlsZSAoayA+IDAgJiYgYltqXSAhPSBiW2tdKSB7IGsgPSBtYXBba107IH1cbiAgICAgIGlmIChiW2pdID09IGJba10pIHsgaysrOyB9XG4gIH1cbiAgLy8gUGhhc2UgMjogdXNlIHRoZXNlIHJlZmVyZW5jZXMgd2hpbGUgaXRlcmF0aW5nIG92ZXIgQVxuICBrID0gMDtcbiAgZm9yIChsZXQgaSA9IHN0YXJ0QTsgaSA8IGEubGVuZ3RoOyBpKyspIHtcbiAgICAgIHdoaWxlIChrID4gMCAmJiBhW2ldICE9IGJba10pIHsgayA9IG1hcFtrXTsgfVxuICAgICAgaWYgKGFbaV0gPT0gYltrXSkgeyBrKys7IH1cbiAgfVxuICByZXR1cm4gaztcbn1cblxuXG4vKipcbiAqIFJldHVybnMgdHJ1ZSBpZiB0aGUgc3RyaW5nIGNvbnNpc3RlbnRseSB1c2VzIFdpbmRvd3MgbGluZSBlbmRpbmdzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gaGFzT25seVdpbkxpbmVFbmRpbmdzKHN0cmluZykge1xuICByZXR1cm4gc3RyaW5nLmluY2x1ZGVzKCdcXHJcXG4nKSAmJiAhc3RyaW5nLnN0YXJ0c1dpdGgoJ1xcbicpICYmICFzdHJpbmcubWF0Y2goL1teXFxyXVxcbi8pO1xufVxuXG4vKipcbiAqIFJldHVybnMgdHJ1ZSBpZiB0aGUgc3RyaW5nIGNvbnNpc3RlbnRseSB1c2VzIFVuaXggbGluZSBlbmRpbmdzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gaGFzT25seVVuaXhMaW5lRW5kaW5ncyhzdHJpbmcpIHtcbiAgcmV0dXJuICFzdHJpbmcuaW5jbHVkZXMoJ1xcclxcbicpICYmIHN0cmluZy5pbmNsdWRlcygnXFxuJyk7XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBTyxTQUFTQSxtQkFBbUJBLENBQUNDLElBQUksRUFBRUMsSUFBSSxFQUFFO0VBQzlDLElBQUlDLENBQUM7RUFDTCxLQUFLQSxDQUFDLEdBQUcsQ0FBQyxFQUFFQSxDQUFDLEdBQUdGLElBQUksQ0FBQ0csTUFBTSxJQUFJRCxDQUFDLEdBQUdELElBQUksQ0FBQ0UsTUFBTSxFQUFFRCxDQUFDLEVBQUUsRUFBRTtJQUNuRCxJQUFJRixJQUFJLENBQUNFLENBQUMsQ0FBQyxJQUFJRCxJQUFJLENBQUNDLENBQUMsQ0FBQyxFQUFFO01BQ3RCLE9BQU9GLElBQUksQ0FBQ0ksS0FBSyxDQUFDLENBQUMsRUFBRUYsQ0FBQyxDQUFDO0lBQ3pCO0VBQ0Y7RUFDQSxPQUFPRixJQUFJLENBQUNJLEtBQUssQ0FBQyxDQUFDLEVBQUVGLENBQUMsQ0FBQztBQUN6QjtBQUVPLFNBQVNHLG1CQUFtQkEsQ0FBQ0wsSUFBSSxFQUFFQyxJQUFJLEVBQUU7RUFDOUMsSUFBSUMsQ0FBQzs7RUFFTDtFQUNBO0VBQ0E7RUFDQSxJQUFJLENBQUNGLElBQUksSUFBSSxDQUFDQyxJQUFJLElBQUlELElBQUksQ0FBQ0EsSUFBSSxDQUFDRyxNQUFNLEdBQUcsQ0FBQyxDQUFDLElBQUlGLElBQUksQ0FBQ0EsSUFBSSxDQUFDRSxNQUFNLEdBQUcsQ0FBQyxDQUFDLEVBQUU7SUFDcEUsT0FBTyxFQUFFO0VBQ1g7RUFFQSxLQUFLRCxDQUFDLEdBQUcsQ0FBQyxFQUFFQSxDQUFDLEdBQUdGLElBQUksQ0FBQ0csTUFBTSxJQUFJRCxDQUFDLEdBQUdELElBQUksQ0FBQ0UsTUFBTSxFQUFFRCxDQUFDLEVBQUUsRUFBRTtJQUNuRCxJQUFJRixJQUFJ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
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/function-bind/implementation.js":
-/*!******************************************************!*\
-  !*** ./node_modules/function-bind/implementation.js ***!
-  \******************************************************/
-/***/ ((module) => {
-
-
-
-/* eslint no-invalid-this: 1 */
-
-var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
-var toStr = Object.prototype.toString;
-var max = Math.max;
-var funcType = '[object Function]';
-
-var concatty = function concatty(a, b) {
-    var arr = [];
-
-    for (var i = 0; i < a.length; i += 1) {
-        arr[i] = a[i];
-    }
-    for (var j = 0; j < b.length; j += 1) {
-        arr[j + a.length] = b[j];
-    }
-
-    return arr;
-};
-
-var slicy = function slicy(arrLike, offset) {
-    var arr = [];
-    for (var i = offset || 0, j = 0; i < arrLike.length; i += 1, j += 1) {
-        arr[j] = arrLike[i];
-    }
-    return arr;
-};
-
-var joiny = function (arr, joiner) {
-    var str = '';
-    for (var i = 0; i < arr.length; i += 1) {
-        str += arr[i];
-        if (i + 1 < arr.length) {
-            str += joiner;
-        }
-    }
-    return str;
-};
-
-module.exports = function bind(that) {
-    var target = this;
-    if (typeof target !== 'function' || toStr.apply(target) !== funcType) {
-        throw new TypeError(ERROR_MESSAGE + target);
-    }
-    var args = slicy(arguments, 1);
-
-    var bound;
-    var binder = function () {
-        if (this instanceof bound) {
-            var result = target.apply(
-                this,
-                concatty(args, arguments)
-            );
-            if (Object(result) === result) {
-                return result;
-            }
-            return this;
-        }
-        return target.apply(
-            that,
-            concatty(args, arguments)
-        );
-
-    };
-
-    var boundLength = max(0, target.length - args.length);
-    var boundArgs = [];
-    for (var i = 0; i < boundLength; i++) {
-        boundArgs[i] = '$' + i;
-    }
-
-    bound = Function('binder', 'return function (' + joiny(boundArgs, ',') + '){ return binder.apply(this,arguments); }')(binder);
-
-    if (target.prototype) {
-        var Empty = function Empty() {};
-        Empty.prototype = target.prototype;
-        bound.prototype = new Empty();
-        Empty.prototype = null;
-    }
-
-    return bound;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/function-bind/index.js":
-/*!*********************************************!*\
-  !*** ./node_modules/function-bind/index.js ***!
-  \*********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var implementation = __webpack_require__(/*! ./implementation */ "./node_modules/function-bind/implementation.js");
-
-module.exports = Function.prototype.bind || implementation;
-
-
-/***/ }),
-
-/***/ "./node_modules/get-func-name/index.js":
+/***/ "./node_modules/get-func-name/index.js"
 /*!*********************************************!*\
   !*** ./node_modules/get-func-name/index.js ***!
   \*********************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -16272,558 +15937,13 @@ function getFuncName(aFunc) {
 module.exports = getFuncName;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/get-intrinsic/index.js":
-/*!*********************************************!*\
-  !*** ./node_modules/get-intrinsic/index.js ***!
-  \*********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var undefined;
-
-var $Error = __webpack_require__(/*! es-errors */ "./node_modules/es-errors/index.js");
-var $EvalError = __webpack_require__(/*! es-errors/eval */ "./node_modules/es-errors/eval.js");
-var $RangeError = __webpack_require__(/*! es-errors/range */ "./node_modules/es-errors/range.js");
-var $ReferenceError = __webpack_require__(/*! es-errors/ref */ "./node_modules/es-errors/ref.js");
-var $SyntaxError = __webpack_require__(/*! es-errors/syntax */ "./node_modules/es-errors/syntax.js");
-var $TypeError = __webpack_require__(/*! es-errors/type */ "./node_modules/es-errors/type.js");
-var $URIError = __webpack_require__(/*! es-errors/uri */ "./node_modules/es-errors/uri.js");
-
-var $Function = Function;
-
-// eslint-disable-next-line consistent-return
-var getEvalledConstructor = function (expressionSyntax) {
-	try {
-		return $Function('"use strict"; return (' + expressionSyntax + ').constructor;')();
-	} catch (e) {}
-};
-
-var $gOPD = Object.getOwnPropertyDescriptor;
-if ($gOPD) {
-	try {
-		$gOPD({}, '');
-	} catch (e) {
-		$gOPD = null; // this is IE 8, which has a broken gOPD
-	}
-}
-
-var throwTypeError = function () {
-	throw new $TypeError();
-};
-var ThrowTypeError = $gOPD
-	? (function () {
-		try {
-			// eslint-disable-next-line no-unused-expressions, no-caller, no-restricted-properties
-			arguments.callee; // IE 8 does not throw here
-			return throwTypeError;
-		} catch (calleeThrows) {
-			try {
-				// IE 8 throws on Object.getOwnPropertyDescriptor(arguments, '')
-				return $gOPD(arguments, 'callee').get;
-			} catch (gOPDthrows) {
-				return throwTypeError;
-			}
-		}
-	}())
-	: throwTypeError;
-
-var hasSymbols = __webpack_require__(/*! has-symbols */ "./node_modules/has-symbols/index.js")();
-var hasProto = __webpack_require__(/*! has-proto */ "./node_modules/has-proto/index.js")();
-
-var getProto = Object.getPrototypeOf || (
-	hasProto
-		? function (x) { return x.__proto__; } // eslint-disable-line no-proto
-		: null
-);
-
-var needsEval = {};
-
-var TypedArray = typeof Uint8Array === 'undefined' || !getProto ? undefined : getProto(Uint8Array);
-
-var INTRINSICS = {
-	__proto__: null,
-	'%AggregateError%': typeof AggregateError === 'undefined' ? undefined : AggregateError,
-	'%Array%': Array,
-	'%ArrayBuffer%': typeof ArrayBuffer === 'undefined' ? undefined : ArrayBuffer,
-	'%ArrayIteratorPrototype%': hasSymbols && getProto ? getProto([][Symbol.iterator]()) : undefined,
-	'%AsyncFromSyncIteratorPrototype%': undefined,
-	'%AsyncFunction%': needsEval,
-	'%AsyncGenerator%': needsEval,
-	'%AsyncGeneratorFunction%': needsEval,
-	'%AsyncIteratorPrototype%': needsEval,
-	'%Atomics%': typeof Atomics === 'undefined' ? undefined : Atomics,
-	'%BigInt%': typeof BigInt === 'undefined' ? undefined : BigInt,
-	'%BigInt64Array%': typeof BigInt64Array === 'undefined' ? undefined : BigInt64Array,
-	'%BigUint64Array%': typeof BigUint64Array === 'undefined' ? undefined : BigUint64Array,
-	'%Boolean%': Boolean,
-	'%DataView%': typeof DataView === 'undefined' ? undefined : DataView,
-	'%Date%': Date,
-	'%decodeURI%': decodeURI,
-	'%decodeURIComponent%': decodeURIComponent,
-	'%encodeURI%': encodeURI,
-	'%encodeURIComponent%': encodeURIComponent,
-	'%Error%': $Error,
-	'%eval%': eval, // eslint-disable-line no-eval
-	'%EvalError%': $EvalError,
-	'%Float32Array%': typeof Float32Array === 'undefined' ? undefined : Float32Array,
-	'%Float64Array%': typeof Float64Array === 'undefined' ? undefined : Float64Array,
-	'%FinalizationRegistry%': typeof FinalizationRegistry === 'undefined' ? undefined : FinalizationRegistry,
-	'%Function%': $Function,
-	'%GeneratorFunction%': needsEval,
-	'%Int8Array%': typeof Int8Array === 'undefined' ? undefined : Int8Array,
-	'%Int16Array%': typeof Int16Array === 'undefined' ? undefined : Int16Array,
-	'%Int32Array%': typeof Int32Array === 'undefined' ? undefined : Int32Array,
-	'%isFinite%': isFinite,
-	'%isNaN%': isNaN,
-	'%IteratorPrototype%': hasSymbols && getProto ? getProto(getProto([][Symbol.iterator]())) : undefined,
-	'%JSON%': typeof JSON === 'object' ? JSON : undefined,
-	'%Map%': typeof Map === 'undefined' ? undefined : Map,
-	'%MapIteratorPrototype%': typeof Map === 'undefined' || !hasSymbols || !getProto ? undefined : getProto(new Map()[Symbol.iterator]()),
-	'%Math%': Math,
-	'%Number%': Number,
-	'%Object%': Object,
-	'%parseFloat%': parseFloat,
-	'%parseInt%': parseInt,
-	'%Promise%': typeof Promise === 'undefined' ? undefined : Promise,
-	'%Proxy%': typeof Proxy === 'undefined' ? undefined : Proxy,
-	'%RangeError%': $RangeError,
-	'%ReferenceError%': $ReferenceError,
-	'%Reflect%': typeof Reflect === 'undefined' ? undefined : Reflect,
-	'%RegExp%': RegExp,
-	'%Set%': typeof Set === 'undefined' ? undefined : Set,
-	'%SetIteratorPrototype%': typeof Set === 'undefined' || !hasSymbols || !getProto ? undefined : getProto(new Set()[Symbol.iterator]()),
-	'%SharedArrayBuffer%': typeof SharedArrayBuffer === 'undefined' ? undefined : SharedArrayBuffer,
-	'%String%': String,
-	'%StringIteratorPrototype%': hasSymbols && getProto ? getProto(''[Symbol.iterator]()) : undefined,
-	'%Symbol%': hasSymbols ? Symbol : undefined,
-	'%SyntaxError%': $SyntaxError,
-	'%ThrowTypeError%': ThrowTypeError,
-	'%TypedArray%': TypedArray,
-	'%TypeError%': $TypeError,
-	'%Uint8Array%': typeof Uint8Array === 'undefined' ? undefined : Uint8Array,
-	'%Uint8ClampedArray%': typeof Uint8ClampedArray === 'undefined' ? undefined : Uint8ClampedArray,
-	'%Uint16Array%': typeof Uint16Array === 'undefined' ? undefined : Uint16Array,
-	'%Uint32Array%': typeof Uint32Array === 'undefined' ? undefined : Uint32Array,
-	'%URIError%': $URIError,
-	'%WeakMap%': typeof WeakMap === 'undefined' ? undefined : WeakMap,
-	'%WeakRef%': typeof WeakRef === 'undefined' ? undefined : WeakRef,
-	'%WeakSet%': typeof WeakSet === 'undefined' ? undefined : WeakSet
-};
-
-if (getProto) {
-	try {
-		null.error; // eslint-disable-line no-unused-expressions
-	} catch (e) {
-		// https://github.com/tc39/proposal-shadowrealm/pull/384#issuecomment-1364264229
-		var errorProto = getProto(getProto(e));
-		INTRINSICS['%Error.prototype%'] = errorProto;
-	}
-}
-
-var doEval = function doEval(name) {
-	var value;
-	if (name === '%AsyncFunction%') {
-		value = getEvalledConstructor('async function () {}');
-	} else if (name === '%GeneratorFunction%') {
-		value = getEvalledConstructor('function* () {}');
-	} else if (name === '%AsyncGeneratorFunction%') {
-		value = getEvalledConstructor('async function* () {}');
-	} else if (name === '%AsyncGenerator%') {
-		var fn = doEval('%AsyncGeneratorFunction%');
-		if (fn) {
-			value = fn.prototype;
-		}
-	} else if (name === '%AsyncIteratorPrototype%') {
-		var gen = doEval('%AsyncGenerator%');
-		if (gen && getProto) {
-			value = getProto(gen.prototype);
-		}
-	}
-
-	INTRINSICS[name] = value;
-
-	return value;
-};
-
-var LEGACY_ALIASES = {
-	__proto__: null,
-	'%ArrayBufferPrototype%': ['ArrayBuffer', 'prototype'],
-	'%ArrayPrototype%': ['Array', 'prototype'],
-	'%ArrayProto_entries%': ['Array', 'prototype', 'entries'],
-	'%ArrayProto_forEach%': ['Array', 'prototype', 'forEach'],
-	'%ArrayProto_keys%': ['Array', 'prototype', 'keys'],
-	'%ArrayProto_values%': ['Array', 'prototype', 'values'],
-	'%AsyncFunctionPrototype%': ['AsyncFunction', 'prototype'],
-	'%AsyncGenerator%': ['AsyncGeneratorFunction', 'prototype'],
-	'%AsyncGeneratorPrototype%': ['AsyncGeneratorFunction', 'prototype', 'prototype'],
-	'%BooleanPrototype%': ['Boolean', 'prototype'],
-	'%DataViewPrototype%': ['DataView', 'prototype'],
-	'%DatePrototype%': ['Date', 'prototype'],
-	'%ErrorPrototype%': ['Error', 'prototype'],
-	'%EvalErrorPrototype%': ['EvalError', 'prototype'],
-	'%Float32ArrayPrototype%': ['Float32Array', 'prototype'],
-	'%Float64ArrayPrototype%': ['Float64Array', 'prototype'],
-	'%FunctionPrototype%': ['Function', 'prototype'],
-	'%Generator%': ['GeneratorFunction', 'prototype'],
-	'%GeneratorPrototype%': ['GeneratorFunction', 'prototype', 'prototype'],
-	'%Int8ArrayPrototype%': ['Int8Array', 'prototype'],
-	'%Int16ArrayPrototype%': ['Int16Array', 'prototype'],
-	'%Int32ArrayPrototype%': ['Int32Array', 'prototype'],
-	'%JSONParse%': ['JSON', 'parse'],
-	'%JSONStringify%': ['JSON', 'stringify'],
-	'%MapPrototype%': ['Map', 'prototype'],
-	'%NumberPrototype%': ['Number', 'prototype'],
-	'%ObjectPrototype%': ['Object', 'prototype'],
-	'%ObjProto_toString%': ['Object', 'prototype', 'toString'],
-	'%ObjProto_valueOf%': ['Object', 'prototype', 'valueOf'],
-	'%PromisePrototype%': ['Promise', 'prototype'],
-	'%PromiseProto_then%': ['Promise', 'prototype', 'then'],
-	'%Promise_all%': ['Promise', 'all'],
-	'%Promise_reject%': ['Promise', 'reject'],
-	'%Promise_resolve%': ['Promise', 'resolve'],
-	'%RangeErrorPrototype%': ['RangeError', 'prototype'],
-	'%ReferenceErrorPrototype%': ['ReferenceError', 'prototype'],
-	'%RegExpPrototype%': ['RegExp', 'prototype'],
-	'%SetPrototype%': ['Set', 'prototype'],
-	'%SharedArrayBufferPrototype%': ['SharedArrayBuffer', 'prototype'],
-	'%StringPrototype%': ['String', 'prototype'],
-	'%SymbolPrototype%': ['Symbol', 'prototype'],
-	'%SyntaxErrorPrototype%': ['SyntaxError', 'prototype'],
-	'%TypedArrayPrototype%': ['TypedArray', 'prototype'],
-	'%TypeErrorPrototype%': ['TypeError', 'prototype'],
-	'%Uint8ArrayPrototype%': ['Uint8Array', 'prototype'],
-	'%Uint8ClampedArrayPrototype%': ['Uint8ClampedArray', 'prototype'],
-	'%Uint16ArrayPrototype%': ['Uint16Array', 'prototype'],
-	'%Uint32ArrayPrototype%': ['Uint32Array', 'prototype'],
-	'%URIErrorPrototype%': ['URIError', 'prototype'],
-	'%WeakMapPrototype%': ['WeakMap', 'prototype'],
-	'%WeakSetPrototype%': ['WeakSet', 'prototype']
-};
-
-var bind = __webpack_require__(/*! function-bind */ "./node_modules/function-bind/index.js");
-var hasOwn = __webpack_require__(/*! hasown */ "./node_modules/hasown/index.js");
-var $concat = bind.call(Function.call, Array.prototype.concat);
-var $spliceApply = bind.call(Function.apply, Array.prototype.splice);
-var $replace = bind.call(Function.call, String.prototype.replace);
-var $strSlice = bind.call(Function.call, String.prototype.slice);
-var $exec = bind.call(Function.call, RegExp.prototype.exec);
-
-/* adapted from https://github.com/lodash/lodash/blob/4.17.15/dist/lodash.js#L6735-L6744 */
-var rePropName = /[^%.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|%$))/g;
-var reEscapeChar = /\\(\\)?/g; /** Used to match backslashes in property paths. */
-var stringToPath = function stringToPath(string) {
-	var first = $strSlice(string, 0, 1);
-	var last = $strSlice(string, -1);
-	if (first === '%' && last !== '%') {
-		throw new $SyntaxError('invalid intrinsic syntax, expected closing `%`');
-	} else if (last === '%' && first !== '%') {
-		throw new $SyntaxError('invalid intrinsic syntax, expected opening `%`');
-	}
-	var result = [];
-	$replace(string, rePropName, function (match, number, quote, subString) {
-		result[result.length] = quote ? $replace(subString, reEscapeChar, '$1') : number || match;
-	});
-	return result;
-};
-/* end adaptation */
-
-var getBaseIntrinsic = function getBaseIntrinsic(name, allowMissing) {
-	var intrinsicName = name;
-	var alias;
-	if (hasOwn(LEGACY_ALIASES, intrinsicName)) {
-		alias = LEGACY_ALIASES[intrinsicName];
-		intrinsicName = '%' + alias[0] + '%';
-	}
-
-	if (hasOwn(INTRINSICS, intrinsicName)) {
-		var value = INTRINSICS[intrinsicName];
-		if (value === needsEval) {
-			value = doEval(intrinsicName);
-		}
-		if (typeof value === 'undefined' && !allowMissing) {
-			throw new $TypeError('intrinsic ' + name + ' exists, but is not available. Please file an issue!');
-		}
-
-		return {
-			alias: alias,
-			name: intrinsicName,
-			value: value
-		};
-	}
-
-	throw new $SyntaxError('intrinsic ' + name + ' does not exist!');
-};
-
-module.exports = function GetIntrinsic(name, allowMissing) {
-	if (typeof name !== 'string' || name.length === 0) {
-		throw new $TypeError('intrinsic name must be a non-empty string');
-	}
-	if (arguments.length > 1 && typeof allowMissing !== 'boolean') {
-		throw new $TypeError('"allowMissing" argument must be a boolean');
-	}
-
-	if ($exec(/^%?[^%]*%?$/, name) === null) {
-		throw new $SyntaxError('`%` may not be present anywhere but at the beginning and end of the intrinsic name');
-	}
-	var parts = stringToPath(name);
-	var intrinsicBaseName = parts.length > 0 ? parts[0] : '';
-
-	var intrinsic = getBaseIntrinsic('%' + intrinsicBaseName + '%', allowMissing);
-	var intrinsicRealName = intrinsic.name;
-	var value = intrinsic.value;
-	var skipFurtherCaching = false;
-
-	var alias = intrinsic.alias;
-	if (alias) {
-		intrinsicBaseName = alias[0];
-		$spliceApply(parts, $concat([0, 1], alias));
-	}
-
-	for (var i = 1, isOwn = true; i < parts.length; i += 1) {
-		var part = parts[i];
-		var first = $strSlice(part, 0, 1);
-		var last = $strSlice(part, -1);
-		if (
-			(
-				(first === '"' || first === "'" || first === '`')
-				|| (last === '"' || last === "'" || last === '`')
-			)
-			&& first !== last
-		) {
-			throw new $SyntaxError('property names with quotes must have matching quotes');
-		}
-		if (part === 'constructor' || !isOwn) {
-			skipFurtherCaching = true;
-		}
-
-		intrinsicBaseName += '.' + part;
-		intrinsicRealName = '%' + intrinsicBaseName + '%';
-
-		if (hasOwn(INTRINSICS, intrinsicRealName)) {
-			value = INTRINSICS[intrinsicRealName];
-		} else if (value != null) {
-			if (!(part in value)) {
-				if (!allowMissing) {
-					throw new $TypeError('base intrinsic for ' + name + ' exists, but the property is not available.');
-				}
-				return void undefined;
-			}
-			if ($gOPD && (i + 1) >= parts.length) {
-				var desc = $gOPD(value, part);
-				isOwn = !!desc;
-
-				// By convention, when a data property is converted to an accessor
-				// property to emulate a data property that does not suffer from
-				// the override mistake, that accessor's getter is marked with
-				// an `originalValue` property. Here, when we detect this, we
-				// uphold the illusion by pretending to see that original data
-				// property, i.e., returning the value rather than the getter
-				// itself.
-				if (isOwn && 'get' in desc && !('originalValue' in desc.get)) {
-					value = desc.get;
-				} else {
-					value = value[part];
-				}
-			} else {
-				isOwn = hasOwn(value, part);
-				value = value[part];
-			}
-
-			if (isOwn && !skipFurtherCaching) {
-				INTRINSICS[intrinsicRealName] = value;
-			}
-		}
-	}
-	return value;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/gopd/index.js":
-/*!************************************!*\
-  !*** ./node_modules/gopd/index.js ***!
-  \************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var GetIntrinsic = __webpack_require__(/*! get-intrinsic */ "./node_modules/get-intrinsic/index.js");
-
-var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
-
-if ($gOPD) {
-	try {
-		$gOPD([], 'length');
-	} catch (e) {
-		// IE 8 has a broken gOPD
-		$gOPD = null;
-	}
-}
-
-module.exports = $gOPD;
-
-
-/***/ }),
-
-/***/ "./node_modules/has-property-descriptors/index.js":
-/*!********************************************************!*\
-  !*** ./node_modules/has-property-descriptors/index.js ***!
-  \********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var $defineProperty = __webpack_require__(/*! es-define-property */ "./node_modules/es-define-property/index.js");
-
-var hasPropertyDescriptors = function hasPropertyDescriptors() {
-	return !!$defineProperty;
-};
-
-hasPropertyDescriptors.hasArrayLengthDefineBug = function hasArrayLengthDefineBug() {
-	// node v0.6 has a bug where array lengths can be Set but not Defined
-	if (!$defineProperty) {
-		return null;
-	}
-	try {
-		return $defineProperty([], 'length', { value: 1 }).length !== 1;
-	} catch (e) {
-		// In Firefox 4-22, defining length on an array throws an exception.
-		return true;
-	}
-};
-
-module.exports = hasPropertyDescriptors;
-
-
-/***/ }),
-
-/***/ "./node_modules/has-proto/index.js":
-/*!*****************************************!*\
-  !*** ./node_modules/has-proto/index.js ***!
-  \*****************************************/
-/***/ ((module) => {
-
-
-
-var test = {
-	__proto__: null,
-	foo: {}
-};
-
-var $Object = Object;
-
-/** @type {import('.')} */
-module.exports = function hasProto() {
-	// @ts-expect-error: TS errors on an inherited property for some reason
-	return { __proto__: test }.foo === test.foo
-		&& !(test instanceof $Object);
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/has-symbols/index.js":
-/*!*******************************************!*\
-  !*** ./node_modules/has-symbols/index.js ***!
-  \*******************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var origSymbol = typeof Symbol !== 'undefined' && Symbol;
-var hasSymbolSham = __webpack_require__(/*! ./shams */ "./node_modules/has-symbols/shams.js");
-
-module.exports = function hasNativeSymbols() {
-	if (typeof origSymbol !== 'function') { return false; }
-	if (typeof Symbol !== 'function') { return false; }
-	if (typeof origSymbol('foo') !== 'symbol') { return false; }
-	if (typeof Symbol('bar') !== 'symbol') { return false; }
-
-	return hasSymbolSham();
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/has-symbols/shams.js":
-/*!*******************************************!*\
-  !*** ./node_modules/has-symbols/shams.js ***!
-  \*******************************************/
-/***/ ((module) => {
-
-
-
-/* eslint complexity: [2, 18], max-statements: [2, 33] */
-module.exports = function hasSymbols() {
-	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
-	if (typeof Symbol.iterator === 'symbol') { return true; }
-
-	var obj = {};
-	var sym = Symbol('test');
-	var symObj = Object(sym);
-	if (typeof sym === 'string') { return false; }
-
-	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
-	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
-
-	// temp disabled per https://github.com/ljharb/object.assign/issues/17
-	// if (sym instanceof Symbol) { return false; }
-	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
-	// if (!(symObj instanceof Symbol)) { return false; }
-
-	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
-	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
-
-	var symVal = 42;
-	obj[sym] = symVal;
-	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
-	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
-
-	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
-
-	var syms = Object.getOwnPropertySymbols(obj);
-	if (syms.length !== 1 || syms[0] !== sym) { return false; }
-
-	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
-
-	if (typeof Object.getOwnPropertyDescriptor === 'function') {
-		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
-	}
-
-	return true;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/hasown/index.js":
-/*!**************************************!*\
-  !*** ./node_modules/hasown/index.js ***!
-  \**************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var call = Function.prototype.call;
-var $hasOwn = Object.prototype.hasOwnProperty;
-var bind = __webpack_require__(/*! function-bind */ "./node_modules/function-bind/index.js");
-
-/** @type {import('.')} */
-module.exports = bind.call(call, $hasOwn);
-
-
-/***/ }),
-
-/***/ "./node_modules/he/he.js":
+/***/ "./node_modules/he/he.js"
 /*!*******************************!*\
   !*** ./node_modules/he/he.js ***!
   \*******************************/
-/***/ (function(module, exports, __webpack_require__) {
+(module, exports, __webpack_require__) {
 
 /* module decorator */ module = __webpack_require__.nmd(module);
 var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/he v1.2.0 by @mathias | MIT license */
@@ -17157,18 +16277,19 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/he v1.2.0 by @mathias | MI
 			return he;
 		}).call(exports, __webpack_require__, exports, module),
 		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	}	else { var key; }
+	}	else // removed by dead control flow
+{ var key; }
 
 }(this));
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/ieee754/index.js":
+/***/ "./node_modules/ieee754/index.js"
 /*!***************************************!*\
   !*** ./node_modules/ieee754/index.js ***!
   \***************************************/
-/***/ ((__unused_webpack_module, exports) => {
+(__unused_webpack_module, exports) {
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -17257,13 +16378,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/inherits/inherits_browser.js":
+/***/ "./node_modules/inherits/inherits_browser.js"
 /*!***************************************************!*\
   !*** ./node_modules/inherits/inherits_browser.js ***!
   \***************************************************/
-/***/ ((module) => {
+(module) {
 
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
@@ -17294,13 +16415,13 @@ if (typeof Object.create === 'function') {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/log-symbols/browser.js":
+/***/ "./node_modules/log-symbols/browser.js"
 /*!*********************************************!*\
   !*** ./node_modules/log-symbols/browser.js ***!
   \*********************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -17312,16 +16433,15 @@ module.exports = {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/loupe/loupe.js":
+/***/ "./node_modules/loupe/loupe.js"
 /*!*************************************!*\
   !*** ./node_modules/loupe/loupe.js ***!
   \*************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+(__unused_webpack_module, exports, __webpack_require__) {
 
-/* provided dependency */ var Buffer = __webpack_require__(/*! ./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js")["Buffer"];
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+/* provided dependency */ var Buffer = __webpack_require__(/*! ./node_modules/buffer */ "./node_modules/buffer/index.js")["Buffer"];
 (function (global, factory) {
    true ? factory(exports) :
   0;
@@ -18214,13 +17334,13 @@ module.exports = {
 })));
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib sync recursive":
+/***/ "./node_modules/mocha/lib sync recursive"
 /*!**************************************!*\
   !*** ./node_modules/mocha/lib/ sync ***!
   \**************************************/
-/***/ ((module) => {
+(module) {
 
 function webpackEmptyContext(req) {
 	var e = new Error("Cannot find module '" + req + "'");
@@ -18232,188 +17352,14 @@ webpackEmptyContext.resolve = webpackEmptyContext;
 webpackEmptyContext.id = "./node_modules/mocha/lib sync recursive";
 module.exports = webpackEmptyContext;
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/node_modules/debug/node_modules/ms/index.js":
-/*!************************************************************************!*\
-  !*** ./node_modules/mocha/node_modules/debug/node_modules/ms/index.js ***!
-  \************************************************************************/
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var w = d * 7;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isFinite(val)) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'weeks':
-    case 'week':
-    case 'w':
-      return n * w;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (msAbs >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (msAbs >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (msAbs >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return plural(ms, msAbs, d, 'day');
-  }
-  if (msAbs >= h) {
-    return plural(ms, msAbs, h, 'hour');
-  }
-  if (msAbs >= m) {
-    return plural(ms, msAbs, m, 'minute');
-  }
-  if (msAbs >= s) {
-    return plural(ms, msAbs, s, 'second');
-  }
-  return ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, msAbs, n, name) {
-  var isPlural = msAbs >= n * 1.5;
-  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/mocha/node_modules/debug/src/browser.js":
+/***/ "./node_modules/mocha/node_modules/debug/src/browser.js"
 /*!**************************************************************!*\
   !*** ./node_modules/mocha/node_modules/debug/src/browser.js ***!
   \**************************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 /* eslint-env browser */
 
 /**
@@ -18541,14 +17487,17 @@ function useColors() {
 		return false;
 	}
 
+	let m;
+
 	// Is webkit? http://stackoverflow.com/a/16459606/376773
 	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	// eslint-disable-next-line no-return-assign
 	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
 		// Is firebug? http://stackoverflow.com/a/398120/376773
 		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
 		// Is firefox >= v31?
 		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		(typeof navigator !== 'undefined' && navigator.userAgent && (m = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m[1], 10) >= 31) ||
 		// Double check webkit in userAgent just in case we are in a worker
 		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
 }
@@ -18632,7 +17581,7 @@ function save(namespaces) {
 function load() {
 	let r;
 	try {
-		r = exports.storage.getItem('debug');
+		r = exports.storage.getItem('debug') || exports.storage.getItem('DEBUG') ;
 	} catch (error) {
 		// Swallow
 		// XXX (@Qix-) should we be logging these?
@@ -18685,15 +17634,14 @@ formatters.j = function (v) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/node_modules/debug/src/common.js":
+/***/ "./node_modules/mocha/node_modules/debug/src/common.js"
 /*!*************************************************************!*\
   !*** ./node_modules/mocha/node_modules/debug/src/common.js ***!
   \*************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -18707,7 +17655,7 @@ function setup(env) {
 	createDebug.disable = disable;
 	createDebug.enable = enable;
 	createDebug.enabled = enabled;
-	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/mocha/node_modules/debug/node_modules/ms/index.js");
+	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/mocha/node_modules/ms/index.js");
 	createDebug.destroy = destroy;
 
 	Object.keys(env).forEach(key => {
@@ -18862,24 +17810,62 @@ function setup(env) {
 		createDebug.names = [];
 		createDebug.skips = [];
 
-		let i;
-		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-		const len = split.length;
+		const split = (typeof namespaces === 'string' ? namespaces : '')
+			.trim()
+			.replace(/\s+/g, ',')
+			.split(',')
+			.filter(Boolean);
 
-		for (i = 0; i < len; i++) {
-			if (!split[i]) {
-				// ignore empty strings
-				continue;
-			}
-
-			namespaces = split[i].replace(/\*/g, '.*?');
-
-			if (namespaces[0] === '-') {
-				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+		for (const ns of split) {
+			if (ns[0] === '-') {
+				createDebug.skips.push(ns.slice(1));
 			} else {
-				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+				createDebug.names.push(ns);
 			}
 		}
+	}
+
+	/**
+	 * Checks if the given string matches a namespace template, honoring
+	 * asterisks as wildcards.
+	 *
+	 * @param {String} search
+	 * @param {String} template
+	 * @return {Boolean}
+	 */
+	function matchesTemplate(search, template) {
+		let searchIndex = 0;
+		let templateIndex = 0;
+		let starIndex = -1;
+		let matchIndex = 0;
+
+		while (searchIndex < search.length) {
+			if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === '*')) {
+				// Match character or proceed with wildcard
+				if (template[templateIndex] === '*') {
+					starIndex = templateIndex;
+					matchIndex = searchIndex;
+					templateIndex++; // Skip the '*'
+				} else {
+					searchIndex++;
+					templateIndex++;
+				}
+			} else if (starIndex !== -1) { // eslint-disable-line no-negated-condition
+				// Backtrack to the last '*' and try to match more characters
+				templateIndex = starIndex + 1;
+				matchIndex++;
+				searchIndex = matchIndex;
+			} else {
+				return false; // No match
+			}
+		}
+
+		// Handle trailing '*' in template
+		while (templateIndex < template.length && template[templateIndex] === '*') {
+			templateIndex++;
+		}
+
+		return templateIndex === template.length;
 	}
 
 	/**
@@ -18890,8 +17876,8 @@ function setup(env) {
 	*/
 	function disable() {
 		const namespaces = [
-			...createDebug.names.map(toNamespace),
-			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+			...createDebug.names,
+			...createDebug.skips.map(namespace => '-' + namespace)
 		].join(',');
 		createDebug.enable('');
 		return namespaces;
@@ -18905,39 +17891,19 @@ function setup(env) {
 	* @api public
 	*/
 	function enabled(name) {
-		if (name[name.length - 1] === '*') {
-			return true;
-		}
-
-		let i;
-		let len;
-
-		for (i = 0, len = createDebug.skips.length; i < len; i++) {
-			if (createDebug.skips[i].test(name)) {
+		for (const skip of createDebug.skips) {
+			if (matchesTemplate(name, skip)) {
 				return false;
 			}
 		}
 
-		for (i = 0, len = createDebug.names.length; i < len; i++) {
-			if (createDebug.names[i].test(name)) {
+		for (const ns of createDebug.names) {
+			if (matchesTemplate(name, ns)) {
 				return true;
 			}
 		}
 
 		return false;
-	}
-
-	/**
-	* Convert regexp to namespace
-	*
-	* @param {RegExp} regxep
-	* @return {String} namespace
-	* @api private
-	*/
-	function toNamespace(regexp) {
-		return regexp.toString()
-			.substring(2, regexp.toString().length - 2)
-			.replace(/\.\*\?$/, '*');
 	}
 
 	/**
@@ -18970,13 +17936,13 @@ function setup(env) {
 module.exports = setup;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/node_modules/escape-string-regexp/index.js":
+/***/ "./node_modules/mocha/node_modules/escape-string-regexp/index.js"
 /*!***********************************************************************!*\
   !*** ./node_modules/mocha/node_modules/escape-string-regexp/index.js ***!
   \***********************************************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -18993,13 +17959,13 @@ module.exports = string => {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/node_modules/ms/index.js":
+/***/ "./node_modules/mocha/node_modules/ms/index.js"
 /*!*****************************************************!*\
   !*** ./node_modules/mocha/node_modules/ms/index.js ***!
   \*****************************************************/
-/***/ ((module) => {
+(module) {
 
 /**
  * Helpers.
@@ -19165,2132 +18131,14 @@ function plural(ms, msAbs, n, name) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js":
-/*!********************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js ***!
-  \********************************************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/events/events.js"
+/*!************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/events/events.js ***!
+  \************************************************************************/
+(module) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-/*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <https://feross.org>
- * @license  MIT
- */
-/* eslint-disable no-proto */
-
-
-
-const base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
-const ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
-const customInspectSymbol =
-  (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
-    ? Symbol['for']('nodejs.util.inspect.custom') // eslint-disable-line dot-notation
-    : null
-
-exports.Buffer = Buffer
-exports.SlowBuffer = SlowBuffer
-exports.INSPECT_MAX_BYTES = 50
-
-const K_MAX_LENGTH = 0x7fffffff
-exports.kMaxLength = K_MAX_LENGTH
-
-/**
- * If `Buffer.TYPED_ARRAY_SUPPORT`:
- *   === true    Use Uint8Array implementation (fastest)
- *   === false   Print warning and recommend using `buffer` v4.x which has an Object
- *               implementation (most compatible, even IE6)
- *
- * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
- * Opera 11.6+, iOS 4.2+.
- *
- * We report that the browser does not support typed arrays if the are not subclassable
- * using __proto__. Firefox 4-29 lacks support for adding new properties to `Uint8Array`
- * (See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438). IE 10 lacks support
- * for __proto__ and has a buggy typed array implementation.
- */
-Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
-
-if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
-    typeof console.error === 'function') {
-  console.error(
-    'This browser lacks typed array (Uint8Array) support which is required by ' +
-    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
-  )
-}
-
-function typedArraySupport () {
-  // Can typed array instances can be augmented?
-  try {
-    const arr = new Uint8Array(1)
-    const proto = { foo: function () { return 42 } }
-    Object.setPrototypeOf(proto, Uint8Array.prototype)
-    Object.setPrototypeOf(arr, proto)
-    return arr.foo() === 42
-  } catch (e) {
-    return false
-  }
-}
-
-Object.defineProperty(Buffer.prototype, 'parent', {
-  enumerable: true,
-  get: function () {
-    if (!Buffer.isBuffer(this)) return undefined
-    return this.buffer
-  }
-})
-
-Object.defineProperty(Buffer.prototype, 'offset', {
-  enumerable: true,
-  get: function () {
-    if (!Buffer.isBuffer(this)) return undefined
-    return this.byteOffset
-  }
-})
-
-function createBuffer (length) {
-  if (length > K_MAX_LENGTH) {
-    throw new RangeError('The value "' + length + '" is invalid for option "size"')
-  }
-  // Return an augmented `Uint8Array` instance
-  const buf = new Uint8Array(length)
-  Object.setPrototypeOf(buf, Buffer.prototype)
-  return buf
-}
-
-/**
- * The Buffer constructor returns instances of `Uint8Array` that have their
- * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
- * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
- * and the `Uint8Array` methods. Square bracket notation works as expected -- it
- * returns a single octet.
- *
- * The `Uint8Array` prototype remains unmodified.
- */
-
-function Buffer (arg, encodingOrOffset, length) {
-  // Common case.
-  if (typeof arg === 'number') {
-    if (typeof encodingOrOffset === 'string') {
-      throw new TypeError(
-        'The "string" argument must be of type string. Received type number'
-      )
-    }
-    return allocUnsafe(arg)
-  }
-  return from(arg, encodingOrOffset, length)
-}
-
-Buffer.poolSize = 8192 // not used by this implementation
-
-function from (value, encodingOrOffset, length) {
-  if (typeof value === 'string') {
-    return fromString(value, encodingOrOffset)
-  }
-
-  if (ArrayBuffer.isView(value)) {
-    return fromArrayView(value)
-  }
-
-  if (value == null) {
-    throw new TypeError(
-      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
-      'or Array-like Object. Received type ' + (typeof value)
-    )
-  }
-
-  if (isInstance(value, ArrayBuffer) ||
-      (value && isInstance(value.buffer, ArrayBuffer))) {
-    return fromArrayBuffer(value, encodingOrOffset, length)
-  }
-
-  if (typeof SharedArrayBuffer !== 'undefined' &&
-      (isInstance(value, SharedArrayBuffer) ||
-      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
-    return fromArrayBuffer(value, encodingOrOffset, length)
-  }
-
-  if (typeof value === 'number') {
-    throw new TypeError(
-      'The "value" argument must not be of type number. Received type number'
-    )
-  }
-
-  const valueOf = value.valueOf && value.valueOf()
-  if (valueOf != null && valueOf !== value) {
-    return Buffer.from(valueOf, encodingOrOffset, length)
-  }
-
-  const b = fromObject(value)
-  if (b) return b
-
-  if (typeof Symbol !== 'undefined' && Symbol.toPrimitive != null &&
-      typeof value[Symbol.toPrimitive] === 'function') {
-    return Buffer.from(value[Symbol.toPrimitive]('string'), encodingOrOffset, length)
-  }
-
-  throw new TypeError(
-    'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
-    'or Array-like Object. Received type ' + (typeof value)
-  )
-}
-
-/**
- * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
- * if value is a number.
- * Buffer.from(str[, encoding])
- * Buffer.from(array)
- * Buffer.from(buffer)
- * Buffer.from(arrayBuffer[, byteOffset[, length]])
- **/
-Buffer.from = function (value, encodingOrOffset, length) {
-  return from(value, encodingOrOffset, length)
-}
-
-// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
-// https://github.com/feross/buffer/pull/148
-Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype)
-Object.setPrototypeOf(Buffer, Uint8Array)
-
-function assertSize (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('"size" argument must be of type number')
-  } else if (size < 0) {
-    throw new RangeError('The value "' + size + '" is invalid for option "size"')
-  }
-}
-
-function alloc (size, fill, encoding) {
-  assertSize(size)
-  if (size <= 0) {
-    return createBuffer(size)
-  }
-  if (fill !== undefined) {
-    // Only pay attention to encoding if it's a string. This
-    // prevents accidentally sending in a number that would
-    // be interpreted as a start offset.
-    return typeof encoding === 'string'
-      ? createBuffer(size).fill(fill, encoding)
-      : createBuffer(size).fill(fill)
-  }
-  return createBuffer(size)
-}
-
-/**
- * Creates a new filled Buffer instance.
- * alloc(size[, fill[, encoding]])
- **/
-Buffer.alloc = function (size, fill, encoding) {
-  return alloc(size, fill, encoding)
-}
-
-function allocUnsafe (size) {
-  assertSize(size)
-  return createBuffer(size < 0 ? 0 : checked(size) | 0)
-}
-
-/**
- * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
- * */
-Buffer.allocUnsafe = function (size) {
-  return allocUnsafe(size)
-}
-/**
- * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
- */
-Buffer.allocUnsafeSlow = function (size) {
-  return allocUnsafe(size)
-}
-
-function fromString (string, encoding) {
-  if (typeof encoding !== 'string' || encoding === '') {
-    encoding = 'utf8'
-  }
-
-  if (!Buffer.isEncoding(encoding)) {
-    throw new TypeError('Unknown encoding: ' + encoding)
-  }
-
-  const length = byteLength(string, encoding) | 0
-  let buf = createBuffer(length)
-
-  const actual = buf.write(string, encoding)
-
-  if (actual !== length) {
-    // Writing a hex string, for example, that contains invalid characters will
-    // cause everything after the first invalid character to be ignored. (e.g.
-    // 'abxxcd' will be treated as 'ab')
-    buf = buf.slice(0, actual)
-  }
-
-  return buf
-}
-
-function fromArrayLike (array) {
-  const length = array.length < 0 ? 0 : checked(array.length) | 0
-  const buf = createBuffer(length)
-  for (let i = 0; i < length; i += 1) {
-    buf[i] = array[i] & 255
-  }
-  return buf
-}
-
-function fromArrayView (arrayView) {
-  if (isInstance(arrayView, Uint8Array)) {
-    const copy = new Uint8Array(arrayView)
-    return fromArrayBuffer(copy.buffer, copy.byteOffset, copy.byteLength)
-  }
-  return fromArrayLike(arrayView)
-}
-
-function fromArrayBuffer (array, byteOffset, length) {
-  if (byteOffset < 0 || array.byteLength < byteOffset) {
-    throw new RangeError('"offset" is outside of buffer bounds')
-  }
-
-  if (array.byteLength < byteOffset + (length || 0)) {
-    throw new RangeError('"length" is outside of buffer bounds')
-  }
-
-  let buf
-  if (byteOffset === undefined && length === undefined) {
-    buf = new Uint8Array(array)
-  } else if (length === undefined) {
-    buf = new Uint8Array(array, byteOffset)
-  } else {
-    buf = new Uint8Array(array, byteOffset, length)
-  }
-
-  // Return an augmented `Uint8Array` instance
-  Object.setPrototypeOf(buf, Buffer.prototype)
-
-  return buf
-}
-
-function fromObject (obj) {
-  if (Buffer.isBuffer(obj)) {
-    const len = checked(obj.length) | 0
-    const buf = createBuffer(len)
-
-    if (buf.length === 0) {
-      return buf
-    }
-
-    obj.copy(buf, 0, 0, len)
-    return buf
-  }
-
-  if (obj.length !== undefined) {
-    if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
-      return createBuffer(0)
-    }
-    return fromArrayLike(obj)
-  }
-
-  if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
-    return fromArrayLike(obj.data)
-  }
-}
-
-function checked (length) {
-  // Note: cannot use `length < K_MAX_LENGTH` here because that fails when
-  // length is NaN (which is otherwise coerced to zero.)
-  if (length >= K_MAX_LENGTH) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + K_MAX_LENGTH.toString(16) + ' bytes')
-  }
-  return length | 0
-}
-
-function SlowBuffer (length) {
-  if (+length != length) { // eslint-disable-line eqeqeq
-    length = 0
-  }
-  return Buffer.alloc(+length)
-}
-
-Buffer.isBuffer = function isBuffer (b) {
-  return b != null && b._isBuffer === true &&
-    b !== Buffer.prototype // so Buffer.isBuffer(Buffer.prototype) will be false
-}
-
-Buffer.compare = function compare (a, b) {
-  if (isInstance(a, Uint8Array)) a = Buffer.from(a, a.offset, a.byteLength)
-  if (isInstance(b, Uint8Array)) b = Buffer.from(b, b.offset, b.byteLength)
-  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-    throw new TypeError(
-      'The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array'
-    )
-  }
-
-  if (a === b) return 0
-
-  let x = a.length
-  let y = b.length
-
-  for (let i = 0, len = Math.min(x, y); i < len; ++i) {
-    if (a[i] !== b[i]) {
-      x = a[i]
-      y = b[i]
-      break
-    }
-  }
-
-  if (x < y) return -1
-  if (y < x) return 1
-  return 0
-}
-
-Buffer.isEncoding = function isEncoding (encoding) {
-  switch (String(encoding).toLowerCase()) {
-    case 'hex':
-    case 'utf8':
-    case 'utf-8':
-    case 'ascii':
-    case 'latin1':
-    case 'binary':
-    case 'base64':
-    case 'ucs2':
-    case 'ucs-2':
-    case 'utf16le':
-    case 'utf-16le':
-      return true
-    default:
-      return false
-  }
-}
-
-Buffer.concat = function concat (list, length) {
-  if (!Array.isArray(list)) {
-    throw new TypeError('"list" argument must be an Array of Buffers')
-  }
-
-  if (list.length === 0) {
-    return Buffer.alloc(0)
-  }
-
-  let i
-  if (length === undefined) {
-    length = 0
-    for (i = 0; i < list.length; ++i) {
-      length += list[i].length
-    }
-  }
-
-  const buffer = Buffer.allocUnsafe(length)
-  let pos = 0
-  for (i = 0; i < list.length; ++i) {
-    let buf = list[i]
-    if (isInstance(buf, Uint8Array)) {
-      if (pos + buf.length > buffer.length) {
-        if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf)
-        buf.copy(buffer, pos)
-      } else {
-        Uint8Array.prototype.set.call(
-          buffer,
-          buf,
-          pos
-        )
-      }
-    } else if (!Buffer.isBuffer(buf)) {
-      throw new TypeError('"list" argument must be an Array of Buffers')
-    } else {
-      buf.copy(buffer, pos)
-    }
-    pos += buf.length
-  }
-  return buffer
-}
-
-function byteLength (string, encoding) {
-  if (Buffer.isBuffer(string)) {
-    return string.length
-  }
-  if (ArrayBuffer.isView(string) || isInstance(string, ArrayBuffer)) {
-    return string.byteLength
-  }
-  if (typeof string !== 'string') {
-    throw new TypeError(
-      'The "string" argument must be one of type string, Buffer, or ArrayBuffer. ' +
-      'Received type ' + typeof string
-    )
-  }
-
-  const len = string.length
-  const mustMatch = (arguments.length > 2 && arguments[2] === true)
-  if (!mustMatch && len === 0) return 0
-
-  // Use a for loop to avoid recursion
-  let loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'ascii':
-      case 'latin1':
-      case 'binary':
-        return len
-      case 'utf8':
-      case 'utf-8':
-        return utf8ToBytes(string).length
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return len * 2
-      case 'hex':
-        return len >>> 1
-      case 'base64':
-        return base64ToBytes(string).length
-      default:
-        if (loweredCase) {
-          return mustMatch ? -1 : utf8ToBytes(string).length // assume utf8
-        }
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-Buffer.byteLength = byteLength
-
-function slowToString (encoding, start, end) {
-  let loweredCase = false
-
-  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
-  // property of a typed array.
-
-  // This behaves neither like String nor Uint8Array in that we set start/end
-  // to their upper/lower bounds if the value passed is out of range.
-  // undefined is handled specially as per ECMA-262 6th Edition,
-  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
-  if (start === undefined || start < 0) {
-    start = 0
-  }
-  // Return early if start > this.length. Done here to prevent potential uint32
-  // coercion fail below.
-  if (start > this.length) {
-    return ''
-  }
-
-  if (end === undefined || end > this.length) {
-    end = this.length
-  }
-
-  if (end <= 0) {
-    return ''
-  }
-
-  // Force coercion to uint32. This will also coerce falsey/NaN values to 0.
-  end >>>= 0
-  start >>>= 0
-
-  if (end <= start) {
-    return ''
-  }
-
-  if (!encoding) encoding = 'utf8'
-
-  while (true) {
-    switch (encoding) {
-      case 'hex':
-        return hexSlice(this, start, end)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Slice(this, start, end)
-
-      case 'ascii':
-        return asciiSlice(this, start, end)
-
-      case 'latin1':
-      case 'binary':
-        return latin1Slice(this, start, end)
-
-      case 'base64':
-        return base64Slice(this, start, end)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return utf16leSlice(this, start, end)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = (encoding + '').toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
-// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
-// reliably in a browserify context because there could be multiple different
-// copies of the 'buffer' package in use. This method works even for Buffer
-// instances that were created from another copy of the `buffer` package.
-// See: https://github.com/feross/buffer/issues/154
-Buffer.prototype._isBuffer = true
-
-function swap (b, n, m) {
-  const i = b[n]
-  b[n] = b[m]
-  b[m] = i
-}
-
-Buffer.prototype.swap16 = function swap16 () {
-  const len = this.length
-  if (len % 2 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 16-bits')
-  }
-  for (let i = 0; i < len; i += 2) {
-    swap(this, i, i + 1)
-  }
-  return this
-}
-
-Buffer.prototype.swap32 = function swap32 () {
-  const len = this.length
-  if (len % 4 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 32-bits')
-  }
-  for (let i = 0; i < len; i += 4) {
-    swap(this, i, i + 3)
-    swap(this, i + 1, i + 2)
-  }
-  return this
-}
-
-Buffer.prototype.swap64 = function swap64 () {
-  const len = this.length
-  if (len % 8 !== 0) {
-    throw new RangeError('Buffer size must be a multiple of 64-bits')
-  }
-  for (let i = 0; i < len; i += 8) {
-    swap(this, i, i + 7)
-    swap(this, i + 1, i + 6)
-    swap(this, i + 2, i + 5)
-    swap(this, i + 3, i + 4)
-  }
-  return this
-}
-
-Buffer.prototype.toString = function toString () {
-  const length = this.length
-  if (length === 0) return ''
-  if (arguments.length === 0) return utf8Slice(this, 0, length)
-  return slowToString.apply(this, arguments)
-}
-
-Buffer.prototype.toLocaleString = Buffer.prototype.toString
-
-Buffer.prototype.equals = function equals (b) {
-  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-  if (this === b) return true
-  return Buffer.compare(this, b) === 0
-}
-
-Buffer.prototype.inspect = function inspect () {
-  let str = ''
-  const max = exports.INSPECT_MAX_BYTES
-  str = this.toString('hex', 0, max).replace(/(.{2})/g, '$1 ').trim()
-  if (this.length > max) str += ' ... '
-  return '<Buffer ' + str + '>'
-}
-if (customInspectSymbol) {
-  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect
-}
-
-Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
-  if (isInstance(target, Uint8Array)) {
-    target = Buffer.from(target, target.offset, target.byteLength)
-  }
-  if (!Buffer.isBuffer(target)) {
-    throw new TypeError(
-      'The "target" argument must be one of type Buffer or Uint8Array. ' +
-      'Received type ' + (typeof target)
-    )
-  }
-
-  if (start === undefined) {
-    start = 0
-  }
-  if (end === undefined) {
-    end = target ? target.length : 0
-  }
-  if (thisStart === undefined) {
-    thisStart = 0
-  }
-  if (thisEnd === undefined) {
-    thisEnd = this.length
-  }
-
-  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
-    throw new RangeError('out of range index')
-  }
-
-  if (thisStart >= thisEnd && start >= end) {
-    return 0
-  }
-  if (thisStart >= thisEnd) {
-    return -1
-  }
-  if (start >= end) {
-    return 1
-  }
-
-  start >>>= 0
-  end >>>= 0
-  thisStart >>>= 0
-  thisEnd >>>= 0
-
-  if (this === target) return 0
-
-  let x = thisEnd - thisStart
-  let y = end - start
-  const len = Math.min(x, y)
-
-  const thisCopy = this.slice(thisStart, thisEnd)
-  const targetCopy = target.slice(start, end)
-
-  for (let i = 0; i < len; ++i) {
-    if (thisCopy[i] !== targetCopy[i]) {
-      x = thisCopy[i]
-      y = targetCopy[i]
-      break
-    }
-  }
-
-  if (x < y) return -1
-  if (y < x) return 1
-  return 0
-}
-
-// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
-// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
-//
-// Arguments:
-// - buffer - a Buffer to search
-// - val - a string, Buffer, or number
-// - byteOffset - an index into `buffer`; will be clamped to an int32
-// - encoding - an optional encoding, relevant is val is a string
-// - dir - true for indexOf, false for lastIndexOf
-function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
-  // Empty buffer means no match
-  if (buffer.length === 0) return -1
-
-  // Normalize byteOffset
-  if (typeof byteOffset === 'string') {
-    encoding = byteOffset
-    byteOffset = 0
-  } else if (byteOffset > 0x7fffffff) {
-    byteOffset = 0x7fffffff
-  } else if (byteOffset < -0x80000000) {
-    byteOffset = -0x80000000
-  }
-  byteOffset = +byteOffset // Coerce to Number.
-  if (numberIsNaN(byteOffset)) {
-    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
-    byteOffset = dir ? 0 : (buffer.length - 1)
-  }
-
-  // Normalize byteOffset: negative offsets start from the end of the buffer
-  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
-  if (byteOffset >= buffer.length) {
-    if (dir) return -1
-    else byteOffset = buffer.length - 1
-  } else if (byteOffset < 0) {
-    if (dir) byteOffset = 0
-    else return -1
-  }
-
-  // Normalize val
-  if (typeof val === 'string') {
-    val = Buffer.from(val, encoding)
-  }
-
-  // Finally, search either indexOf (if dir is true) or lastIndexOf
-  if (Buffer.isBuffer(val)) {
-    // Special case: looking for empty string/buffer always fails
-    if (val.length === 0) {
-      return -1
-    }
-    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
-  } else if (typeof val === 'number') {
-    val = val & 0xFF // Search for a byte value [0-255]
-    if (typeof Uint8Array.prototype.indexOf === 'function') {
-      if (dir) {
-        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
-      } else {
-        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
-      }
-    }
-    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
-  }
-
-  throw new TypeError('val must be string, number or Buffer')
-}
-
-function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
-  let indexSize = 1
-  let arrLength = arr.length
-  let valLength = val.length
-
-  if (encoding !== undefined) {
-    encoding = String(encoding).toLowerCase()
-    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
-        encoding === 'utf16le' || encoding === 'utf-16le') {
-      if (arr.length < 2 || val.length < 2) {
-        return -1
-      }
-      indexSize = 2
-      arrLength /= 2
-      valLength /= 2
-      byteOffset /= 2
-    }
-  }
-
-  function read (buf, i) {
-    if (indexSize === 1) {
-      return buf[i]
-    } else {
-      return buf.readUInt16BE(i * indexSize)
-    }
-  }
-
-  let i
-  if (dir) {
-    let foundIndex = -1
-    for (i = byteOffset; i < arrLength; i++) {
-      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
-        if (foundIndex === -1) foundIndex = i
-        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
-      } else {
-        if (foundIndex !== -1) i -= i - foundIndex
-        foundIndex = -1
-      }
-    }
-  } else {
-    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
-    for (i = byteOffset; i >= 0; i--) {
-      let found = true
-      for (let j = 0; j < valLength; j++) {
-        if (read(arr, i + j) !== read(val, j)) {
-          found = false
-          break
-        }
-      }
-      if (found) return i
-    }
-  }
-
-  return -1
-}
-
-Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
-  return this.indexOf(val, byteOffset, encoding) !== -1
-}
-
-Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
-  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
-}
-
-Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
-  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
-}
-
-function hexWrite (buf, string, offset, length) {
-  offset = Number(offset) || 0
-  const remaining = buf.length - offset
-  if (!length) {
-    length = remaining
-  } else {
-    length = Number(length)
-    if (length > remaining) {
-      length = remaining
-    }
-  }
-
-  const strLen = string.length
-
-  if (length > strLen / 2) {
-    length = strLen / 2
-  }
-  let i
-  for (i = 0; i < length; ++i) {
-    const parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (numberIsNaN(parsed)) return i
-    buf[offset + i] = parsed
-  }
-  return i
-}
-
-function utf8Write (buf, string, offset, length) {
-  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-function asciiWrite (buf, string, offset, length) {
-  return blitBuffer(asciiToBytes(string), buf, offset, length)
-}
-
-function base64Write (buf, string, offset, length) {
-  return blitBuffer(base64ToBytes(string), buf, offset, length)
-}
-
-function ucs2Write (buf, string, offset, length) {
-  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-Buffer.prototype.write = function write (string, offset, length, encoding) {
-  // Buffer#write(string)
-  if (offset === undefined) {
-    encoding = 'utf8'
-    length = this.length
-    offset = 0
-  // Buffer#write(string, encoding)
-  } else if (length === undefined && typeof offset === 'string') {
-    encoding = offset
-    length = this.length
-    offset = 0
-  // Buffer#write(string, offset[, length][, encoding])
-  } else if (isFinite(offset)) {
-    offset = offset >>> 0
-    if (isFinite(length)) {
-      length = length >>> 0
-      if (encoding === undefined) encoding = 'utf8'
-    } else {
-      encoding = length
-      length = undefined
-    }
-  } else {
-    throw new Error(
-      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
-    )
-  }
-
-  const remaining = this.length - offset
-  if (length === undefined || length > remaining) length = remaining
-
-  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
-    throw new RangeError('Attempt to write outside buffer bounds')
-  }
-
-  if (!encoding) encoding = 'utf8'
-
-  let loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'hex':
-        return hexWrite(this, string, offset, length)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Write(this, string, offset, length)
-
-      case 'ascii':
-      case 'latin1':
-      case 'binary':
-        return asciiWrite(this, string, offset, length)
-
-      case 'base64':
-        // Warning: maxLength not taken into account in base64Write
-        return base64Write(this, string, offset, length)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return ucs2Write(this, string, offset, length)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-Buffer.prototype.toJSON = function toJSON () {
-  return {
-    type: 'Buffer',
-    data: Array.prototype.slice.call(this._arr || this, 0)
-  }
-}
-
-function base64Slice (buf, start, end) {
-  if (start === 0 && end === buf.length) {
-    return base64.fromByteArray(buf)
-  } else {
-    return base64.fromByteArray(buf.slice(start, end))
-  }
-}
-
-function utf8Slice (buf, start, end) {
-  end = Math.min(buf.length, end)
-  const res = []
-
-  let i = start
-  while (i < end) {
-    const firstByte = buf[i]
-    let codePoint = null
-    let bytesPerSequence = (firstByte > 0xEF)
-      ? 4
-      : (firstByte > 0xDF)
-          ? 3
-          : (firstByte > 0xBF)
-              ? 2
-              : 1
-
-    if (i + bytesPerSequence <= end) {
-      let secondByte, thirdByte, fourthByte, tempCodePoint
-
-      switch (bytesPerSequence) {
-        case 1:
-          if (firstByte < 0x80) {
-            codePoint = firstByte
-          }
-          break
-        case 2:
-          secondByte = buf[i + 1]
-          if ((secondByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
-            if (tempCodePoint > 0x7F) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 3:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
-            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 4:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          fourthByte = buf[i + 3]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
-            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
-              codePoint = tempCodePoint
-            }
-          }
-      }
-    }
-
-    if (codePoint === null) {
-      // we did not generate a valid codePoint so insert a
-      // replacement char (U+FFFD) and advance only 1 byte
-      codePoint = 0xFFFD
-      bytesPerSequence = 1
-    } else if (codePoint > 0xFFFF) {
-      // encode to utf16 (surrogate pair dance)
-      codePoint -= 0x10000
-      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
-      codePoint = 0xDC00 | codePoint & 0x3FF
-    }
-
-    res.push(codePoint)
-    i += bytesPerSequence
-  }
-
-  return decodeCodePointsArray(res)
-}
-
-// Based on http://stackoverflow.com/a/22747272/680742, the browser with
-// the lowest limit is Chrome, with 0x10000 args.
-// We go 1 magnitude less, for safety
-const MAX_ARGUMENTS_LENGTH = 0x1000
-
-function decodeCodePointsArray (codePoints) {
-  const len = codePoints.length
-  if (len <= MAX_ARGUMENTS_LENGTH) {
-    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
-  }
-
-  // Decode in chunks to avoid "call stack size exceeded".
-  let res = ''
-  let i = 0
-  while (i < len) {
-    res += String.fromCharCode.apply(
-      String,
-      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
-    )
-  }
-  return res
-}
-
-function asciiSlice (buf, start, end) {
-  let ret = ''
-  end = Math.min(buf.length, end)
-
-  for (let i = start; i < end; ++i) {
-    ret += String.fromCharCode(buf[i] & 0x7F)
-  }
-  return ret
-}
-
-function latin1Slice (buf, start, end) {
-  let ret = ''
-  end = Math.min(buf.length, end)
-
-  for (let i = start; i < end; ++i) {
-    ret += String.fromCharCode(buf[i])
-  }
-  return ret
-}
-
-function hexSlice (buf, start, end) {
-  const len = buf.length
-
-  if (!start || start < 0) start = 0
-  if (!end || end < 0 || end > len) end = len
-
-  let out = ''
-  for (let i = start; i < end; ++i) {
-    out += hexSliceLookupTable[buf[i]]
-  }
-  return out
-}
-
-function utf16leSlice (buf, start, end) {
-  const bytes = buf.slice(start, end)
-  let res = ''
-  // If bytes.length is odd, the last 8 bits must be ignored (same as node.js)
-  for (let i = 0; i < bytes.length - 1; i += 2) {
-    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
-  }
-  return res
-}
-
-Buffer.prototype.slice = function slice (start, end) {
-  const len = this.length
-  start = ~~start
-  end = end === undefined ? len : ~~end
-
-  if (start < 0) {
-    start += len
-    if (start < 0) start = 0
-  } else if (start > len) {
-    start = len
-  }
-
-  if (end < 0) {
-    end += len
-    if (end < 0) end = 0
-  } else if (end > len) {
-    end = len
-  }
-
-  if (end < start) end = start
-
-  const newBuf = this.subarray(start, end)
-  // Return an augmented `Uint8Array` instance
-  Object.setPrototypeOf(newBuf, Buffer.prototype)
-
-  return newBuf
-}
-
-/*
- * Need to make sure that buffer isn't trying to write out of bounds.
- */
-function checkOffset (offset, ext, length) {
-  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
-  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
-}
-
-Buffer.prototype.readUintLE =
-Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  let val = this[offset]
-  let mul = 1
-  let i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUintBE =
-Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) {
-    checkOffset(offset, byteLength, this.length)
-  }
-
-  let val = this[offset + --byteLength]
-  let mul = 1
-  while (byteLength > 0 && (mul *= 0x100)) {
-    val += this[offset + --byteLength] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUint8 =
-Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  return this[offset]
-}
-
-Buffer.prototype.readUint16LE =
-Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return this[offset] | (this[offset + 1] << 8)
-}
-
-Buffer.prototype.readUint16BE =
-Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return (this[offset] << 8) | this[offset + 1]
-}
-
-Buffer.prototype.readUint32LE =
-Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return ((this[offset]) |
-      (this[offset + 1] << 8) |
-      (this[offset + 2] << 16)) +
-      (this[offset + 3] * 0x1000000)
-}
-
-Buffer.prototype.readUint32BE =
-Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] * 0x1000000) +
-    ((this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    this[offset + 3])
-}
-
-Buffer.prototype.readBigUInt64LE = defineBigIntMethod(function readBigUInt64LE (offset) {
-  offset = offset >>> 0
-  validateNumber(offset, 'offset')
-  const first = this[offset]
-  const last = this[offset + 7]
-  if (first === undefined || last === undefined) {
-    boundsError(offset, this.length - 8)
-  }
-
-  const lo = first +
-    this[++offset] * 2 ** 8 +
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 24
-
-  const hi = this[++offset] +
-    this[++offset] * 2 ** 8 +
-    this[++offset] * 2 ** 16 +
-    last * 2 ** 24
-
-  return BigInt(lo) + (BigInt(hi) << BigInt(32))
-})
-
-Buffer.prototype.readBigUInt64BE = defineBigIntMethod(function readBigUInt64BE (offset) {
-  offset = offset >>> 0
-  validateNumber(offset, 'offset')
-  const first = this[offset]
-  const last = this[offset + 7]
-  if (first === undefined || last === undefined) {
-    boundsError(offset, this.length - 8)
-  }
-
-  const hi = first * 2 ** 24 +
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 8 +
-    this[++offset]
-
-  const lo = this[++offset] * 2 ** 24 +
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 8 +
-    last
-
-  return (BigInt(hi) << BigInt(32)) + BigInt(lo)
-})
-
-Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  let val = this[offset]
-  let mul = 1
-  let i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  let i = byteLength
-  let mul = 1
-  let val = this[offset + --i]
-  while (i > 0 && (mul *= 0x100)) {
-    val += this[offset + --i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  if (!(this[offset] & 0x80)) return (this[offset])
-  return ((0xff - this[offset] + 1) * -1)
-}
-
-Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  const val = this[offset] | (this[offset + 1] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  const val = this[offset + 1] | (this[offset] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset]) |
-    (this[offset + 1] << 8) |
-    (this[offset + 2] << 16) |
-    (this[offset + 3] << 24)
-}
-
-Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] << 24) |
-    (this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    (this[offset + 3])
-}
-
-Buffer.prototype.readBigInt64LE = defineBigIntMethod(function readBigInt64LE (offset) {
-  offset = offset >>> 0
-  validateNumber(offset, 'offset')
-  const first = this[offset]
-  const last = this[offset + 7]
-  if (first === undefined || last === undefined) {
-    boundsError(offset, this.length - 8)
-  }
-
-  const val = this[offset + 4] +
-    this[offset + 5] * 2 ** 8 +
-    this[offset + 6] * 2 ** 16 +
-    (last << 24) // Overflow
-
-  return (BigInt(val) << BigInt(32)) +
-    BigInt(first +
-    this[++offset] * 2 ** 8 +
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 24)
-})
-
-Buffer.prototype.readBigInt64BE = defineBigIntMethod(function readBigInt64BE (offset) {
-  offset = offset >>> 0
-  validateNumber(offset, 'offset')
-  const first = this[offset]
-  const last = this[offset + 7]
-  if (first === undefined || last === undefined) {
-    boundsError(offset, this.length - 8)
-  }
-
-  const val = (first << 24) + // Overflow
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 8 +
-    this[++offset]
-
-  return (BigInt(val) << BigInt(32)) +
-    BigInt(this[++offset] * 2 ** 24 +
-    this[++offset] * 2 ** 16 +
-    this[++offset] * 2 ** 8 +
-    last)
-})
-
-Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, true, 23, 4)
-}
-
-Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, false, 23, 4)
-}
-
-Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, true, 52, 8)
-}
-
-Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
-  offset = offset >>> 0
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, false, 52, 8)
-}
-
-function checkInt (buf, value, offset, ext, max, min) {
-  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
-  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
-  if (offset + ext > buf.length) throw new RangeError('Index out of range')
-}
-
-Buffer.prototype.writeUintLE =
-Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) {
-    const maxBytes = Math.pow(2, 8 * byteLength) - 1
-    checkInt(this, value, offset, byteLength, maxBytes, 0)
-  }
-
-  let mul = 1
-  let i = 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUintBE =
-Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  byteLength = byteLength >>> 0
-  if (!noAssert) {
-    const maxBytes = Math.pow(2, 8 * byteLength) - 1
-    checkInt(this, value, offset, byteLength, maxBytes, 0)
-  }
-
-  let i = byteLength - 1
-  let mul = 1
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUint8 =
-Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-Buffer.prototype.writeUint16LE =
-Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  this[offset] = (value & 0xff)
-  this[offset + 1] = (value >>> 8)
-  return offset + 2
-}
-
-Buffer.prototype.writeUint16BE =
-Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  this[offset] = (value >>> 8)
-  this[offset + 1] = (value & 0xff)
-  return offset + 2
-}
-
-Buffer.prototype.writeUint32LE =
-Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  this[offset + 3] = (value >>> 24)
-  this[offset + 2] = (value >>> 16)
-  this[offset + 1] = (value >>> 8)
-  this[offset] = (value & 0xff)
-  return offset + 4
-}
-
-Buffer.prototype.writeUint32BE =
-Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  this[offset] = (value >>> 24)
-  this[offset + 1] = (value >>> 16)
-  this[offset + 2] = (value >>> 8)
-  this[offset + 3] = (value & 0xff)
-  return offset + 4
-}
-
-function wrtBigUInt64LE (buf, value, offset, min, max) {
-  checkIntBI(value, min, max, buf, offset, 7)
-
-  let lo = Number(value & BigInt(0xffffffff))
-  buf[offset++] = lo
-  lo = lo >> 8
-  buf[offset++] = lo
-  lo = lo >> 8
-  buf[offset++] = lo
-  lo = lo >> 8
-  buf[offset++] = lo
-  let hi = Number(value >> BigInt(32) & BigInt(0xffffffff))
-  buf[offset++] = hi
-  hi = hi >> 8
-  buf[offset++] = hi
-  hi = hi >> 8
-  buf[offset++] = hi
-  hi = hi >> 8
-  buf[offset++] = hi
-  return offset
-}
-
-function wrtBigUInt64BE (buf, value, offset, min, max) {
-  checkIntBI(value, min, max, buf, offset, 7)
-
-  let lo = Number(value & BigInt(0xffffffff))
-  buf[offset + 7] = lo
-  lo = lo >> 8
-  buf[offset + 6] = lo
-  lo = lo >> 8
-  buf[offset + 5] = lo
-  lo = lo >> 8
-  buf[offset + 4] = lo
-  let hi = Number(value >> BigInt(32) & BigInt(0xffffffff))
-  buf[offset + 3] = hi
-  hi = hi >> 8
-  buf[offset + 2] = hi
-  hi = hi >> 8
-  buf[offset + 1] = hi
-  hi = hi >> 8
-  buf[offset] = hi
-  return offset + 8
-}
-
-Buffer.prototype.writeBigUInt64LE = defineBigIntMethod(function writeBigUInt64LE (value, offset = 0) {
-  return wrtBigUInt64LE(this, value, offset, BigInt(0), BigInt('0xffffffffffffffff'))
-})
-
-Buffer.prototype.writeBigUInt64BE = defineBigIntMethod(function writeBigUInt64BE (value, offset = 0) {
-  return wrtBigUInt64BE(this, value, offset, BigInt(0), BigInt('0xffffffffffffffff'))
-})
-
-Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) {
-    const limit = Math.pow(2, (8 * byteLength) - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  let i = 0
-  let mul = 1
-  let sub = 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
-      sub = 1
-    }
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) {
-    const limit = Math.pow(2, (8 * byteLength) - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  let i = byteLength - 1
-  let mul = 1
-  let sub = 0
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
-      sub = 1
-    }
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (value < 0) value = 0xff + value + 1
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  this[offset] = (value & 0xff)
-  this[offset + 1] = (value >>> 8)
-  return offset + 2
-}
-
-Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  this[offset] = (value >>> 8)
-  this[offset + 1] = (value & 0xff)
-  return offset + 2
-}
-
-Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  this[offset] = (value & 0xff)
-  this[offset + 1] = (value >>> 8)
-  this[offset + 2] = (value >>> 16)
-  this[offset + 3] = (value >>> 24)
-  return offset + 4
-}
-
-Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (value < 0) value = 0xffffffff + value + 1
-  this[offset] = (value >>> 24)
-  this[offset + 1] = (value >>> 16)
-  this[offset + 2] = (value >>> 8)
-  this[offset + 3] = (value & 0xff)
-  return offset + 4
-}
-
-Buffer.prototype.writeBigInt64LE = defineBigIntMethod(function writeBigInt64LE (value, offset = 0) {
-  return wrtBigUInt64LE(this, value, offset, -BigInt('0x8000000000000000'), BigInt('0x7fffffffffffffff'))
-})
-
-Buffer.prototype.writeBigInt64BE = defineBigIntMethod(function writeBigInt64BE (value, offset = 0) {
-  return wrtBigUInt64BE(this, value, offset, -BigInt('0x8000000000000000'), BigInt('0x7fffffffffffffff'))
-})
-
-function checkIEEE754 (buf, value, offset, ext, max, min) {
-  if (offset + ext > buf.length) throw new RangeError('Index out of range')
-  if (offset < 0) throw new RangeError('Index out of range')
-}
-
-function writeFloat (buf, value, offset, littleEndian, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 23, 4)
-  return offset + 4
-}
-
-Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, false, noAssert)
-}
-
-function writeDouble (buf, value, offset, littleEndian, noAssert) {
-  value = +value
-  offset = offset >>> 0
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 52, 8)
-  return offset + 8
-}
-
-Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, false, noAssert)
-}
-
-// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, targetStart, start, end) {
-  if (!Buffer.isBuffer(target)) throw new TypeError('argument should be a Buffer')
-  if (!start) start = 0
-  if (!end && end !== 0) end = this.length
-  if (targetStart >= target.length) targetStart = target.length
-  if (!targetStart) targetStart = 0
-  if (end > 0 && end < start) end = start
-
-  // Copy 0 bytes; we're done
-  if (end === start) return 0
-  if (target.length === 0 || this.length === 0) return 0
-
-  // Fatal error conditions
-  if (targetStart < 0) {
-    throw new RangeError('targetStart out of bounds')
-  }
-  if (start < 0 || start >= this.length) throw new RangeError('Index out of range')
-  if (end < 0) throw new RangeError('sourceEnd out of bounds')
-
-  // Are we oob?
-  if (end > this.length) end = this.length
-  if (target.length - targetStart < end - start) {
-    end = target.length - targetStart + start
-  }
-
-  const len = end - start
-
-  if (this === target && typeof Uint8Array.prototype.copyWithin === 'function') {
-    // Use built-in when available, missing from IE11
-    this.copyWithin(targetStart, start, end)
-  } else {
-    Uint8Array.prototype.set.call(
-      target,
-      this.subarray(start, end),
-      targetStart
-    )
-  }
-
-  return len
-}
-
-// Usage:
-//    buffer.fill(number[, offset[, end]])
-//    buffer.fill(buffer[, offset[, end]])
-//    buffer.fill(string[, offset[, end]][, encoding])
-Buffer.prototype.fill = function fill (val, start, end, encoding) {
-  // Handle string cases:
-  if (typeof val === 'string') {
-    if (typeof start === 'string') {
-      encoding = start
-      start = 0
-      end = this.length
-    } else if (typeof end === 'string') {
-      encoding = end
-      end = this.length
-    }
-    if (encoding !== undefined && typeof encoding !== 'string') {
-      throw new TypeError('encoding must be a string')
-    }
-    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
-      throw new TypeError('Unknown encoding: ' + encoding)
-    }
-    if (val.length === 1) {
-      const code = val.charCodeAt(0)
-      if ((encoding === 'utf8' && code < 128) ||
-          encoding === 'latin1') {
-        // Fast path: If `val` fits into a single byte, use that numeric value.
-        val = code
-      }
-    }
-  } else if (typeof val === 'number') {
-    val = val & 255
-  } else if (typeof val === 'boolean') {
-    val = Number(val)
-  }
-
-  // Invalid ranges are not set to a default, so can range check early.
-  if (start < 0 || this.length < start || this.length < end) {
-    throw new RangeError('Out of range index')
-  }
-
-  if (end <= start) {
-    return this
-  }
-
-  start = start >>> 0
-  end = end === undefined ? this.length : end >>> 0
-
-  if (!val) val = 0
-
-  let i
-  if (typeof val === 'number') {
-    for (i = start; i < end; ++i) {
-      this[i] = val
-    }
-  } else {
-    const bytes = Buffer.isBuffer(val)
-      ? val
-      : Buffer.from(val, encoding)
-    const len = bytes.length
-    if (len === 0) {
-      throw new TypeError('The value "' + val +
-        '" is invalid for argument "value"')
-    }
-    for (i = 0; i < end - start; ++i) {
-      this[i + start] = bytes[i % len]
-    }
-  }
-
-  return this
-}
-
-// CUSTOM ERRORS
-// =============
-
-// Simplified versions from Node, changed for Buffer-only usage
-const errors = {}
-function E (sym, getMessage, Base) {
-  errors[sym] = class NodeError extends Base {
-    constructor () {
-      super()
-
-      Object.defineProperty(this, 'message', {
-        value: getMessage.apply(this, arguments),
-        writable: true,
-        configurable: true
-      })
-
-      // Add the error code to the name to include it in the stack trace.
-      this.name = `${this.name} [${sym}]`
-      // Access the stack to generate the error message including the error code
-      // from the name.
-      this.stack // eslint-disable-line no-unused-expressions
-      // Reset the name to the actual name.
-      delete this.name
-    }
-
-    get code () {
-      return sym
-    }
-
-    set code (value) {
-      Object.defineProperty(this, 'code', {
-        configurable: true,
-        enumerable: true,
-        value,
-        writable: true
-      })
-    }
-
-    toString () {
-      return `${this.name} [${sym}]: ${this.message}`
-    }
-  }
-}
-
-E('ERR_BUFFER_OUT_OF_BOUNDS',
-  function (name) {
-    if (name) {
-      return `${name} is outside of buffer bounds`
-    }
-
-    return 'Attempt to access memory outside buffer bounds'
-  }, RangeError)
-E('ERR_INVALID_ARG_TYPE',
-  function (name, actual) {
-    return `The "${name}" argument must be of type number. Received type ${typeof actual}`
-  }, TypeError)
-E('ERR_OUT_OF_RANGE',
-  function (str, range, input) {
-    let msg = `The value of "${str}" is out of range.`
-    let received = input
-    if (Number.isInteger(input) && Math.abs(input) > 2 ** 32) {
-      received = addNumericalSeparator(String(input))
-    } else if (typeof input === 'bigint') {
-      received = String(input)
-      if (input > BigInt(2) ** BigInt(32) || input < -(BigInt(2) ** BigInt(32))) {
-        received = addNumericalSeparator(received)
-      }
-      received += 'n'
-    }
-    msg += ` It must be ${range}. Received ${received}`
-    return msg
-  }, RangeError)
-
-function addNumericalSeparator (val) {
-  let res = ''
-  let i = val.length
-  const start = val[0] === '-' ? 1 : 0
-  for (; i >= start + 4; i -= 3) {
-    res = `_${val.slice(i - 3, i)}${res}`
-  }
-  return `${val.slice(0, i)}${res}`
-}
-
-// CHECK FUNCTIONS
-// ===============
-
-function checkBounds (buf, offset, byteLength) {
-  validateNumber(offset, 'offset')
-  if (buf[offset] === undefined || buf[offset + byteLength] === undefined) {
-    boundsError(offset, buf.length - (byteLength + 1))
-  }
-}
-
-function checkIntBI (value, min, max, buf, offset, byteLength) {
-  if (value > max || value < min) {
-    const n = typeof min === 'bigint' ? 'n' : ''
-    let range
-    if (byteLength > 3) {
-      if (min === 0 || min === BigInt(0)) {
-        range = `>= 0${n} and < 2${n} ** ${(byteLength + 1) * 8}${n}`
-      } else {
-        range = `>= -(2${n} ** ${(byteLength + 1) * 8 - 1}${n}) and < 2 ** ` +
-                `${(byteLength + 1) * 8 - 1}${n}`
-      }
-    } else {
-      range = `>= ${min}${n} and <= ${max}${n}`
-    }
-    throw new errors.ERR_OUT_OF_RANGE('value', range, value)
-  }
-  checkBounds(buf, offset, byteLength)
-}
-
-function validateNumber (value, name) {
-  if (typeof value !== 'number') {
-    throw new errors.ERR_INVALID_ARG_TYPE(name, 'number', value)
-  }
-}
-
-function boundsError (value, length, type) {
-  if (Math.floor(value) !== value) {
-    validateNumber(value, type)
-    throw new errors.ERR_OUT_OF_RANGE(type || 'offset', 'an integer', value)
-  }
-
-  if (length < 0) {
-    throw new errors.ERR_BUFFER_OUT_OF_BOUNDS()
-  }
-
-  throw new errors.ERR_OUT_OF_RANGE(type || 'offset',
-                                    `>= ${type ? 1 : 0} and <= ${length}`,
-                                    value)
-}
-
-// HELPER FUNCTIONS
-// ================
-
-const INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
-
-function base64clean (str) {
-  // Node takes equal signs as end of the Base64 encoding
-  str = str.split('=')[0]
-  // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = str.trim().replace(INVALID_BASE64_RE, '')
-  // Node converts strings with length < 2 to ''
-  if (str.length < 2) return ''
-  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
-  while (str.length % 4 !== 0) {
-    str = str + '='
-  }
-  return str
-}
-
-function utf8ToBytes (string, units) {
-  units = units || Infinity
-  let codePoint
-  const length = string.length
-  let leadSurrogate = null
-  const bytes = []
-
-  for (let i = 0; i < length; ++i) {
-    codePoint = string.charCodeAt(i)
-
-    // is surrogate component
-    if (codePoint > 0xD7FF && codePoint < 0xE000) {
-      // last char was a lead
-      if (!leadSurrogate) {
-        // no lead yet
-        if (codePoint > 0xDBFF) {
-          // unexpected trail
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
-        } else if (i + 1 === length) {
-          // unpaired lead
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
-        }
-
-        // valid lead
-        leadSurrogate = codePoint
-
-        continue
-      }
-
-      // 2 leads in a row
-      if (codePoint < 0xDC00) {
-        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-        leadSurrogate = codePoint
-        continue
-      }
-
-      // valid surrogate pair
-      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
-    } else if (leadSurrogate) {
-      // valid bmp char, but last char was a lead
-      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-    }
-
-    leadSurrogate = null
-
-    // encode utf8
-    if (codePoint < 0x80) {
-      if ((units -= 1) < 0) break
-      bytes.push(codePoint)
-    } else if (codePoint < 0x800) {
-      if ((units -= 2) < 0) break
-      bytes.push(
-        codePoint >> 0x6 | 0xC0,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x10000) {
-      if ((units -= 3) < 0) break
-      bytes.push(
-        codePoint >> 0xC | 0xE0,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x110000) {
-      if ((units -= 4) < 0) break
-      bytes.push(
-        codePoint >> 0x12 | 0xF0,
-        codePoint >> 0xC & 0x3F | 0x80,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else {
-      throw new Error('Invalid code point')
-    }
-  }
-
-  return bytes
-}
-
-function asciiToBytes (str) {
-  const byteArray = []
-  for (let i = 0; i < str.length; ++i) {
-    // Node's code seems to be doing this and not & 0x7F..
-    byteArray.push(str.charCodeAt(i) & 0xFF)
-  }
-  return byteArray
-}
-
-function utf16leToBytes (str, units) {
-  let c, hi, lo
-  const byteArray = []
-  for (let i = 0; i < str.length; ++i) {
-    if ((units -= 2) < 0) break
-
-    c = str.charCodeAt(i)
-    hi = c >> 8
-    lo = c % 256
-    byteArray.push(lo)
-    byteArray.push(hi)
-  }
-
-  return byteArray
-}
-
-function base64ToBytes (str) {
-  return base64.toByteArray(base64clean(str))
-}
-
-function blitBuffer (src, dst, offset, length) {
-  let i
-  for (i = 0; i < length; ++i) {
-    if ((i + offset >= dst.length) || (i >= src.length)) break
-    dst[i + offset] = src[i]
-  }
-  return i
-}
-
-// ArrayBuffer or Uint8Array objects from other contexts (i.e. iframes) do not pass
-// the `instanceof` check but they should be treated as of that type.
-// See: https://github.com/feross/buffer/issues/166
-function isInstance (obj, type) {
-  return obj instanceof type ||
-    (obj != null && obj.constructor != null && obj.constructor.name != null &&
-      obj.constructor.name === type.name)
-}
-function numberIsNaN (obj) {
-  // For IE11 support
-  return obj !== obj // eslint-disable-line no-self-compare
-}
-
-// Create lookup table for `toString('hex')`
-// See: https://github.com/feross/buffer/issues/219
-const hexSliceLookupTable = (function () {
-  const alphabet = '0123456789abcdef'
-  const table = new Array(256)
-  for (let i = 0; i < 16; ++i) {
-    const i16 = i * 16
-    for (let j = 0; j < 16; ++j) {
-      table[i16 + j] = alphabet[i] + alphabet[j]
-    }
-  }
-  return table
-})()
-
-// Return not function with Error if BigInt not supported
-function defineBigIntMethod (fn) {
-  return typeof BigInt === 'undefined' ? BufferBigIntNotDefined : fn
-}
-
-function BufferBigIntNotDefined () {
-  throw new Error('BigInt not supported')
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/events/events.js":
-/*!*********************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/events/events.js ***!
-  \*********************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -21790,152 +18638,13 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/index.js":
-/*!*******************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/index.js ***!
-  \*******************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-module.exports = Stream;
-
-var EE = (__webpack_require__(/*! events */ "./node_modules/node-polyfill-webpack-plugin/node_modules/events/events.js").EventEmitter);
-var inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js");
-
-inherits(Stream, EE);
-Stream.Readable = __webpack_require__(/*! readable-stream/lib/_stream_readable.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_readable.js");
-Stream.Writable = __webpack_require__(/*! readable-stream/lib/_stream_writable.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_writable.js");
-Stream.Duplex = __webpack_require__(/*! readable-stream/lib/_stream_duplex.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
-Stream.Transform = __webpack_require__(/*! readable-stream/lib/_stream_transform.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_transform.js");
-Stream.PassThrough = __webpack_require__(/*! readable-stream/lib/_stream_passthrough.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_passthrough.js");
-Stream.finished = __webpack_require__(/*! readable-stream/lib/internal/streams/end-of-stream.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/end-of-stream.js")
-Stream.pipeline = __webpack_require__(/*! readable-stream/lib/internal/streams/pipeline.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/pipeline.js")
-
-// Backwards-compat with node 0.4.x
-Stream.Stream = Stream;
-
-
-
-// old-style streams.  Note that the pipe method (the only relevant
-// part of this class) is overridden in the Readable class.
-
-function Stream() {
-  EE.call(this);
-}
-
-Stream.prototype.pipe = function(dest, options) {
-  var source = this;
-
-  function ondata(chunk) {
-    if (dest.writable) {
-      if (false === dest.write(chunk) && source.pause) {
-        source.pause();
-      }
-    }
-  }
-
-  source.on('data', ondata);
-
-  function ondrain() {
-    if (source.readable && source.resume) {
-      source.resume();
-    }
-  }
-
-  dest.on('drain', ondrain);
-
-  // If the 'end' option is not supplied, dest.end() will be called when
-  // source gets the 'end' or 'close' events.  Only dest.end() once.
-  if (!dest._isStdio && (!options || options.end !== false)) {
-    source.on('end', onend);
-    source.on('close', onclose);
-  }
-
-  var didOnEnd = false;
-  function onend() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    dest.end();
-  }
-
-
-  function onclose() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    if (typeof dest.destroy === 'function') dest.destroy();
-  }
-
-  // don't leave dangling pipes when there are errors.
-  function onerror(er) {
-    cleanup();
-    if (EE.listenerCount(this, 'error') === 0) {
-      throw er; // Unhandled stream error in pipe.
-    }
-  }
-
-  source.on('error', onerror);
-  dest.on('error', onerror);
-
-  // remove all the event listeners that were added.
-  function cleanup() {
-    source.removeListener('data', ondata);
-    dest.removeListener('drain', ondrain);
-
-    source.removeListener('end', onend);
-    source.removeListener('close', onclose);
-
-    source.removeListener('error', onerror);
-    dest.removeListener('error', onerror);
-
-    source.removeListener('end', cleanup);
-    source.removeListener('close', cleanup);
-
-    dest.removeListener('close', cleanup);
-  }
-
-  source.on('end', cleanup);
-  source.on('close', cleanup);
-
-  dest.on('close', cleanup);
-
-  dest.emit('pipe', source);
-
-  // Allow for unix-like usage: A.pipe(B).pipe(C)
-  return dest;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js":
-/*!*********************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js ***!
-  \*********************************************************************************************************************************/
-/***/ ((module) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js"
+/*!*****************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js ***!
+  \*****************************************************************************************/
+(module) {
 
 
 
@@ -22066,15 +18775,14 @@ createErrorType('ERR_STREAM_UNSHIFT_AFTER_END_EVENT', 'stream.unshift() after en
 module.exports.codes = codes;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js":
-/*!*************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js ***!
-  \*************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js"
+/*!*********************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js ***!
+  \*********************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22112,8 +18820,8 @@ var objectKeys = Object.keys || function (obj) {
 /*</replacement>*/
 
 module.exports = Duplex;
-var Readable = __webpack_require__(/*! ./_stream_readable */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_readable.js");
-var Writable = __webpack_require__(/*! ./_stream_writable */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_writable.js");
+var Readable = __webpack_require__(/*! ./_stream_readable */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_readable.js");
+var Writable = __webpack_require__(/*! ./_stream_writable */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_writable.js");
 __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js")(Duplex, Readable);
 {
   // Allow the keys array to be GC'ed.
@@ -22202,13 +18910,13 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
   }
 });
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_passthrough.js":
-/*!******************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_passthrough.js ***!
-  \******************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_passthrough.js"
+/*!**************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_passthrough.js ***!
+  \**************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -22238,7 +18946,7 @@ Object.defineProperty(Duplex.prototype, 'destroyed', {
 
 
 module.exports = PassThrough;
-var Transform = __webpack_require__(/*! ./_stream_transform */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_transform.js");
+var Transform = __webpack_require__(/*! ./_stream_transform */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_transform.js");
 __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js")(PassThrough, Transform);
 function PassThrough(options) {
   if (!(this instanceof PassThrough)) return new PassThrough(options);
@@ -22248,15 +18956,14 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_readable.js":
-/*!***************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_readable.js ***!
-  \***************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_readable.js"
+/*!***********************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_readable.js ***!
+  \***********************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22289,17 +18996,17 @@ var Duplex;
 Readable.ReadableState = ReadableState;
 
 /*<replacement>*/
-var EE = (__webpack_require__(/*! events */ "./node_modules/node-polyfill-webpack-plugin/node_modules/events/events.js").EventEmitter);
+var EE = (__webpack_require__(/*! events */ "./node_modules/node-stdlib-browser/node_modules/events/events.js").EventEmitter);
 var EElistenerCount = function EElistenerCount(emitter, type) {
   return emitter.listeners(type).length;
 };
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(/*! ./internal/streams/stream */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/stream-browser.js");
+var Stream = __webpack_require__(/*! ./internal/streams/stream */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/stream-browser.js");
 /*</replacement>*/
 
-var Buffer = (__webpack_require__(/*! buffer */ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js").Buffer);
+var Buffer = (__webpack_require__(/*! buffer */ "./node_modules/buffer/index.js").Buffer);
 var OurUint8Array = (typeof __webpack_require__.g !== 'undefined' ? __webpack_require__.g : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -22309,7 +19016,7 @@ function _isUint8Array(obj) {
 }
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(/*! util */ "?0fee");
+var debugUtil = __webpack_require__(/*! util */ "?b57c");
 var debug;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -22318,11 +19025,11 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(/*! ./internal/streams/buffer_list */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/buffer_list.js");
-var destroyImpl = __webpack_require__(/*! ./internal/streams/destroy */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/destroy.js");
-var _require = __webpack_require__(/*! ./internal/streams/state */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/state.js"),
+var BufferList = __webpack_require__(/*! ./internal/streams/buffer_list */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/buffer_list.js");
+var destroyImpl = __webpack_require__(/*! ./internal/streams/destroy */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/destroy.js");
+var _require = __webpack_require__(/*! ./internal/streams/state */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/state.js"),
   getHighWaterMark = _require.getHighWaterMark;
-var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes),
+var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes),
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PUSH_AFTER_EOF = _require$codes.ERR_STREAM_PUSH_AFTER_EOF,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
@@ -22347,7 +19054,7 @@ function prependListener(emitter, event, fn) {
   if (!emitter._events || !emitter._events[event]) emitter.on(event, fn);else if (Array.isArray(emitter._events[event])) emitter._events[event].unshift(fn);else emitter._events[event] = [fn, emitter._events[event]];
 }
 function ReadableState(options, stream, isDuplex) {
-  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
+  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
   options = options || {};
 
   // Duplex streams are both readable and writable, but share
@@ -22414,13 +19121,13 @@ function ReadableState(options, stream, isDuplex) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = (__webpack_require__(/*! string_decoder/ */ "./node_modules/node-polyfill-webpack-plugin/node_modules/string_decoder/lib/string_decoder.js").StringDecoder);
+    if (!StringDecoder) StringDecoder = (__webpack_require__(/*! string_decoder/ */ "./node_modules/node-stdlib-browser/node_modules/string_decoder/lib/string_decoder.js").StringDecoder);
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
 }
 function Readable(options) {
-  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
+  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
   if (!(this instanceof Readable)) return new Readable(options);
 
   // Checking for a Stream.Duplex instance is faster here instead of inside
@@ -22557,7 +19264,7 @@ Readable.prototype.isPaused = function () {
 
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = (__webpack_require__(/*! string_decoder/ */ "./node_modules/node-polyfill-webpack-plugin/node_modules/string_decoder/lib/string_decoder.js").StringDecoder);
+  if (!StringDecoder) StringDecoder = (__webpack_require__(/*! string_decoder/ */ "./node_modules/node-stdlib-browser/node_modules/string_decoder/lib/string_decoder.js").StringDecoder);
   var decoder = new StringDecoder(enc);
   this._readableState.decoder = decoder;
   // If setEncoding(null), decoder.encoding equals utf8
@@ -23176,7 +19883,7 @@ Readable.prototype.wrap = function (stream) {
 if (typeof Symbol === 'function') {
   Readable.prototype[Symbol.asyncIterator] = function () {
     if (createReadableStreamAsyncIterator === undefined) {
-      createReadableStreamAsyncIterator = __webpack_require__(/*! ./internal/streams/async_iterator */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/async_iterator.js");
+      createReadableStreamAsyncIterator = __webpack_require__(/*! ./internal/streams/async_iterator */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/async_iterator.js");
     }
     return createReadableStreamAsyncIterator(this);
   };
@@ -23273,7 +19980,7 @@ function endReadableNT(state, stream) {
 if (typeof Symbol === 'function') {
   Readable.from = function (iterable, opts) {
     if (from === undefined) {
-      from = __webpack_require__(/*! ./internal/streams/from */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/from-browser.js");
+      from = __webpack_require__(/*! ./internal/streams/from */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/from-browser.js");
     }
     return from(Readable, iterable, opts);
   };
@@ -23285,13 +19992,13 @@ function indexOf(xs, x) {
   return -1;
 }
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_transform.js":
-/*!****************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_transform.js ***!
-  \****************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_transform.js"
+/*!************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_transform.js ***!
+  \************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -23359,12 +20066,12 @@ function indexOf(xs, x) {
 
 
 module.exports = Transform;
-var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes),
+var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes),
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
   ERR_TRANSFORM_ALREADY_TRANSFORMING = _require$codes.ERR_TRANSFORM_ALREADY_TRANSFORMING,
   ERR_TRANSFORM_WITH_LENGTH_0 = _require$codes.ERR_TRANSFORM_WITH_LENGTH_0;
-var Duplex = __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
+var Duplex = __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
 __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js")(Transform, Duplex);
 function afterTransform(er, data) {
   var ts = this._transformState;
@@ -23484,15 +20191,14 @@ function done(stream, er, data) {
   return stream.push(null);
 }
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_writable.js":
-/*!***************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_writable.js ***!
-  \***************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_writable.js"
+/*!***********************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_writable.js ***!
+  \***********************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -23555,10 +20261,10 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(/*! ./internal/streams/stream */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/stream-browser.js");
+var Stream = __webpack_require__(/*! ./internal/streams/stream */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/stream-browser.js");
 /*</replacement>*/
 
-var Buffer = (__webpack_require__(/*! buffer */ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js").Buffer);
+var Buffer = (__webpack_require__(/*! buffer */ "./node_modules/buffer/index.js").Buffer);
 var OurUint8Array = (typeof __webpack_require__.g !== 'undefined' ? __webpack_require__.g : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}).Uint8Array || function () {};
 function _uint8ArrayToBuffer(chunk) {
   return Buffer.from(chunk);
@@ -23566,10 +20272,10 @@ function _uint8ArrayToBuffer(chunk) {
 function _isUint8Array(obj) {
   return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
 }
-var destroyImpl = __webpack_require__(/*! ./internal/streams/destroy */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/destroy.js");
-var _require = __webpack_require__(/*! ./internal/streams/state */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/state.js"),
+var destroyImpl = __webpack_require__(/*! ./internal/streams/destroy */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/destroy.js");
+var _require = __webpack_require__(/*! ./internal/streams/state */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/state.js"),
   getHighWaterMark = _require.getHighWaterMark;
-var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes),
+var _require$codes = (__webpack_require__(/*! ../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes),
   ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
   ERR_METHOD_NOT_IMPLEMENTED = _require$codes.ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK = _require$codes.ERR_MULTIPLE_CALLBACK,
@@ -23582,7 +20288,7 @@ var errorOrDestroy = destroyImpl.errorOrDestroy;
 __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js")(Writable, Stream);
 function nop() {}
 function WritableState(options, stream, isDuplex) {
-  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
+  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
   options = options || {};
 
   // Duplex streams are both readable and writable, but share
@@ -23724,7 +20430,7 @@ if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.protot
   };
 }
 function Writable(options) {
-  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/_stream_duplex.js");
+  Duplex = Duplex || __webpack_require__(/*! ./_stream_duplex */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
 
   // Writable ctor is applied to Duplexes, too.
   // `realHasInstance` is necessary because using plain `instanceof`
@@ -24135,22 +20841,21 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/async_iterator.js":
-/*!******************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/async_iterator.js ***!
-  \******************************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/async_iterator.js"
+/*!**************************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/async_iterator.js ***!
+  \**************************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 
 
 var _Object$setPrototypeO;
 function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-var finished = __webpack_require__(/*! ./end-of-stream */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/end-of-stream.js");
+var finished = __webpack_require__(/*! ./end-of-stream */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/end-of-stream.js");
 var kLastResolve = Symbol('lastResolve');
 var kLastReject = Symbol('lastReject');
 var kError = Symbol('error');
@@ -24325,13 +21030,13 @@ var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterat
 };
 module.exports = createReadableStreamAsyncIterator;
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/buffer_list.js":
-/*!***************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/buffer_list.js ***!
-  \***************************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/buffer_list.js"
+/*!***********************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/buffer_list.js ***!
+  \***********************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 
@@ -24343,9 +21048,9 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-var _require = __webpack_require__(/*! buffer */ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js"),
+var _require = __webpack_require__(/*! buffer */ "./node_modules/buffer/index.js"),
   Buffer = _require.Buffer;
-var _require2 = __webpack_require__(/*! util */ "?fd9c"),
+var _require2 = __webpack_require__(/*! util */ "?97a6"),
   inspect = _require2.inspect;
 var custom = inspect && inspect.custom || 'inspect';
 function copyBuffer(src, target, offset) {
@@ -24517,15 +21222,14 @@ module.exports = /*#__PURE__*/function () {
   return BufferList;
 }();
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/destroy.js":
-/*!***********************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/destroy.js ***!
-  \***********************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/destroy.js"
+/*!*******************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/destroy.js ***!
+  \*******************************************************************************************************/
+(module) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 
 
 // undocumented cb() API, needed for core, not for public API
@@ -24623,20 +21327,20 @@ module.exports = {
   errorOrDestroy: errorOrDestroy
 };
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/end-of-stream.js":
-/*!*****************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/end-of-stream.js ***!
-  \*****************************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/end-of-stream.js"
+/*!*************************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/end-of-stream.js ***!
+  \*************************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
 
 
 
-var ERR_STREAM_PREMATURE_CLOSE = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes).ERR_STREAM_PREMATURE_CLOSE;
+var ERR_STREAM_PREMATURE_CLOSE = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes).ERR_STREAM_PREMATURE_CLOSE;
 function once(callback) {
   var called = false;
   return function () {
@@ -24718,26 +21422,26 @@ function eos(stream, opts, callback) {
 }
 module.exports = eos;
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/from-browser.js":
-/*!****************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/from-browser.js ***!
-  \****************************************************************************************************************************************************/
-/***/ ((module) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/from-browser.js"
+/*!************************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/from-browser.js ***!
+  \************************************************************************************************************/
+(module) {
 
 module.exports = function () {
   throw new Error('Readable.from is not available in the browser')
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/pipeline.js":
-/*!************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/pipeline.js ***!
-  \************************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/pipeline.js"
+/*!********************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/pipeline.js ***!
+  \********************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 // Ported from https://github.com/mafintosh/pump with
 // permission from the author, Mathias Buus (@mafintosh).
@@ -24753,7 +21457,7 @@ function once(callback) {
     callback.apply(void 0, arguments);
   };
 }
-var _require$codes = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes),
+var _require$codes = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes),
   ERR_MISSING_ARGS = _require$codes.ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED = _require$codes.ERR_STREAM_DESTROYED;
 function noop(err) {
@@ -24769,7 +21473,7 @@ function destroyer(stream, reading, writing, callback) {
   stream.on('close', function () {
     closed = true;
   });
-  if (eos === undefined) eos = __webpack_require__(/*! ./end-of-stream */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/end-of-stream.js");
+  if (eos === undefined) eos = __webpack_require__(/*! ./end-of-stream */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/end-of-stream.js");
   eos(stream, {
     readable: reading,
     writable: writing
@@ -24826,17 +21530,17 @@ function pipeline() {
 }
 module.exports = pipeline;
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/state.js":
-/*!*********************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/state.js ***!
-  \*********************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/state.js"
+/*!*****************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/state.js ***!
+  \*****************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 
-var ERR_INVALID_OPT_VALUE = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/errors-browser.js").codes).ERR_INVALID_OPT_VALUE;
+var ERR_INVALID_OPT_VALUE = (__webpack_require__(/*! ../../../errors */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/errors-browser.js").codes).ERR_INVALID_OPT_VALUE;
 function highWaterMarkFrom(options, isDuplex, duplexKey) {
   return options.highWaterMark != null ? options.highWaterMark : isDuplex ? options[duplexKey] : null;
 }
@@ -24857,24 +21561,163 @@ module.exports = {
   getHighWaterMark: getHighWaterMark
 };
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/stream-browser.js":
-/*!******************************************************************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/stream-browserify/node_modules/readable-stream/lib/internal/streams/stream-browser.js ***!
-  \******************************************************************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/stream-browser.js"
+/*!**************************************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/stream-browser.js ***!
+  \**************************************************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
 
-module.exports = __webpack_require__(/*! events */ "./node_modules/node-polyfill-webpack-plugin/node_modules/events/events.js").EventEmitter;
+module.exports = __webpack_require__(/*! events */ "./node_modules/node-stdlib-browser/node_modules/events/events.js").EventEmitter;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/node-polyfill-webpack-plugin/node_modules/string_decoder/lib/string_decoder.js":
-/*!*****************************************************************************************************!*\
-  !*** ./node_modules/node-polyfill-webpack-plugin/node_modules/string_decoder/lib/string_decoder.js ***!
-  \*****************************************************************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ "./node_modules/node-stdlib-browser/node_modules/stream-browserify/index.js"
+/*!**********************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/stream-browserify/index.js ***!
+  \**********************************************************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+module.exports = Stream;
+
+var EE = (__webpack_require__(/*! events */ "./node_modules/node-stdlib-browser/node_modules/events/events.js").EventEmitter);
+var inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits_browser.js");
+
+inherits(Stream, EE);
+Stream.Readable = __webpack_require__(/*! readable-stream/lib/_stream_readable.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_readable.js");
+Stream.Writable = __webpack_require__(/*! readable-stream/lib/_stream_writable.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_writable.js");
+Stream.Duplex = __webpack_require__(/*! readable-stream/lib/_stream_duplex.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_duplex.js");
+Stream.Transform = __webpack_require__(/*! readable-stream/lib/_stream_transform.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_transform.js");
+Stream.PassThrough = __webpack_require__(/*! readable-stream/lib/_stream_passthrough.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/_stream_passthrough.js");
+Stream.finished = __webpack_require__(/*! readable-stream/lib/internal/streams/end-of-stream.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/end-of-stream.js")
+Stream.pipeline = __webpack_require__(/*! readable-stream/lib/internal/streams/pipeline.js */ "./node_modules/node-stdlib-browser/node_modules/readable-stream/lib/internal/streams/pipeline.js")
+
+// Backwards-compat with node 0.4.x
+Stream.Stream = Stream;
+
+
+
+// old-style streams.  Note that the pipe method (the only relevant
+// part of this class) is overridden in the Readable class.
+
+function Stream() {
+  EE.call(this);
+}
+
+Stream.prototype.pipe = function(dest, options) {
+  var source = this;
+
+  function ondata(chunk) {
+    if (dest.writable) {
+      if (false === dest.write(chunk) && source.pause) {
+        source.pause();
+      }
+    }
+  }
+
+  source.on('data', ondata);
+
+  function ondrain() {
+    if (source.readable && source.resume) {
+      source.resume();
+    }
+  }
+
+  dest.on('drain', ondrain);
+
+  // If the 'end' option is not supplied, dest.end() will be called when
+  // source gets the 'end' or 'close' events.  Only dest.end() once.
+  if (!dest._isStdio && (!options || options.end !== false)) {
+    source.on('end', onend);
+    source.on('close', onclose);
+  }
+
+  var didOnEnd = false;
+  function onend() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    dest.end();
+  }
+
+
+  function onclose() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    if (typeof dest.destroy === 'function') dest.destroy();
+  }
+
+  // don't leave dangling pipes when there are errors.
+  function onerror(er) {
+    cleanup();
+    if (EE.listenerCount(this, 'error') === 0) {
+      throw er; // Unhandled stream error in pipe.
+    }
+  }
+
+  source.on('error', onerror);
+  dest.on('error', onerror);
+
+  // remove all the event listeners that were added.
+  function cleanup() {
+    source.removeListener('data', ondata);
+    dest.removeListener('drain', ondrain);
+
+    source.removeListener('end', onend);
+    source.removeListener('close', onclose);
+
+    source.removeListener('error', onerror);
+    dest.removeListener('error', onerror);
+
+    source.removeListener('end', cleanup);
+    source.removeListener('close', cleanup);
+
+    dest.removeListener('close', cleanup);
+  }
+
+  source.on('end', cleanup);
+  source.on('close', cleanup);
+
+  dest.on('close', cleanup);
+
+  dest.emit('pipe', source);
+
+  // Allow for unix-like usage: A.pipe(B).pipe(C)
+  return dest;
+};
+
+
+/***/ },
+
+/***/ "./node_modules/node-stdlib-browser/node_modules/string_decoder/lib/string_decoder.js"
+/*!********************************************************************************************!*\
+  !*** ./node_modules/node-stdlib-browser/node_modules/string_decoder/lib/string_decoder.js ***!
+  \********************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -25173,335 +22016,13 @@ function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/object-keys/implementation.js":
-/*!****************************************************!*\
-  !*** ./node_modules/object-keys/implementation.js ***!
-  \****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var keysShim;
-if (!Object.keys) {
-	// modified from https://github.com/es-shims/es5-shim
-	var has = Object.prototype.hasOwnProperty;
-	var toStr = Object.prototype.toString;
-	var isArgs = __webpack_require__(/*! ./isArguments */ "./node_modules/object-keys/isArguments.js"); // eslint-disable-line global-require
-	var isEnumerable = Object.prototype.propertyIsEnumerable;
-	var hasDontEnumBug = !isEnumerable.call({ toString: null }, 'toString');
-	var hasProtoEnumBug = isEnumerable.call(function () {}, 'prototype');
-	var dontEnums = [
-		'toString',
-		'toLocaleString',
-		'valueOf',
-		'hasOwnProperty',
-		'isPrototypeOf',
-		'propertyIsEnumerable',
-		'constructor'
-	];
-	var equalsConstructorPrototype = function (o) {
-		var ctor = o.constructor;
-		return ctor && ctor.prototype === o;
-	};
-	var excludedKeys = {
-		$applicationCache: true,
-		$console: true,
-		$external: true,
-		$frame: true,
-		$frameElement: true,
-		$frames: true,
-		$innerHeight: true,
-		$innerWidth: true,
-		$onmozfullscreenchange: true,
-		$onmozfullscreenerror: true,
-		$outerHeight: true,
-		$outerWidth: true,
-		$pageXOffset: true,
-		$pageYOffset: true,
-		$parent: true,
-		$scrollLeft: true,
-		$scrollTop: true,
-		$scrollX: true,
-		$scrollY: true,
-		$self: true,
-		$webkitIndexedDB: true,
-		$webkitStorageInfo: true,
-		$window: true
-	};
-	var hasAutomationEqualityBug = (function () {
-		/* global window */
-		if (typeof window === 'undefined') { return false; }
-		for (var k in window) {
-			try {
-				if (!excludedKeys['$' + k] && has.call(window, k) && window[k] !== null && typeof window[k] === 'object') {
-					try {
-						equalsConstructorPrototype(window[k]);
-					} catch (e) {
-						return true;
-					}
-				}
-			} catch (e) {
-				return true;
-			}
-		}
-		return false;
-	}());
-	var equalsConstructorPrototypeIfNotBuggy = function (o) {
-		/* global window */
-		if (typeof window === 'undefined' || !hasAutomationEqualityBug) {
-			return equalsConstructorPrototype(o);
-		}
-		try {
-			return equalsConstructorPrototype(o);
-		} catch (e) {
-			return false;
-		}
-	};
-
-	keysShim = function keys(object) {
-		var isObject = object !== null && typeof object === 'object';
-		var isFunction = toStr.call(object) === '[object Function]';
-		var isArguments = isArgs(object);
-		var isString = isObject && toStr.call(object) === '[object String]';
-		var theKeys = [];
-
-		if (!isObject && !isFunction && !isArguments) {
-			throw new TypeError('Object.keys called on a non-object');
-		}
-
-		var skipProto = hasProtoEnumBug && isFunction;
-		if (isString && object.length > 0 && !has.call(object, 0)) {
-			for (var i = 0; i < object.length; ++i) {
-				theKeys.push(String(i));
-			}
-		}
-
-		if (isArguments && object.length > 0) {
-			for (var j = 0; j < object.length; ++j) {
-				theKeys.push(String(j));
-			}
-		} else {
-			for (var name in object) {
-				if (!(skipProto && name === 'prototype') && has.call(object, name)) {
-					theKeys.push(String(name));
-				}
-			}
-		}
-
-		if (hasDontEnumBug) {
-			var skipConstructor = equalsConstructorPrototypeIfNotBuggy(object);
-
-			for (var k = 0; k < dontEnums.length; ++k) {
-				if (!(skipConstructor && dontEnums[k] === 'constructor') && has.call(object, dontEnums[k])) {
-					theKeys.push(dontEnums[k]);
-				}
-			}
-		}
-		return theKeys;
-	};
-}
-module.exports = keysShim;
-
-
-/***/ }),
-
-/***/ "./node_modules/object-keys/index.js":
-/*!*******************************************!*\
-  !*** ./node_modules/object-keys/index.js ***!
-  \*******************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var slice = Array.prototype.slice;
-var isArgs = __webpack_require__(/*! ./isArguments */ "./node_modules/object-keys/isArguments.js");
-
-var origKeys = Object.keys;
-var keysShim = origKeys ? function keys(o) { return origKeys(o); } : __webpack_require__(/*! ./implementation */ "./node_modules/object-keys/implementation.js");
-
-var originalKeys = Object.keys;
-
-keysShim.shim = function shimObjectKeys() {
-	if (Object.keys) {
-		var keysWorksWithArguments = (function () {
-			// Safari 5.0 bug
-			var args = Object.keys(arguments);
-			return args && args.length === arguments.length;
-		}(1, 2));
-		if (!keysWorksWithArguments) {
-			Object.keys = function keys(object) { // eslint-disable-line func-name-matching
-				if (isArgs(object)) {
-					return originalKeys(slice.call(object));
-				}
-				return originalKeys(object);
-			};
-		}
-	} else {
-		Object.keys = keysShim;
-	}
-	return Object.keys || keysShim;
-};
-
-module.exports = keysShim;
-
-
-/***/ }),
-
-/***/ "./node_modules/object-keys/isArguments.js":
-/*!*************************************************!*\
-  !*** ./node_modules/object-keys/isArguments.js ***!
-  \*************************************************/
-/***/ ((module) => {
-
-
-
-var toStr = Object.prototype.toString;
-
-module.exports = function isArguments(value) {
-	var str = toStr.call(value);
-	var isArgs = str === '[object Arguments]';
-	if (!isArgs) {
-		isArgs = str !== '[object Array]' &&
-			value !== null &&
-			typeof value === 'object' &&
-			typeof value.length === 'number' &&
-			value.length >= 0 &&
-			toStr.call(value.callee) === '[object Function]';
-	}
-	return isArgs;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/object.assign/implementation.js":
-/*!******************************************************!*\
-  !*** ./node_modules/object.assign/implementation.js ***!
-  \******************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-// modified from https://github.com/es-shims/es6-shim
-var objectKeys = __webpack_require__(/*! object-keys */ "./node_modules/object-keys/index.js");
-var hasSymbols = __webpack_require__(/*! has-symbols/shams */ "./node_modules/has-symbols/shams.js")();
-var callBound = __webpack_require__(/*! call-bind/callBound */ "./node_modules/call-bind/callBound.js");
-var toObject = Object;
-var $push = callBound('Array.prototype.push');
-var $propIsEnumerable = callBound('Object.prototype.propertyIsEnumerable');
-var originalGetSymbols = hasSymbols ? Object.getOwnPropertySymbols : null;
-
-// eslint-disable-next-line no-unused-vars
-module.exports = function assign(target, source1) {
-	if (target == null) { throw new TypeError('target must be an object'); }
-	var to = toObject(target); // step 1
-	if (arguments.length === 1) {
-		return to; // step 2
-	}
-	for (var s = 1; s < arguments.length; ++s) {
-		var from = toObject(arguments[s]); // step 3.a.i
-
-		// step 3.a.ii:
-		var keys = objectKeys(from);
-		var getSymbols = hasSymbols && (Object.getOwnPropertySymbols || originalGetSymbols);
-		if (getSymbols) {
-			var syms = getSymbols(from);
-			for (var j = 0; j < syms.length; ++j) {
-				var key = syms[j];
-				if ($propIsEnumerable(from, key)) {
-					$push(keys, key);
-				}
-			}
-		}
-
-		// step 3.a.iii:
-		for (var i = 0; i < keys.length; ++i) {
-			var nextKey = keys[i];
-			if ($propIsEnumerable(from, nextKey)) { // step 3.a.iii.2
-				var propValue = from[nextKey]; // step 3.a.iii.2.a
-				to[nextKey] = propValue; // step 3.a.iii.2.b
-			}
-		}
-	}
-
-	return to; // step 4
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/object.assign/polyfill.js":
-/*!************************************************!*\
-  !*** ./node_modules/object.assign/polyfill.js ***!
-  \************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var implementation = __webpack_require__(/*! ./implementation */ "./node_modules/object.assign/implementation.js");
-
-var lacksProperEnumerationOrder = function () {
-	if (!Object.assign) {
-		return false;
-	}
-	/*
-	 * v8, specifically in node 4.x, has a bug with incorrect property enumeration order
-	 * note: this does not detect the bug unless there's 20 characters
-	 */
-	var str = 'abcdefghijklmnopqrst';
-	var letters = str.split('');
-	var map = {};
-	for (var i = 0; i < letters.length; ++i) {
-		map[letters[i]] = letters[i];
-	}
-	var obj = Object.assign({}, map);
-	var actual = '';
-	for (var k in obj) {
-		actual += k;
-	}
-	return str !== actual;
-};
-
-var assignHasPendingExceptions = function () {
-	if (!Object.assign || !Object.preventExtensions) {
-		return false;
-	}
-	/*
-	 * Firefox 37 still has "pending exception" logic in its Object.assign implementation,
-	 * which is 72% slower than our shim, and Firefox 40's native implementation.
-	 */
-	var thrower = Object.preventExtensions({ 1: 2 });
-	try {
-		Object.assign(thrower, 'xy');
-	} catch (e) {
-		return thrower[1] === 'y';
-	}
-	return false;
-};
-
-module.exports = function getPolyfill() {
-	if (!Object.assign) {
-		return implementation;
-	}
-	if (lacksProperEnumerationOrder()) {
-		return implementation;
-	}
-	if (assignHasPendingExceptions()) {
-		return implementation;
-	}
-	return Object.assign;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/pathval/index.js":
+/***/ "./node_modules/pathval/index.js"
 /*!***************************************!*\
   !*** ./node_modules/pathval/index.js ***!
   \***************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -25806,207 +22327,13 @@ module.exports = {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/process/browser.js":
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/***/ ((module) => {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ }),
-
-/***/ "./node_modules/safe-buffer/index.js":
+/***/ "./node_modules/safe-buffer/index.js"
 /*!*******************************************!*\
   !*** ./node_modules/safe-buffer/index.js ***!
   \*******************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
@@ -26075,65 +22402,13 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/set-function-length/index.js":
-/*!***************************************************!*\
-  !*** ./node_modules/set-function-length/index.js ***!
-  \***************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-
-
-var GetIntrinsic = __webpack_require__(/*! get-intrinsic */ "./node_modules/get-intrinsic/index.js");
-var define = __webpack_require__(/*! define-data-property */ "./node_modules/define-data-property/index.js");
-var hasDescriptors = __webpack_require__(/*! has-property-descriptors */ "./node_modules/has-property-descriptors/index.js")();
-var gOPD = __webpack_require__(/*! gopd */ "./node_modules/gopd/index.js");
-
-var $TypeError = __webpack_require__(/*! es-errors/type */ "./node_modules/es-errors/type.js");
-var $floor = GetIntrinsic('%Math.floor%');
-
-/** @type {import('.')} */
-module.exports = function setFunctionLength(fn, length) {
-	if (typeof fn !== 'function') {
-		throw new $TypeError('`fn` is not a function');
-	}
-	if (typeof length !== 'number' || length < 0 || length > 0xFFFFFFFF || $floor(length) !== length) {
-		throw new $TypeError('`length` must be a positive 32-bit integer');
-	}
-
-	var loose = arguments.length > 2 && !!arguments[2];
-
-	var functionLengthIsConfigurable = true;
-	var functionLengthIsWritable = true;
-	if ('length' in fn && gOPD) {
-		var desc = gOPD(fn, 'length');
-		if (desc && !desc.configurable) {
-			functionLengthIsConfigurable = false;
-		}
-		if (desc && !desc.writable) {
-			functionLengthIsWritable = false;
-		}
-	}
-
-	if (functionLengthIsConfigurable || functionLengthIsWritable || !loose) {
-		if (hasDescriptors) {
-			define(/** @type {Parameters<define>[0]} */ (fn), 'length', length, true, true);
-		} else {
-			define(/** @type {Parameters<define>[0]} */ (fn), 'length', length);
-		}
-	}
-	return fn;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/type-detect/type-detect.js":
+/***/ "./node_modules/type-detect/type-detect.js"
 /*!*************************************************!*\
   !*** ./node_modules/type-detect/type-detect.js ***!
   \*************************************************/
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 (function (global, factory) {
 	 true ? module.exports = factory() :
@@ -26524,15 +22799,14 @@ return typeDetect;
 })));
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/util-deprecate/browser.js":
+/***/ "./node_modules/util-deprecate/browser.js"
 /*!************************************************!*\
   !*** ./node_modules/util-deprecate/browser.js ***!
   \************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 
 /**
  * Module exports.
@@ -26602,13 +22876,13 @@ function config (name) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/util/node_modules/inherits/inherits_browser.js":
+/***/ "./node_modules/util/node_modules/inherits/inherits_browser.js"
 /*!*********************************************************************!*\
   !*** ./node_modules/util/node_modules/inherits/inherits_browser.js ***!
   \*********************************************************************/
-/***/ ((module) => {
+(module) {
 
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
@@ -26635,13 +22909,13 @@ if (typeof Object.create === 'function') {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/util/support/isBufferBrowser.js":
+/***/ "./node_modules/util/support/isBufferBrowser.js"
 /*!******************************************************!*\
   !*** ./node_modules/util/support/isBufferBrowser.js ***!
   \******************************************************/
-/***/ ((module) => {
+(module) {
 
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
@@ -26650,16 +22924,14 @@ module.exports = function isBuffer(arg) {
     && typeof arg.readUInt8 === 'function';
 }
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/util/util.js":
+/***/ "./node_modules/util/util.js"
 /*!***********************************!*\
   !*** ./node_modules/util/util.js ***!
   \***********************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27248,115 +23520,84 @@ function hasOwnProperty(obj, prop) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "?0ac7":
+/***/ "?0ac7"
 /*!**********************!*\
   !*** util (ignored) ***!
   \**********************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?f114":
-/*!********************!*\
-  !*** fs (ignored) ***!
-  \********************/
-/***/ (() => {
-
-/* (ignored) */
-
-/***/ }),
-
-/***/ "?3073":
-/*!**********************!*\
-  !*** path (ignored) ***!
-  \**********************/
-/***/ (() => {
-
-/* (ignored) */
-
-/***/ }),
-
-/***/ "?d996":
+/***/ "?d996"
 /*!********************************!*\
   !*** supports-color (ignored) ***!
   \********************************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?a0e8":
+/***/ "?a0e8"
 /*!************************************!*\
   !*** ./nodejs/esm-utils (ignored) ***!
   \************************************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?9e59":
+/***/ "?9e59"
 /*!****************************************!*\
   !*** ./nodejs/file-unloader (ignored) ***!
   \****************************************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?e9a5":
+/***/ "?e9a5"
 /*!***************************************************!*\
   !*** ./nodejs/parallel-buffered-runner (ignored) ***!
   \***************************************************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?c4b6":
-/*!**********************!*\
-  !*** path (ignored) ***!
-  \**********************/
-/***/ (() => {
-
-/* (ignored) */
-
-/***/ }),
-
-/***/ "?fd9c":
+/***/ "?97a6"
 /*!**********************!*\
   !*** util (ignored) ***!
   \**********************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "?0fee":
+/***/ "?b57c"
 /*!**********************!*\
   !*** util (ignored) ***!
   \**********************/
-/***/ (() => {
+() {
 
 /* (ignored) */
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/browser-entry.js":
+/***/ "./node_modules/mocha/browser-entry.js"
 /*!*********************************************!*\
   !*** ./node_modules/mocha/browser-entry.js ***!
   \*********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 
 
 /* eslint no-unused-vars: off */
@@ -27430,16 +23671,16 @@ process.listenerCount = function (name) {
 
 process.on = function (e, fn) {
   if (e === 'uncaughtException') {
-    __webpack_require__.g.onerror = function (err, url, line) {
-      fn(new Error(err + ' (' + url + ':' + line + ')'));
+    __webpack_require__.g.onerror = function (msg, url, line, col, err) {
+      fn(err || new Error(msg + ' (' + url + ':' + line + ':' + col + ')'));
       return !mocha.options.allowUncaught;
     };
     uncaughtExceptionHandlers.push(fn);
   }
 };
 
-process.listeners = function (e) {
-  if (e === 'uncaughtException') {
+process.listeners = function (err) {
+  if (err === 'uncaughtException') {
     return uncaughtExceptionHandlers;
   }
   return [];
@@ -27585,193 +23826,13 @@ __webpack_require__.g.mocha = mocha;
 module.exports = mocha;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/browser/growl.js":
-/*!*************************************************!*\
-  !*** ./node_modules/mocha/lib/browser/growl.js ***!
-  \*************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-
-
-/**
- * Web Notifications module.
- * @module Growl
- */
-
-/**
- * Save timer references to avoid Sinon interfering (see GH-237).
- */
-var Date = __webpack_require__.g.Date;
-var setTimeout = __webpack_require__.g.setTimeout;
-var EVENT_RUN_END = (__webpack_require__(/*! ../runner */ "./node_modules/mocha/lib/runner.js").constants).EVENT_RUN_END;
-var isBrowser = (__webpack_require__(/*! ../utils */ "./node_modules/mocha/lib/utils.js").isBrowser);
-
-/**
- * Checks if browser notification support exists.
- *
- * @public
- * @see {@link https://caniuse.com/#feat=notifications|Browser support (notifications)}
- * @see {@link https://caniuse.com/#feat=promises|Browser support (promises)}
- * @see {@link Mocha#growl}
- * @see {@link Mocha#isGrowlCapable}
- * @return {boolean} whether browser notification support exists
- */
-exports.isCapable = function () {
-  var hasNotificationSupport = 'Notification' in window;
-  var hasPromiseSupport = typeof Promise === 'function';
-  return isBrowser() && hasNotificationSupport && hasPromiseSupport;
-};
-
-/**
- * Implements browser notifications as a pseudo-reporter.
- *
- * @public
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/notification|Notification API}
- * @see {@link https://developers.google.com/web/fundamentals/push-notifications/display-a-notification|Displaying a Notification}
- * @see {@link Growl#isPermitted}
- * @see {@link Mocha#_growl}
- * @param {Runner} runner - Runner instance.
- */
-exports.notify = function (runner) {
-  var promise = isPermitted();
-
-  /**
-   * Attempt notification.
-   */
-  var sendNotification = function () {
-    // If user hasn't responded yet... "No notification for you!" (Seinfeld)
-    Promise.race([promise, Promise.resolve(undefined)])
-      .then(canNotify)
-      .then(function () {
-        display(runner);
-      })
-      .catch(notPermitted);
-  };
-
-  runner.once(EVENT_RUN_END, sendNotification);
-};
-
-/**
- * Checks if browser notification is permitted by user.
- *
- * @private
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Notification/permission|Notification.permission}
- * @see {@link Mocha#growl}
- * @see {@link Mocha#isGrowlPermitted}
- * @returns {Promise<boolean>} promise determining if browser notification
- *     permissible when fulfilled.
- */
-function isPermitted() {
-  var permitted = {
-    granted: function allow() {
-      return Promise.resolve(true);
-    },
-    denied: function deny() {
-      return Promise.resolve(false);
-    },
-    default: function ask() {
-      return Notification.requestPermission().then(function (permission) {
-        return permission === 'granted';
-      });
-    }
-  };
-
-  return permitted[Notification.permission]();
-}
-
-/**
- * @summary
- * Determines if notification should proceed.
- *
- * @description
- * Notification shall <strong>not</strong> proceed unless `value` is true.
- *
- * `value` will equal one of:
- * <ul>
- *   <li><code>true</code> (from `isPermitted`)</li>
- *   <li><code>false</code> (from `isPermitted`)</li>
- *   <li><code>undefined</code> (from `Promise.race`)</li>
- * </ul>
- *
- * @private
- * @param {boolean|undefined} value - Determines if notification permissible.
- * @returns {Promise<undefined>} Notification can proceed
- */
-function canNotify(value) {
-  if (!value) {
-    var why = value === false ? 'blocked' : 'unacknowledged';
-    var reason = 'not permitted by user (' + why + ')';
-    return Promise.reject(new Error(reason));
-  }
-  return Promise.resolve();
-}
-
-/**
- * Displays the notification.
- *
- * @private
- * @param {Runner} runner - Runner instance.
- */
-function display(runner) {
-  var stats = runner.stats;
-  var symbol = {
-    cross: '\u274C',
-    tick: '\u2705'
-  };
-  var logo = (__webpack_require__(/*! ../../package.json */ "./node_modules/mocha/package.json").notifyLogo);
-  var _message;
-  var message;
-  var title;
-
-  if (stats.failures) {
-    _message = stats.failures + ' of ' + stats.tests + ' tests failed';
-    message = symbol.cross + ' ' + _message;
-    title = 'Failed';
-  } else {
-    _message = stats.passes + ' tests passed in ' + stats.duration + 'ms';
-    message = symbol.tick + ' ' + _message;
-    title = 'Passed';
-  }
-
-  // Send notification
-  var options = {
-    badge: logo,
-    body: message,
-    dir: 'ltr',
-    icon: logo,
-    lang: 'en-US',
-    name: 'mocha',
-    requireInteraction: false,
-    timestamp: Date.now()
-  };
-  var notification = new Notification(title, options);
-
-  // Autoclose after brief delay (makes various browsers act same)
-  var FORCE_DURATION = 4000;
-  setTimeout(notification.close.bind(notification), FORCE_DURATION);
-}
-
-/**
- * As notifications are tangential to our purpose, just log the error.
- *
- * @private
- * @param {Error} err - Why notification didn't happen.
- */
-function notPermitted(err) {
-  console.error('notification error:', err.message);
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/mocha/lib/browser/highlight-tags.js":
+/***/ "./node_modules/mocha/lib/browser/highlight-tags.js"
 /*!**********************************************************!*\
   !*** ./node_modules/mocha/lib/browser/highlight-tags.js ***!
   \**********************************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -27814,13 +23875,13 @@ module.exports = function highlightTags(name) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/browser/parse-query.js":
+/***/ "./node_modules/mocha/lib/browser/parse-query.js"
 /*!*******************************************************!*\
   !*** ./node_modules/mocha/lib/browser/parse-query.js ***!
   \*******************************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -27848,147 +23909,19 @@ module.exports = function parseQuery(qs) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/browser/progress.js":
-/*!****************************************************!*\
-  !*** ./node_modules/mocha/lib/browser/progress.js ***!
-  \****************************************************/
-/***/ ((module) => {
-
-
-
-/**
- @module browser/Progress
-*/
-
-/**
- * Expose `Progress`.
- */
-
-module.exports = Progress;
-
-/**
- * Initialize a new `Progress` indicator.
- */
-function Progress() {
-  this.percent = 0;
-  this.size(0);
-  this.fontSize(11);
-  this.font('helvetica, arial, sans-serif');
-}
-
-/**
- * Set progress size to `size`.
- *
- * @public
- * @param {number} size
- * @return {Progress} Progress instance.
- */
-Progress.prototype.size = function (size) {
-  this._size = size;
-  return this;
-};
-
-/**
- * Set text to `text`.
- *
- * @public
- * @param {string} text
- * @return {Progress} Progress instance.
- */
-Progress.prototype.text = function (text) {
-  this._text = text;
-  return this;
-};
-
-/**
- * Set font size to `size`.
- *
- * @public
- * @param {number} size
- * @return {Progress} Progress instance.
- */
-Progress.prototype.fontSize = function (size) {
-  this._fontSize = size;
-  return this;
-};
-
-/**
- * Set font to `family`.
- *
- * @param {string} family
- * @return {Progress} Progress instance.
- */
-Progress.prototype.font = function (family) {
-  this._font = family;
-  return this;
-};
-
-/**
- * Update percentage to `n`.
- *
- * @param {number} n
- * @return {Progress} Progress instance.
- */
-Progress.prototype.update = function (n) {
-  this.percent = n;
-  return this;
-};
-
-/**
- * Draw on `ctx`.
- *
- * @param {CanvasRenderingContext2d} ctx
- * @return {Progress} Progress instance.
- */
-Progress.prototype.draw = function (ctx) {
-  try {
-    var percent = Math.min(this.percent, 100);
-    var size = this._size;
-    var half = size / 2;
-    var x = half;
-    var y = half;
-    var rad = half - 1;
-    var fontSize = this._fontSize;
-
-    ctx.font = fontSize + 'px ' + this._font;
-
-    var angle = Math.PI * 2 * (percent / 100);
-    ctx.clearRect(0, 0, size, size);
-
-    // outer circle
-    ctx.strokeStyle = '#9f9f9f';
-    ctx.beginPath();
-    ctx.arc(x, y, rad, 0, angle, false);
-    ctx.stroke();
-
-    // inner circle
-    ctx.strokeStyle = '#eee';
-    ctx.beginPath();
-    ctx.arc(x, y, rad - 1, 0, angle, true);
-    ctx.stroke();
-
-    // text
-    var text = this._text || (percent | 0) + '%';
-    var w = ctx.measureText(text).width;
-
-    ctx.fillText(text, x - w / 2 + 1, y + fontSize / 2 - 1);
-  } catch (ignore) {
-    // don't fail if we can't render progress
-  }
-  return this;
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/mocha/lib/context.js":
+/***/ "./node_modules/mocha/lib/context.js"
 /*!*******************************************!*\
   !*** ./node_modules/mocha/lib/context.js ***!
   \*******************************************/
-/***/ ((module) => {
+(module) {
 
+
+
+/**
+ * @typedef {import('./runnable.js')} Runnable
+ */
 
 /**
  * @module Context
@@ -28077,70 +24010,15 @@ Context.prototype.retries = function (n) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/errors.js":
-/*!******************************************!*\
-  !*** ./node_modules/mocha/lib/errors.js ***!
-  \******************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/***/ "./node_modules/mocha/lib/error-constants.js"
+/*!***************************************************!*\
+  !*** ./node_modules/mocha/lib/error-constants.js ***!
+  \***************************************************/
+(module) {
 
 
-const {format} = __webpack_require__(/*! util */ "./node_modules/util/util.js");
-
-/**
- * Contains error codes, factory functions to create throwable error objects,
- * and warning/deprecation functions.
- * @module
- */
-
-/**
- * process.emitWarning or a polyfill
- * @see https://nodejs.org/api/process.html#process_process_emitwarning_warning_options
- * @ignore
- */
-const emitWarning = (msg, type) => {
-  if (process.emitWarning) {
-    process.emitWarning(msg, type);
-  } else {
-    /* istanbul ignore next */
-    process.nextTick(function () {
-      console.warn(type + ': ' + msg);
-    });
-  }
-};
-
-/**
- * Show a deprecation warning. Each distinct message is only displayed once.
- * Ignores empty messages.
- *
- * @param {string} [msg] - Warning to print
- * @private
- */
-const deprecate = msg => {
-  msg = String(msg);
-  if (msg && !deprecate.cache[msg]) {
-    deprecate.cache[msg] = true;
-    emitWarning(msg, 'DeprecationWarning');
-  }
-};
-deprecate.cache = {};
-
-/**
- * Show a generic warning.
- * Ignores empty messages.
- *
- * @param {string} [msg] - Warning to print
- * @private
- */
-const warn = msg => {
-  if (msg) {
-    emitWarning(msg);
-  }
-};
 
 /**
  * When Mocha throws exceptions (or rejects `Promise`s), it attempts to assign a `code` property to the `Error` object, for easier handling. These are the potential values of `code`.
@@ -28260,6 +24138,80 @@ var constants = {
    * @default
    */
   UNPARSABLE_FILE: 'ERR_MOCHA_UNPARSABLE_FILE'
+};
+
+module.exports = { constants };
+
+
+/***/ },
+
+/***/ "./node_modules/mocha/lib/errors.js"
+/*!******************************************!*\
+  !*** ./node_modules/mocha/lib/errors.js ***!
+  \******************************************/
+(module, __unused_webpack_exports, __webpack_require__) {
+
+
+
+/**
+ * @typedef {import('./mocha.js')} Mocha
+ * @typedef {import('./runnable.js')} Runnable
+ * @typedef {import('./types.d.ts').MochaTimeoutError} MochaTimeoutError
+ * @typedef {import('./types.d.ts').PluginDefinition} PluginDefinition
+ */
+
+const {format} = __webpack_require__(/*! node:util */ "node:util");
+const { constants } = __webpack_require__(/*! ./error-constants.js */ "./node_modules/mocha/lib/error-constants.js");
+
+/**
+ * Contains error codes, factory functions to create throwable error objects,
+ * and warning/deprecation functions.
+ * @module
+ */
+
+/**
+ * process.emitWarning or a polyfill
+ * @see https://nodejs.org/api/process.html#process_process_emitwarning_warning_options
+ * @ignore
+ */
+const emitWarning = (msg, type) => {
+  if (process.emitWarning) {
+    process.emitWarning(msg, type);
+  } else {
+    /* istanbul ignore next */
+    process.nextTick(function () {
+      console.warn(type + ': ' + msg);
+    });
+  }
+};
+
+/**
+ * Show a deprecation warning. Each distinct message is only displayed once.
+ * Ignores empty messages.
+ *
+ * @param {string} [msg] - Warning to print
+ * @private
+ */
+const deprecate = msg => {
+  msg = String(msg);
+  if (msg && !deprecate.cache[msg]) {
+    deprecate.cache[msg] = true;
+    emitWarning(msg, 'DeprecationWarning');
+  }
+};
+deprecate.cache = {};
+
+/**
+ * Show a generic warning.
+ * Ignores empty messages.
+ *
+ * @param {string} [msg] - Warning to print
+ * @private
+ */
+const warn = msg => {
+  if (msg) {
+    emitWarning(msg);
+  }
 };
 
 /**
@@ -28596,10 +24548,9 @@ function createTimeoutError(msg, timeout, file) {
  * @public
  * @static
  * @param {string} message - Error message to be displayed.
- * @param {string} filename - File name
  * @returns {Error} Error with code {@link constants.UNPARSABLE_FILE}
  */
-function createUnparsableFileError(message, filename) {
+function createUnparsableFileError(message) {
   var err = new Error(message);
   err.code = constants.UNPARSABLE_FILE;
   return err;
@@ -28617,7 +24568,6 @@ const isMochaError = err =>
   Boolean(err && typeof err === 'object' && MOCHA_ERRORS.has(err.code));
 
 module.exports = {
-  constants,
   createFatalError,
   createForbiddenExclusivityError,
   createInvalidArgumentTypeError,
@@ -28642,23 +24592,14 @@ module.exports = {
   warn
 };
 
-/**
- * The error thrown when a Runnable times out
- * @memberof module:lib/errors
- * @typedef {Error} MochaTimeoutError
- * @property {constants.TIMEOUT} code - Error code
- * @property {number?} timeout Timeout in ms
- * @property {string?} file Filepath, if given
- */
 
+/***/ },
 
-/***/ }),
-
-/***/ "./node_modules/mocha/lib/hook.js":
+/***/ "./node_modules/mocha/lib/hook.js"
 /*!****************************************!*\
   !*** ./node_modules/mocha/lib/hook.js ***!
   \****************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 
@@ -28751,15 +24692,19 @@ Hook.prototype.serialize = function serialize() {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/bdd.js":
+/***/ "./node_modules/mocha/lib/interfaces/bdd.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/bdd.js ***!
   \**************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('../suite.js')} Suite
+ */
 
 var Test = __webpack_require__(/*! ../test */ "./node_modules/mocha/lib/test.js");
 var EVENT_FILE_PRE_REQUIRE =
@@ -28801,9 +24746,9 @@ module.exports = function bddInterface(suite) {
 
     context.describe = context.context = function (title, fn) {
       return common.suite.create({
-        title: title,
-        file: file,
-        fn: fn
+        title,
+        file,
+        fn
       });
     };
 
@@ -28816,9 +24761,9 @@ module.exports = function bddInterface(suite) {
       context.describe.skip =
         function (title, fn) {
           return common.suite.skip({
-            title: title,
-            file: file,
-            fn: fn
+            title,
+            file,
+            fn
           });
         };
 
@@ -28828,9 +24773,9 @@ module.exports = function bddInterface(suite) {
 
     context.describe.only = function (title, fn) {
       return common.suite.only({
-        title: title,
-        file: file,
-        fn: fn
+        title,
+        file,
+        fn
       });
     };
 
@@ -28875,15 +24820,20 @@ module.exports = function bddInterface(suite) {
 module.exports.description = 'BDD or RSpec style [default]';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/common.js":
+/***/ "./node_modules/mocha/lib/interfaces/common.js"
 /*!*****************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/common.js ***!
   \*****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('../context.js')} Context
+ * @typedef {import('../mocha.js')} Mocha
+ */
 
 /**
  @module interfaces/common
@@ -28942,7 +24892,7 @@ module.exports = function (suites, context, mocha) {
      * @param {Function} fn
      */
     before: function (name, fn) {
-      suites[0].beforeAll(name, fn);
+      return suites[0].beforeAll(name, fn);
     },
 
     /**
@@ -28952,7 +24902,7 @@ module.exports = function (suites, context, mocha) {
      * @param {Function} fn
      */
     after: function (name, fn) {
-      suites[0].afterAll(name, fn);
+      return suites[0].afterAll(name, fn);
     },
 
     /**
@@ -28962,7 +24912,7 @@ module.exports = function (suites, context, mocha) {
      * @param {Function} fn
      */
     beforeEach: function (name, fn) {
-      suites[0].beforeEach(name, fn);
+      return suites[0].beforeEach(name, fn);
     },
 
     /**
@@ -28972,7 +24922,7 @@ module.exports = function (suites, context, mocha) {
      * @param {Function} fn
      */
     afterEach: function (name, fn) {
-      suites[0].afterEach(name, fn);
+      return suites[0].afterEach(name, fn);
     },
 
     suite: {
@@ -29078,13 +25028,13 @@ module.exports = function (suites, context, mocha) {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/exports.js":
+/***/ "./node_modules/mocha/lib/interfaces/exports.js"
 /*!******************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/exports.js ***!
   \******************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 var Suite = __webpack_require__(/*! ../suite */ "./node_modules/mocha/lib/suite.js");
@@ -29148,13 +25098,13 @@ module.exports = function (suite) {
 module.exports.description = 'Node.js module ("exports") style';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/index.js":
+/***/ "./node_modules/mocha/lib/interfaces/index.js"
 /*!****************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/index.js ***!
   \****************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 
 
@@ -29164,15 +25114,18 @@ exports.qunit = __webpack_require__(/*! ./qunit */ "./node_modules/mocha/lib/int
 exports.exports = __webpack_require__(/*! ./exports */ "./node_modules/mocha/lib/interfaces/exports.js");
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/qunit.js":
+/***/ "./node_modules/mocha/lib/interfaces/qunit.js"
 /*!****************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/qunit.js ***!
   \****************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
+/**
+ * @typedef {import('../suite.js')} Suite
+ */
 
 var Test = __webpack_require__(/*! ../test */ "./node_modules/mocha/lib/test.js");
 var EVENT_FILE_PRE_REQUIRE =
@@ -29223,8 +25176,8 @@ module.exports = function qUnitInterface(suite) {
         suites.shift();
       }
       return common.suite.create({
-        title: title,
-        file: file,
+        title,
+        file,
         fn: false
       });
     };
@@ -29238,8 +25191,8 @@ module.exports = function qUnitInterface(suite) {
         suites.shift();
       }
       return common.suite.only({
-        title: title,
-        file: file,
+        title,
+        file,
         fn: false
       });
     };
@@ -29272,15 +25225,19 @@ module.exports = function qUnitInterface(suite) {
 module.exports.description = 'QUnit style';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/interfaces/tdd.js":
+/***/ "./node_modules/mocha/lib/interfaces/tdd.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/interfaces/tdd.js ***!
   \**************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('../suite.js')} Suite
+ */
 
 var Test = __webpack_require__(/*! ../test */ "./node_modules/mocha/lib/test.js");
 var EVENT_FILE_PRE_REQUIRE =
@@ -29329,9 +25286,9 @@ module.exports = function (suite) {
      */
     context.suite = function (title, fn) {
       return common.suite.create({
-        title: title,
-        file: file,
-        fn: fn
+        title,
+        file,
+        fn
       });
     };
 
@@ -29340,9 +25297,9 @@ module.exports = function (suite) {
      */
     context.suite.skip = function (title, fn) {
       return common.suite.skip({
-        title: title,
-        file: file,
-        fn: fn
+        title,
+        file,
+        fn
       });
     };
 
@@ -29351,9 +25308,9 @@ module.exports = function (suite) {
      */
     context.suite.only = function (title, fn) {
       return common.suite.only({
-        title: title,
-        file: file,
-        fn: fn
+        title,
+        file,
+        fn
       });
     };
 
@@ -29388,16 +25345,15 @@ module.exports.description =
   'traditional "suite"/"test" instead of BDD\'s "describe"/"it"';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/mocha.js":
+/***/ "./node_modules/mocha/lib/mocha.js"
 /*!*****************************************!*\
   !*** ./node_modules/mocha/lib/mocha.js ***!
   \*****************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
 /* module decorator */ module = __webpack_require__.nmd(module);
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 
 
 /*!
@@ -29407,9 +25363,8 @@ module.exports.description =
  */
 
 var escapeRe = __webpack_require__(/*! escape-string-regexp */ "./node_modules/mocha/node_modules/escape-string-regexp/index.js");
-var path = __webpack_require__(/*! path */ "?c4b6");
+var path = __webpack_require__(/*! node:path */ "node:path");
 var builtinReporters = __webpack_require__(/*! ./reporters */ "./node_modules/mocha/lib/reporters/index.js");
-var growl = __webpack_require__(/*! ./nodejs/growl */ "./node_modules/mocha/lib/browser/growl.js");
 var utils = __webpack_require__(/*! ./utils */ "./node_modules/mocha/lib/utils.js");
 var mocharc = __webpack_require__(/*! ./mocharc.json */ "./node_modules/mocha/lib/mocharc.json");
 var Suite = __webpack_require__(/*! ./suite */ "./node_modules/mocha/lib/suite.js");
@@ -29425,6 +25380,14 @@ const {
 const {EVENT_FILE_PRE_REQUIRE, EVENT_FILE_POST_REQUIRE, EVENT_FILE_REQUIRE} =
   Suite.constants;
 var debug = __webpack_require__(/*! debug */ "./node_modules/mocha/node_modules/debug/src/browser.js")('mocha:mocha');
+
+/**
+ * @typedef {import('./types.d.ts').DoneCB} DoneCB
+ * @typedef {import('./types.d.ts').MochaGlobalFixture} MochaGlobalFixture
+ * @typedef {import('./types.d.ts').MochaOptions} MochaOptions
+ * @typedef {import('./types.d.ts').MochaRootHookObject} MochaRootHookObject
+ * @typedef {import('./types.d.ts').Reporter} Reporter
+ */
 
 exports = module.exports = Mocha;
 
@@ -29549,37 +25512,7 @@ exports.run = function (...args) {
  *
  * @public
  * @class Mocha
- * @param {Object} [options] - Settings object.
- * @param {boolean} [options.allowUncaught] - Propagate uncaught errors?
- * @param {boolean} [options.asyncOnly] - Force `done` callback or promise?
- * @param {boolean} [options.bail] - Bail after first test failure?
- * @param {boolean} [options.checkLeaks] - Check for global variable leaks?
- * @param {boolean} [options.color] - Color TTY output from reporter?
- * @param {boolean} [options.delay] - Delay root suite execution?
- * @param {boolean} [options.diff] - Show diff on failure?
- * @param {boolean} [options.dryRun] - Report tests without running them?
- * @param {boolean} [options.failZero] - Fail test run if zero tests?
- * @param {string} [options.fgrep] - Test filter given string.
- * @param {boolean} [options.forbidOnly] - Tests marked `only` fail the suite?
- * @param {boolean} [options.forbidPending] - Pending tests fail the suite?
- * @param {boolean} [options.fullTrace] - Full stacktrace upon failure?
- * @param {string[]} [options.global] - Variables expected in global scope.
- * @param {RegExp|string} [options.grep] - Test filter given regular expression.
- * @param {boolean} [options.growl] - Enable desktop notifications?
- * @param {boolean} [options.inlineDiffs] - Display inline diffs?
- * @param {boolean} [options.invert] - Invert test filter matches?
- * @param {boolean} [options.noHighlighting] - Disable syntax highlighting?
- * @param {string|constructor} [options.reporter] - Reporter name or constructor.
- * @param {Object} [options.reporterOption] - Reporter settings object.
- * @param {number} [options.retries] - Number of times to retry failed tests.
- * @param {number} [options.slow] - Slow threshold value.
- * @param {number|string} [options.timeout] - Timeout threshold value.
- * @param {string} [options.ui] - Interface name.
- * @param {boolean} [options.parallel] - Run jobs in parallel.
- * @param {number} [options.jobs] - Max number of worker processes for parallel runs.
- * @param {MochaRootHookObject} [options.rootHooks] - Hooks to bootstrap the root suite with.
- * @param {string[]} [options.require] - Pathname of `rootHooks` plugin for parallel runs.
- * @param {boolean} [options.isWorker] - Should be `true` if `Mocha` process is running in a worker process.
+ * @param {MochaOptions} [options] - Settings object.
  */
 function Mocha(options = {}) {
   options = {...mocharc, ...options};
@@ -29595,7 +25528,9 @@ function Mocha(options = {}) {
     .ui(options.ui)
     .reporter(
       options.reporter,
-      options.reporterOption || options.reporterOptions // for backwards compability
+      options['reporter-option'] ||
+        options.reporterOption ||
+        options.reporterOptions // for backwards compatibility
     )
     .slow(options.slow)
     .global(options.global);
@@ -29618,11 +25553,11 @@ function Mocha(options = {}) {
     'delay',
     'diff',
     'dryRun',
+    'passOnFailingTestSuite',
     'failZero',
     'forbidOnly',
     'forbidPending',
     'fullTrace',
-    'growl',
     'inlineDiffs',
     'invert'
   ].forEach(function (opt) {
@@ -29712,7 +25647,7 @@ Mocha.prototype.addFile = function (file) {
  * @public
  * @see [CLI option](../#-reporter-name-r-name)
  * @see [Reporters](../#reporters)
- * @param {String|Function} reporterName - Reporter name or constructor.
+ * @param {String|Reporter} reporterName - Reporter name or constructor.
  * @param {Object} [reporterOptions] - Options used to configure the reporter.
  * @returns {Mocha} this
  * @chainable
@@ -29745,8 +25680,8 @@ Mocha.prototype.reporter = function (reporterName, reporterOptions) {
         // Try to load reporters from a cwd-relative path
         try {
           reporter = __webpack_require__("./node_modules/mocha/lib sync recursive")(path.resolve(reporterName));
-        } catch (e) {
-          throw createInvalidReporterError(e.message, reporterName);
+        } catch (err) {
+          throw createInvalidReporterError(err.message, reporterName);
         }
       }
     }
@@ -29832,6 +25767,8 @@ Mocha.prototype.loadFiles = function (fn) {
  * @see {@link Mocha#addFile}
  * @see {@link Mocha#run}
  * @see {@link Mocha#unloadFiles}
+ * @param {Object} [options] - Settings object.
+ * @param {Function} [options.esmDecorator] - Function invoked on esm module name right before importing it. By default will passthrough as is.
  * @returns {Promise}
  * @example
  *
@@ -29840,7 +25777,7 @@ Mocha.prototype.loadFiles = function (fn) {
  *   .then(() => mocha.run(failures => process.exitCode = failures ? 1 : 0))
  *   .catch(() => process.exitCode = 1);
  */
-Mocha.prototype.loadFilesAsync = function () {
+Mocha.prototype.loadFilesAsync = function ({esmDecorator} = {}) {
   var self = this;
   var suite = this.suite;
   this.lazyLoadFiles(true);
@@ -29853,7 +25790,8 @@ Mocha.prototype.loadFilesAsync = function () {
     function (file, resultModule) {
       suite.emit(EVENT_FILE_REQUIRE, resultModule, file, self);
       suite.emit(EVENT_FILE_POST_REQUIRE, __webpack_require__.g, file, self);
-    }
+    },
+    esmDecorator
   );
 };
 
@@ -29868,7 +25806,7 @@ Mocha.prototype.loadFilesAsync = function () {
 Mocha.unloadFile = function (file) {
   if (utils.isBrowser()) {
     throw createUnsupportedError(
-      'unloadFile() is only suported in a Node.js environment'
+      'unloadFile() is only supported in a Node.js environment'
     );
   }
   return (__webpack_require__(/*! ./nodejs/file-unloader */ "?9e59").unloadFile)(file);
@@ -30048,49 +25986,6 @@ Mocha.prototype.fullTrace = function (fullTrace) {
 };
 
 /**
- * Enables desktop notification support if prerequisite software installed.
- *
- * @public
- * @see [CLI option](../#-growl-g)
- * @return {Mocha} this
- * @chainable
- */
-Mocha.prototype.growl = function () {
-  this.options.growl = this.isGrowlCapable();
-  if (!this.options.growl) {
-    var detail = utils.isBrowser()
-      ? 'notification support not available in this browser...'
-      : 'notification support prerequisites not installed...';
-    console.error(detail + ' cannot enable!');
-  }
-  return this;
-};
-
-/**
- * @summary
- * Determines if Growl support seems likely.
- *
- * @description
- * <strong>Not available when run in browser.</strong>
- *
- * @private
- * @see {@link Growl#isCapable}
- * @see {@link Mocha#growl}
- * @return {boolean} whether Growl support can be expected
- */
-Mocha.prototype.isGrowlCapable = growl.isCapable;
-
-/**
- * Implements desktop notifications using a pseudo-reporter.
- *
- * @private
- * @see {@link Mocha#growl}
- * @see {@link Growl#notify}
- * @param {Runner} runner - Runner instance.
- */
-Mocha.prototype._growl = growl.notify;
-
-/**
  * Specifies whitelist of variable names to be expected in global scope.
  *
  * @public
@@ -30113,7 +26008,7 @@ Mocha.prototype.global = function (global) {
     });
   return this;
 };
-// for backwards compability, 'globals' is an alias of 'global'
+// for backwards compatibility, 'globals' is an alias of 'global'
 Mocha.prototype.globals = Mocha.prototype.global;
 
 /**
@@ -30314,6 +26209,20 @@ Mocha.prototype.failZero = function (failZero) {
 };
 
 /**
+ * Fail test run if tests were failed.
+ *
+ * @public
+ * @see [CLI option](../#-pass-on-failing-test-suite)
+ * @param {boolean} [passOnFailingTestSuite=false] - Whether to fail test run.
+ * @return {Mocha} this
+ * @chainable
+ */
+Mocha.prototype.passOnFailingTestSuite = function(passOnFailingTestSuite) {
+  this.options.passOnFailingTestSuite = passOnFailingTestSuite === true;
+  return this;
+};
+
+/**
  * Causes tests marked `only` to fail the suite.
  *
  * @public
@@ -30379,14 +26288,6 @@ Object.defineProperty(Mocha.prototype, 'version', {
 });
 
 /**
- * Callback to be invoked when test execution is complete.
- *
- * @private
- * @callback DoneCB
- * @param {number} failures - Number of failures that occurred.
- */
-
-/**
  * Runs root suite and invokes `fn()` when complete.
  *
  * @description
@@ -30398,7 +26299,7 @@ Object.defineProperty(Mocha.prototype, 'version', {
  * @see {@link Mocha#unloadFiles}
  * @see {@link Runner#run}
  * @param {DoneCB} [fn] - Callback invoked when test execution completed.
- * @returns {Runner} runner instance
+ * @returns {import("./runner.js")} runner instance
  * @example
  *
  * // exit with non-zero status if there were test failures
@@ -30436,9 +26337,6 @@ Mocha.prototype.run = function (fn) {
   }
   if (options.global) {
     runner.globals(options.global);
-  }
-  if (options.growl) {
-    this._growl(runner);
   }
   if (options.color !== undefined) {
     exports.reporters.Base.useColors = options.color;
@@ -30712,63 +26610,14 @@ Mocha.prototype.hasGlobalTeardownFixtures =
     return Boolean(this.options.globalTeardown.length);
   };
 
-/**
- * An alternative way to define root hooks that works with parallel runs.
- * @typedef {Object} MochaRootHookObject
- * @property {Function|Function[]} [beforeAll] - "Before all" hook(s)
- * @property {Function|Function[]} [beforeEach] - "Before each" hook(s)
- * @property {Function|Function[]} [afterAll] - "After all" hook(s)
- * @property {Function|Function[]} [afterEach] - "After each" hook(s)
- */
 
-/**
- * An function that returns a {@link MochaRootHookObject}, either sync or async.
-   @callback MochaRootHookFunction
- * @returns {MochaRootHookObject|Promise<MochaRootHookObject>}
- */
+/***/ },
 
-/**
- * A function that's invoked _once_ which is either sync or async.
- * Can be a "teardown" or "setup".  These will all share the same context.
- * @callback MochaGlobalFixture
- * @returns {void|Promise<void>}
- */
-
-/**
- * An object making up all necessary parts of a plugin loader and aggregator
- * @typedef {Object} PluginDefinition
- * @property {string} exportName - Named export to use
- * @property {string} [optionName] - Option name for Mocha constructor (use `exportName` if omitted)
- * @property {PluginValidator} [validate] - Validator function
- * @property {PluginFinalizer} [finalize] - Finalizer/aggregator function
- */
-
-/**
- * A (sync) function to assert a user-supplied plugin implementation is valid.
- *
- * Defined in a {@link PluginDefinition}.
-
- * @callback PluginValidator
- * @param {*} value - Value to check
- * @this {PluginDefinition}
- * @returns {void}
- */
-
-/**
- * A function to finalize plugins impls of a particular ilk
- * @callback PluginFinalizer
- * @param {Array<*>} impls - User-supplied implementations
- * @returns {Promise<*>|*}
- */
-
-
-/***/ }),
-
-/***/ "./node_modules/mocha/lib/pending.js":
+/***/ "./node_modules/mocha/lib/pending.js"
 /*!*******************************************!*\
   !*** ./node_modules/mocha/lib/pending.js ***!
   \*******************************************/
-/***/ ((module) => {
+(module) {
 
 
 
@@ -30788,16 +26637,21 @@ function Pending(message) {
 }
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/base.js":
+/***/ "./node_modules/mocha/lib/reporters/base.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/base.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ * @typedef {import('../test.js')} Test
+ * @typedef {import('../types.d.ts').FullErrorStack} FullErrorStack
+ */
 
 /**
  * @module Base
@@ -31022,6 +26876,56 @@ var generateDiff = (exports.generateDiff = function (actual, expected) {
 });
 
 /**
+ * Traverses err.cause and returns all stack traces
+ *
+ * @private
+ * @param {Error} err
+ * @param {Set<Error>} [seen]
+ * @return {FullErrorStack}
+ */
+var getFullErrorStack = function (err, seen) {
+  if (seen && seen.has(err)) {
+    return { message: '', msg: '<circular>', stack: '' };
+  }
+
+  var message;
+
+  if (typeof err.inspect === 'function') {
+    message = err.inspect() + '';
+  } else if (err.message && typeof err.message.toString === 'function') {
+    message = err.message + '';
+  } else {
+    message = '';
+  }
+
+  var msg;
+  var stack = err.stack || message;
+  var index = message ? stack.indexOf(message) : -1;
+
+  if (index === -1) {
+    msg = message;
+  } else {
+    index += message.length;
+    msg = stack.slice(0, index);
+    // remove msg from stack
+    stack = stack.slice(index + 1);
+
+    if (err.cause) {
+      seen = seen || new Set();
+      seen.add(err);
+      const causeStack = getFullErrorStack(err.cause, seen)
+      stack += '\n   Caused by: ' + causeStack.msg + (causeStack.stack ? '\n' + causeStack.stack : '');
+    }
+  }
+
+  return {
+    message,
+    msg,
+    stack
+  };
+};
+
+/**
  * Outputs the given `failures` as a list.
  *
  * @public
@@ -31041,7 +26945,6 @@ exports.list = function (failures) {
       color('error stack', '\n%s\n');
 
     // msg
-    var msg;
     var err;
     if (test.err && test.err.multiple) {
       if (multipleTest !== test) {
@@ -31052,25 +26955,8 @@ exports.list = function (failures) {
     } else {
       err = test.err;
     }
-    var message;
-    if (typeof err.inspect === 'function') {
-      message = err.inspect() + '';
-    } else if (err.message && typeof err.message.toString === 'function') {
-      message = err.message + '';
-    } else {
-      message = '';
-    }
-    var stack = err.stack || message;
-    var index = message ? stack.indexOf(message) : -1;
 
-    if (index === -1) {
-      msg = message;
-    } else {
-      index += message.length;
-      msg = stack.slice(0, index);
-      // remove msg from stack
-      stack = stack.slice(index + 1);
-    }
+    var { message, msg, stack } = getFullErrorStack(err);
 
     // uncaught
     if (err.uncaught) {
@@ -31350,14 +27236,19 @@ Base.consoleLog = consoleLog;
 Base.abstract = true;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/doc.js":
+/***/ "./node_modules/mocha/lib/reporters/doc.js"
 /*!*************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/doc.js ***!
   \*************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Doc
@@ -31455,15 +27346,19 @@ function Doc(runner, options) {
 Doc.description = 'HTML documentation';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/dot.js":
+/***/ "./node_modules/mocha/lib/reporters/dot.js"
 /*!*************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/dot.js ***!
   \*************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Dot
@@ -31547,15 +27442,19 @@ inherits(Dot, Base);
 Dot.description = 'dot matrix representation';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/html.js":
+/***/ "./node_modules/mocha/lib/reporters/html.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/html.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /* eslint-env browser */
 /**
@@ -31567,7 +27466,6 @@ Dot.description = 'dot matrix representation';
 
 var Base = __webpack_require__(/*! ./base */ "./node_modules/mocha/lib/reporters/base.js");
 var utils = __webpack_require__(/*! ../utils */ "./node_modules/mocha/lib/utils.js");
-var Progress = __webpack_require__(/*! ../browser/progress */ "./node_modules/mocha/lib/browser/progress.js");
 var escapeRe = __webpack_require__(/*! escape-string-regexp */ "./node_modules/mocha/node_modules/escape-string-regexp/index.js");
 var constants = (__webpack_require__(/*! ../runner */ "./node_modules/mocha/lib/runner.js").constants);
 var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
@@ -31590,12 +27488,13 @@ var Date = __webpack_require__.g.Date;
 exports = module.exports = HTML;
 
 /**
- * Stats template.
+ * Stats template: Result, progress, passes, failures, and duration.
  */
 
 var statsTemplate =
   '<ul id="mocha-stats">' +
-  '<li class="progress"><canvas width="40" height="40"></canvas></li>' +
+  '<li class="result"></li>' +
+  '<li class="progress-contain"><progress class="progress-element" max="100" value="0"></progress><svg class="progress-ring"><circle class="ring-flatlight" stroke-dasharray="100%,0%"/><circle class="ring-highlight" stroke-dasharray="0%,100%"/></svg><div class="progress-text">0%</div></li>' +
   '<li class="passes"><a href="javascript:void(0);">passes:</a> <em>0</em></li>' +
   '<li class="failures"><a href="javascript:void(0);">failures:</a> <em>0</em></li>' +
   '<li class="duration">duration: <em>0</em>s</li>' +
@@ -31620,28 +27519,36 @@ function HTML(runner, options) {
   var stats = this.stats;
   var stat = fragment(statsTemplate);
   var items = stat.getElementsByTagName('li');
-  var passes = items[1].getElementsByTagName('em')[0];
-  var passesLink = items[1].getElementsByTagName('a')[0];
-  var failures = items[2].getElementsByTagName('em')[0];
-  var failuresLink = items[2].getElementsByTagName('a')[0];
-  var duration = items[3].getElementsByTagName('em')[0];
-  var canvas = stat.getElementsByTagName('canvas')[0];
+  const resultIndex = 0;
+  const progressIndex = 1;
+  const passesIndex = 2;
+  const failuresIndex = 3;
+  const durationIndex = 4;
+  /** Stat item containing the root suite pass or fail indicator (hasFailures ? '✖' : '✓') */
+  var resultIndicator = items[resultIndex];
+  /** Passes text and count */
+  const passesStat = items[passesIndex];
+  /** Stat item containing the pass count (not the word, just the number) */
+  const passesCount = passesStat.getElementsByTagName('em')[0];
+  /** Stat item linking to filter to show only passing tests */
+  const passesLink = passesStat.getElementsByTagName('a')[0];
+  /** Failures text and count */
+  const failuresStat = items[failuresIndex];
+  /** Stat item containing the failure count (not the word, just the number) */
+  const failuresCount = failuresStat.getElementsByTagName('em')[0];
+  /** Stat item linking to filter to show only failing tests */
+  const failuresLink = failuresStat.getElementsByTagName('a')[0];
+  /** Stat item linking to the duration time (not the word or unit, just the number) */
+  var duration = items[durationIndex].getElementsByTagName('em')[0];
   var report = fragment('<ul id="mocha-report"></ul>');
   var stack = [report];
-  var progress;
-  var ctx;
+  var progressText = items[progressIndex].getElementsByTagName('div')[0];
+  var progressBar = items[progressIndex].getElementsByTagName('progress')[0];
+  var progressRing = [
+    items[progressIndex].getElementsByClassName('ring-flatlight')[0],
+    items[progressIndex].getElementsByClassName('ring-highlight')[0]
+  ];
   var root = document.getElementById('mocha');
-
-  if (canvas.getContext) {
-    var ratio = window.devicePixelRatio || 1;
-    canvas.style.width = canvas.width;
-    canvas.style.height = canvas.height;
-    canvas.width *= ratio;
-    canvas.height *= ratio;
-    ctx = canvas.getContext('2d');
-    ctx.scale(ratio, ratio);
-    progress = new Progress();
-  }
 
   if (!root) {
     return error('#mocha div missing, add it to your document');
@@ -31672,10 +27579,6 @@ function HTML(runner, options) {
   root.appendChild(stat);
   root.appendChild(report);
 
-  if (progress) {
-    progress.size(40);
-  }
-
   runner.on(EVENT_SUITE_BEGIN, function (suite) {
     if (suite.root) {
       return;
@@ -31697,6 +27600,10 @@ function HTML(runner, options) {
 
   runner.on(EVENT_SUITE_END, function (suite) {
     if (suite.root) {
+      if (stats.failures === 0) {
+        text(resultIndicator, '✓');
+        stat.className += ' pass';
+      }
       updateStats();
       return;
     }
@@ -31717,6 +27624,10 @@ function HTML(runner, options) {
   });
 
   runner.on(EVENT_TEST_FAIL, function (test) {
+    // Update stat items
+    text(resultIndicator, '✖');
+    stat.className += ' fail';
+
     var el = fragment(
       '<li class="test fail"><h2>%e <a href="%e" class="replay">' +
         playIcon +
@@ -31738,7 +27649,7 @@ function HTML(runner, options) {
       if (indexOfMessage === -1) {
         stackString = test.err.stack;
       } else {
-        stackString = test.err.stack.substr(
+        stackString = test.err.stack.slice(
           test.err.message.length + indexOfMessage
         );
       }
@@ -31789,16 +27700,33 @@ function HTML(runner, options) {
   }
 
   function updateStats() {
-    // TODO: add to stats
     var percent = ((stats.tests / runner.total) * 100) | 0;
-    if (progress) {
-      progress.update(percent).draw(ctx);
+    progressBar.value = percent;
+    if (progressText) {
+      // setting a toFixed that is too low, makes small changes to progress not shown
+      // setting it too high, makes the progress text longer then it needs to
+      // to address this, calculate the toFixed based on the magnitude of total
+      var decimalPlaces = Math.ceil(Math.log10(runner.total / 100));
+      text(
+        progressText,
+        percent.toFixed(Math.min(Math.max(decimalPlaces, 0), 100)) + '%'
+      );
+    }
+    if (progressRing) {
+      var radius = parseFloat(getComputedStyle(progressRing[0]).getPropertyValue('r'));
+      var wholeArc = Math.PI * 2 * radius;
+      var highlightArc = percent * (wholeArc / 100);
+      // The progress ring is in 2 parts, the flatlight color and highlight color.
+      // Rendering both on top of the other, seems to make a 3rd color on the edges.
+      // To create 1 whole ring with 2 colors, both parts are inverse of the other.
+      progressRing[0].style['stroke-dasharray'] = `0,${highlightArc}px,${wholeArc}px`;
+      progressRing[1].style['stroke-dasharray'] = `${highlightArc}px,${wholeArc}px`;
     }
 
     // update stats
     var ms = new Date() - stats.start;
-    text(passes, stats.passes);
-    text(failures, stats.failures);
+    text(passesCount, stats.passes);
+    text(failuresCount, stats.failures);
     text(duration, (ms / 1000).toFixed(2));
   }
 }
@@ -31812,16 +27740,16 @@ function HTML(runner, options) {
 function makeUrl(s) {
   var search = window.location.search;
 
-  // Remove previous grep query parameter if present
+  // Remove previous {grep, fgrep, invert} query parameters if present
   if (search) {
-    search = search.replace(/[?&]grep=[^&\s]*/g, '').replace(/^&/, '?');
+    search = search.replace(/[?&](?:f?grep|invert)=[^&\s]*/g, '').replace(/^&/, '?');
   }
 
   return (
     window.location.pathname +
     (search ? search + '&' : '?') +
     'grep=' +
-    encodeURIComponent(escapeRe(s))
+    encodeURIComponent(s)
   );
 }
 
@@ -31831,7 +27759,7 @@ function makeUrl(s) {
  * @param {Object} [suite]
  */
 HTML.prototype.suiteURL = function (suite) {
-  return makeUrl(suite.fullTitle());
+  return makeUrl('^' + escapeRe(suite.fullTitle()) + ' ');
 };
 
 /**
@@ -31840,7 +27768,7 @@ HTML.prototype.suiteURL = function (suite) {
  * @param {Object} [test]
  */
 HTML.prototype.testURL = function (test) {
-  return makeUrl(test.fullTitle());
+  return makeUrl('^' + escapeRe(test.fullTitle()) + '$');
 };
 
 /**
@@ -31947,13 +27875,13 @@ function on(el, event, fn) {
 HTML.browserOnly = true;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/index.js":
+/***/ "./node_modules/mocha/lib/reporters/index.js"
 /*!***************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/index.js ***!
   \***************************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
 
 
@@ -31976,15 +27904,20 @@ exports.Landing = exports.landing = __webpack_require__(/*! ./landing */ "./node
 exports.JSONStream = exports["json-stream"] = __webpack_require__(/*! ./json-stream */ "./node_modules/mocha/lib/reporters/json-stream.js");
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/json-stream.js":
+/***/ "./node_modules/mocha/lib/reporters/json-stream.js"
 /*!*********************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/json-stream.js ***!
   \*********************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ * @typedef {import('../test.js')} Test
+ */
 
 /**
  * @module JSONStream
@@ -32023,7 +27956,7 @@ function JSONStream(runner, options) {
   var total = runner.total;
 
   runner.once(EVENT_RUN_BEGIN, function () {
-    writeEvent(['start', {total: total}]);
+    writeEvent(['start', {total}]);
   });
 
   runner.on(EVENT_TEST_PASS, function (test) {
@@ -32043,15 +27976,10 @@ function JSONStream(runner, options) {
 }
 
 /**
- * Mocha event to be written to the output stream.
- * @typedef {Array} JSONStream~MochaEvent
- */
-
-/**
  * Writes Mocha event to reporter output stream.
  *
  * @private
- * @param {JSONStream~MochaEvent} event - Mocha event to be output.
+ * @param {unknown[]} event - Mocha event to be output.
  */
 function writeEvent(event) {
   process.stdout.write(JSON.stringify(event) + '\n');
@@ -32079,16 +28007,19 @@ function clean(test) {
 JSONStream.description = 'newline delimited JSON events';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/json.js":
+/***/ "./node_modules/mocha/lib/reporters/json.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/json.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module JSON
@@ -32098,8 +28029,8 @@ JSONStream.description = 'newline delimited JSON events';
  */
 
 var Base = __webpack_require__(/*! ./base */ "./node_modules/mocha/lib/reporters/base.js");
-var fs = __webpack_require__(/*! fs */ "?f114");
-var path = __webpack_require__(/*! path */ "?3073");
+var fs = __webpack_require__(/*! node:fs */ "node:fs");
+var path = __webpack_require__(/*! node:path */ "node:path");
 const createUnsupportedError = (__webpack_require__(/*! ../errors */ "./node_modules/mocha/lib/errors.js").createUnsupportedError);
 const utils = __webpack_require__(/*! ../utils */ "./node_modules/mocha/lib/utils.js");
 var constants = (__webpack_require__(/*! ../runner */ "./node_modules/mocha/lib/runner.js").constants);
@@ -32253,15 +28184,19 @@ function errorJSON(err) {
 JSONReporter.description = 'single JSON object';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/landing.js":
+/***/ "./node_modules/mocha/lib/reporters/landing.js"
 /*!*****************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/landing.js ***!
   \*****************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Landing
@@ -32380,15 +28315,19 @@ inherits(Landing, Base);
 Landing.description = 'Unicode landing strip';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/list.js":
+/***/ "./node_modules/mocha/lib/reporters/list.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/list.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module List
@@ -32469,15 +28408,19 @@ inherits(List, Base);
 List.description = 'like "spec" reporter but flat';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/markdown.js":
+/***/ "./node_modules/mocha/lib/reporters/markdown.js"
 /*!******************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/markdown.js ***!
   \******************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Markdown
@@ -32530,7 +28473,7 @@ function Markdown(runner, options) {
     var ret = obj;
     var key = SUITE_PREFIX + suite.title;
 
-    obj = obj[key] = obj[key] || {suite: suite};
+    obj = obj[key] = obj[key] || {suite};
     suite.suites.forEach(function (suite) {
       mapTOC(suite, obj);
     });
@@ -32592,15 +28535,19 @@ function Markdown(runner, options) {
 Markdown.description = 'GitHub Flavored Markdown';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/min.js":
+/***/ "./node_modules/mocha/lib/reporters/min.js"
 /*!*************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/min.js ***!
   \*************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Min
@@ -32655,15 +28602,19 @@ inherits(Min, Base);
 Min.description = 'essentially just a summary';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/nyan.js":
+/***/ "./node_modules/mocha/lib/reporters/nyan.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/nyan.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Nyan
@@ -32732,7 +28683,7 @@ function NyanCat(runner, options) {
   runner.once(EVENT_RUN_END, function () {
     Base.cursor.show();
     for (var i = 0; i < self.numberOfLines; i++) {
-      write('\n');
+      process.stdout.write('\n');
     }
     self.epilogue();
   });
@@ -32768,15 +28719,15 @@ NyanCat.prototype.drawScoreboard = function () {
   var stats = this.stats;
 
   function draw(type, n) {
-    write(' ');
-    write(Base.color(type, n));
-    write('\n');
+    process.stdout.write(' ');
+    process.stdout.write(Base.color(type, n));
+    process.stdout.write('\n');
   }
 
   draw('green', stats.passes);
   draw('fail', stats.failures);
   draw('pending', stats.pending);
-  write('\n');
+  process.stdout.write('\n');
 
   this.cursorUp(this.numberOfLines);
 };
@@ -32810,9 +28761,9 @@ NyanCat.prototype.drawRainbow = function () {
   var self = this;
 
   this.trajectories.forEach(function (line) {
-    write('\u001b[' + self.scoreboardWidth + 'C');
-    write(line.join(''));
-    write('\n');
+    process.stdout.write('\u001b[' + self.scoreboardWidth + 'C');
+    process.stdout.write(line.join(''));
+    process.stdout.write('\n');
   });
 
   this.cursorUp(this.numberOfLines);
@@ -32829,25 +28780,25 @@ NyanCat.prototype.drawNyanCat = function () {
   var dist = '\u001b[' + startWidth + 'C';
   var padding = '';
 
-  write(dist);
-  write('_,------,');
-  write('\n');
+  process.stdout.write(dist);
+  process.stdout.write('_,------,');
+  process.stdout.write('\n');
 
-  write(dist);
+  process.stdout.write(dist);
   padding = self.tick ? '  ' : '   ';
-  write('_|' + padding + '/\\_/\\ ');
-  write('\n');
+  process.stdout.write('_|' + padding + '/\\_/\\ ');
+  process.stdout.write('\n');
 
-  write(dist);
+  process.stdout.write(dist);
   padding = self.tick ? '_' : '__';
   var tail = self.tick ? '~' : '^';
-  write(tail + '|' + padding + this.face() + ' ');
-  write('\n');
+  process.stdout.write(tail + '|' + padding + this.face() + ' ');
+  process.stdout.write('\n');
 
-  write(dist);
+  process.stdout.write(dist);
   padding = self.tick ? ' ' : '  ';
-  write(padding + '""  "" ');
-  write('\n');
+  process.stdout.write(padding + '""  "" ');
+  process.stdout.write('\n');
 
   this.cursorUp(this.numberOfLines);
 };
@@ -32879,7 +28830,7 @@ NyanCat.prototype.face = function () {
  */
 
 NyanCat.prototype.cursorUp = function (n) {
-  write('\u001b[' + n + 'A');
+  process.stdout.write('\u001b[' + n + 'A');
 };
 
 /**
@@ -32890,7 +28841,7 @@ NyanCat.prototype.cursorUp = function (n) {
  */
 
 NyanCat.prototype.cursorDown = function (n) {
-  write('\u001b[' + n + 'B');
+  process.stdout.write('\u001b[' + n + 'B');
 };
 
 /**
@@ -32930,27 +28881,22 @@ NyanCat.prototype.rainbowify = function (str) {
   return '\u001b[38;5;' + color + 'm' + str + '\u001b[0m';
 };
 
-/**
- * Stdout helper.
- *
- * @param {string} string A message to write to stdout.
- */
-function write(string) {
-  process.stdout.write(string);
-}
-
 NyanCat.description = '"nyan cat"';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/progress.js":
+/***/ "./node_modules/mocha/lib/reporters/progress.js"
 /*!******************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/progress.js ***!
   \******************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ */
 
 /**
  * @module Progress
@@ -33057,14 +29003,20 @@ inherits(Progress, Base);
 Progress.description = 'a progress bar';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/spec.js":
+/***/ "./node_modules/mocha/lib/reporters/spec.js"
 /*!**************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/spec.js ***!
   \**************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ * @typedef {import('../test.js')} Test
+ */
 
 /**
  * @module Spec
@@ -33166,15 +29118,20 @@ inherits(Spec, Base);
 Spec.description = 'hierarchical & verbose [default]';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/tap.js":
+/***/ "./node_modules/mocha/lib/reporters/tap.js"
 /*!*************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/tap.js ***!
   \*************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ * @typedef {import('../test.js')} Test
+ */
 
 /**
  * @module TAP
@@ -33183,7 +29140,7 @@ Spec.description = 'hierarchical & verbose [default]';
  * Module dependencies.
  */
 
-var util = __webpack_require__(/*! util */ "./node_modules/util/util.js");
+var util = __webpack_require__(/*! node:util */ "node:util");
 var Base = __webpack_require__(/*! ./base */ "./node_modules/mocha/lib/reporters/base.js");
 var constants = (__webpack_require__(/*! ../runner */ "./node_modules/mocha/lib/runner.js").constants);
 var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
@@ -33274,7 +29231,7 @@ function title(test) {
  * @param {string} format - `printf`-like format string
  * @param {...*} [varArgs] - Format string arguments
  */
-function println(format, varArgs) {
+function println() {
   var vargs = Array.from(arguments);
   vargs[0] += '\n';
   process.stdout.write(sprintf.apply(null, vargs));
@@ -33361,9 +29318,8 @@ TAPProducer.prototype.writePending = function (n, test) {
  * @abstract
  * @param {number} n - Index of test that failed.
  * @param {Test} test - Instance containing test information.
- * @param {Error} err - Reason the test failed.
  */
-TAPProducer.prototype.writeFail = function (n, test, err) {
+TAPProducer.prototype.writeFail = function (n, test) {
   println('not ok %d %s', n, title(test));
 };
 
@@ -33470,15 +29426,20 @@ inherits(TAP13Producer, TAPProducer);
 TAP.description = 'TAP-compatible output';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/reporters/xunit.js":
+/***/ "./node_modules/mocha/lib/reporters/xunit.js"
 /*!***************************************************!*\
   !*** ./node_modules/mocha/lib/reporters/xunit.js ***!
   \***************************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+
+
+/**
+ * @typedef {import('../runner.js')} Runner
+ * @typedef {import('../test.js')} Test
+ */
 
 /**
  * @module XUnit
@@ -33489,8 +29450,8 @@ TAP.description = 'TAP-compatible output';
 
 var Base = __webpack_require__(/*! ./base */ "./node_modules/mocha/lib/reporters/base.js");
 var utils = __webpack_require__(/*! ../utils */ "./node_modules/mocha/lib/utils.js");
-var fs = __webpack_require__(/*! fs */ "?f114");
-var path = __webpack_require__(/*! path */ "?3073");
+var fs = __webpack_require__(/*! node:fs */ "node:fs");
+var path = __webpack_require__(/*! node:path */ "node:path");
 var errors = __webpack_require__(/*! ../errors */ "./node_modules/mocha/lib/errors.js");
 var createUnsupportedError = errors.createUnsupportedError;
 var constants = (__webpack_require__(/*! ../runner */ "./node_modules/mocha/lib/runner.js").constants);
@@ -33585,7 +29546,7 @@ function XUnit(runner, options) {
     );
 
     tests.forEach(function (t) {
-      self.test(t);
+      self.test(t, options);
     });
 
     self.write('</testsuite>');
@@ -33633,12 +29594,13 @@ XUnit.prototype.write = function (line) {
  *
  * @param {Test} test
  */
-XUnit.prototype.test = function (test) {
+XUnit.prototype.test = function (test, options) {
   Base.useColors = false;
 
   var attrs = {
     classname: test.parent.fullTitle(),
     name: test.title,
+    file: testFilePath(test.file, options),
     time: test.duration / 1000 || 0
   };
 
@@ -33695,20 +29657,28 @@ function tag(name, attrs, close, content) {
   return tag;
 }
 
+function testFilePath(filepath, options) {
+  if (options && options.reporterOptions && options.reporterOptions.showRelativePaths) {
+    return path.relative(process.cwd(), filepath);
+  }
+
+  return filepath;
+}
+
 XUnit.description = 'XUnit-compatible XML output';
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/runnable.js":
+/***/ "./node_modules/mocha/lib/runnable.js"
 /*!********************************************!*\
   !*** ./node_modules/mocha/lib/runnable.js ***!
   \********************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 
-var EventEmitter = (__webpack_require__(/*! events */ "./node_modules/events/events.js").EventEmitter);
+var EventEmitter = (__webpack_require__(/*! node:events */ "node:events").EventEmitter);
 var Pending = __webpack_require__(/*! ./pending */ "./node_modules/mocha/lib/pending.js");
 var debug = __webpack_require__(/*! debug */ "./node_modules/mocha/node_modules/debug/src/browser.js")('mocha:runnable');
 var milliseconds = __webpack_require__(/*! ms */ "./node_modules/mocha/node_modules/ms/index.js");
@@ -33728,10 +29698,14 @@ var setTimeout = __webpack_require__.g.setTimeout;
 var clearTimeout = __webpack_require__.g.clearTimeout;
 var toString = Object.prototype.toString;
 
+var MAX_TIMEOUT = Math.pow(2, 31) - 1;
+
 module.exports = Runnable;
 
+// "Additional properties" doc comment added for hosted docs (mochajs.org/api)
 /**
  * Initialize a new `Runnable` with the given `title` and callback `fn`.
+ * Additional properties, like `getFullTitle()` and `slow()`, can be viewed in the `Runnable` source.
  *
  * @class
  * @extends external:EventEmitter
@@ -33803,8 +29777,7 @@ Runnable.prototype.timeout = function (ms) {
   }
 
   // Clamp to range
-  var INT_MAX = Math.pow(2, 31) - 1;
-  var range = [0, INT_MAX];
+  var range = [0, MAX_TIMEOUT];
   ms = utils.clamp(ms, range);
 
   // see #1652 for reasoning
@@ -33919,7 +29892,7 @@ Runnable.prototype.fullTitle = function () {
  *
  * @memberof Mocha.Runnable
  * @public
- * @return {string}
+ * @return {string[]}
  */
 Runnable.prototype.titlePath = function () {
   return this.parent.titlePath().concat([this.title]);
@@ -33941,11 +29914,8 @@ Runnable.prototype.clearTimeout = function () {
  */
 Runnable.prototype.resetTimeout = function () {
   var self = this;
-  var ms = this.timeout();
+  var ms = this.timeout() || MAX_TIMEOUT;
 
-  if (ms === 0) {
-    return;
-  }
   this.clearTimeout();
   this.timer = setTimeout(function () {
     if (self.timeout() === 0) {
@@ -34184,22 +30154,25 @@ Runnable.toValueOrError = function (value) {
 Runnable.constants = constants;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/runner.js":
+/***/ "./node_modules/mocha/lib/runner.js"
 /*!******************************************!*\
   !*** ./node_modules/mocha/lib/runner.js ***!
   \******************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
 
+
+/**
+ * @typedef {import('./types.d.ts').RunnerOptions} RunnerOptions
+ */
 
 /**
  * Module dependencies.
  * @private
  */
-var EventEmitter = (__webpack_require__(/*! events */ "./node_modules/events/events.js").EventEmitter);
+var EventEmitter = (__webpack_require__(/*! node:events */ "node:events").EventEmitter);
 var Pending = __webpack_require__(/*! ./pending */ "./node_modules/mocha/lib/pending.js");
 var utils = __webpack_require__(/*! ./utils */ "./node_modules/mocha/lib/utils.js");
 var debug = __webpack_require__(/*! debug */ "./node_modules/mocha/node_modules/debug/src/browser.js")('mocha:runner');
@@ -34221,8 +30194,8 @@ const {
   createUnsupportedError,
   createFatalError,
   isMochaError,
-  constants: errorConstants
 } = __webpack_require__(/*! ./errors */ "./node_modules/mocha/lib/errors.js");
+const { constants: errorConstants } = __webpack_require__(/*! ./error-constants */ "./node_modules/mocha/lib/error-constants.js");
 
 /**
  * Non-enumerable globals.
@@ -34242,7 +30215,39 @@ var globals = [
 
 var constants = utils.defineConstants(
   /**
-   * {@link Runner}-related constants.
+   * {@link Runner}-related constants. Used by reporters. Each event emits the corresponding object, unless otherwise indicated.
+   * @example
+   * const Mocha = require('mocha');
+   * const Base = Mocha.reporters.Base;
+   * const {
+   *   EVENT_HOOK_BEGIN,
+   *   EVENT_TEST_PASS,
+   *   EVENT_TEST_FAIL,
+   *   EVENT_TEST_END
+   * } = Mocha.Runner.constants
+   *
+   * function MyReporter(runner, options) {
+   *   Base.call(this, runner, options);
+   *
+   *   runner.on(EVENT_HOOK_BEGIN, function(hook) {
+   *     console.log('hook called: ', hook.title);
+   *   });
+   *
+   *   runner.on(EVENT_TEST_PASS, function(test) {
+   *     console.log('pass: %s', test.fullTitle());
+   *   });
+   *
+   *   runner.on(EVENT_TEST_FAIL, function(test, err) {
+   *     console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
+   *   });
+   *
+   *   runner.on(EVENT_TEST_END, function() {
+   *     console.log('end: %d/%d', runner.stats.passes, runner.stats.tests);
+   *   });
+   * }
+   *
+   * module.exports = MyReporter;
+   *
    * @public
    * @memberof Runner
    * @readonly
@@ -34292,7 +30297,13 @@ var constants = utils.defineConstants(
      */
     EVENT_TEST_END: 'test end',
     /**
-     * Emitted when {@link Test} execution fails
+     * Emitted when {@link Test} execution fails. Includes an `err` object of type `Error`.
+     * @example
+     * runner.on(EVENT_TEST_FAIL, function(test, err) {
+     *   console.log('fail: %s -- error: %s', test.fullTitle(), err.message);
+     * });
+     *
+     *
      */
     EVENT_TEST_FAIL: 'fail',
     /**
@@ -34330,27 +30341,15 @@ class Runner extends EventEmitter {
    * @public
    * @class
    * @param {Suite} suite - Root suite
-   * @param {Object|boolean} [opts] - Options. If `boolean` (deprecated), whether to delay execution of root suite until ready.
+   * @param {Object} [opts] - Settings object
    * @param {boolean} [opts.cleanReferencesAfterRun] - Whether to clean references to test fns and hooks when a suite is done.
    * @param {boolean} [opts.delay] - Whether to delay execution of root suite until ready.
    * @param {boolean} [opts.dryRun] - Whether to report tests without running them.
    * @param {boolean} [opts.failZero] - Whether to fail test run if zero tests encountered.
    */
-  constructor(suite, opts) {
+  constructor(suite, opts = {}) {
     super();
-    if (opts === undefined) {
-      opts = {};
-    }
-    if (typeof opts === 'boolean') {
-      // TODO: remove this
-      (__webpack_require__(/*! ./errors */ "./node_modules/mocha/lib/errors.js").deprecate)(
-        '"Runner(suite: Suite, delay: boolean)" is deprecated. Use "Runner(suite: Suite, {delay: boolean})" instead.'
-      );
-      this._delay = opts;
-      opts = {};
-    } else {
-      this._delay = opts.delay;
-    }
+
     var self = this;
     this._globals = [];
     this._abort = false;
@@ -34650,11 +30649,22 @@ Runner.prototype.fail = function (test, err, force) {
     err = thrown2Error(err);
   }
 
-  try {
-    err.stack =
-      this.fullStackTrace || !err.stack ? err.stack : stackFilter(err.stack);
-  } catch (ignore) {
-    // some environments do not take kindly to monkeying with the stack
+  // Filter the stack traces
+  if (!this.fullStackTrace) {
+    const alreadyFiltered = new Set();
+    let currentErr = err;
+
+    while (currentErr && currentErr.stack && !alreadyFiltered.has(currentErr)) {
+      alreadyFiltered.add(currentErr);
+
+      try {
+        currentErr.stack = stackFilter(currentErr.stack);
+      } catch (ignore) {
+        // some environments do not take kindly to monkeying with the stack
+      }
+
+      currentErr = currentErr.cause;
+    }
   }
 
   this.emit(constants.EVENT_TEST_FAIL, test, err);
@@ -35226,7 +31236,7 @@ Runner.prototype._uncaught = function (err) {
  * @public
  * @memberof Runner
  * @param {Function} fn - Callback when finished
- * @param {{files: string[], options: Options}} [opts] - For subclasses
+ * @param {RunnerOptions} [opts] - For subclasses
  * @returns {Runner} Runner instance.
  */
 Runner.prototype.run = function (fn, opts = {}) {
@@ -35259,7 +31269,7 @@ Runner.prototype.run = function (fn, opts = {}) {
       debug('run(): filtered exclusive Runnables');
     }
     this.state = constants.STATE_RUNNING;
-    if (this._delay) {
+    if (this._opts.delay) {
       this.emit(constants.EVENT_DELAY_END);
       debug('run(): "delay" ended');
     }
@@ -35286,7 +31296,7 @@ Runner.prototype.run = function (fn, opts = {}) {
   this._addEventListener(process, 'uncaughtException', this.uncaught);
   this._addEventListener(process, 'unhandledRejection', this.unhandled);
 
-  if (this._delay) {
+  if (this._opts.delay) {
     // for reporters, I guess.
     // might be nice to debounce some dots while we wait.
     this.emit(constants.EVENT_DELAY_BEGIN, rootSuite);
@@ -35310,11 +31320,11 @@ Runner.prototype.run = function (fn, opts = {}) {
  * @public
  * @example
  * // this reporter needs proper object references when run in parallel mode
- * class MyReporter() {
+ * class MyReporter {
  *   constructor(runner) {
- *     this.runner.linkPartialObjects(true)
+ *     runner.linkPartialObjects(true)
  *       .on(EVENT_SUITE_BEGIN, suite => {
-           // this Suite may be the same object...
+ *         // this Suite may be the same object...
  *       })
  *       .on(EVENT_TEST_BEGIN, test => {
  *         // ...as the `test.parent` property
@@ -35322,7 +31332,7 @@ Runner.prototype.run = function (fn, opts = {}) {
  *   }
  * }
  */
-Runner.prototype.linkPartialObjects = function (value) {
+Runner.prototype.linkPartialObjects = function () {
   return this;
 };
 
@@ -35461,15 +31471,20 @@ Runner.constants = constants;
 module.exports = Runner;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/stats-collector.js":
+/***/ "./node_modules/mocha/lib/stats-collector.js"
 /*!***************************************************!*\
   !*** ./node_modules/mocha/lib/stats-collector.js ***!
   \***************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('./types.d.ts').StatsCollector} StatsCollector
+ * @typedef {import('./runner.js')} Runner
+ */
 
 /**
  * Provides a factory function for a {@link StatsCollector} object.
@@ -35485,21 +31500,6 @@ var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
 var EVENT_RUN_END = constants.EVENT_RUN_END;
 var EVENT_TEST_END = constants.EVENT_TEST_END;
 
-/**
- * Test statistics collector.
- *
- * @public
- * @typedef {Object} StatsCollector
- * @property {number} suites - integer count of suites run.
- * @property {number} tests - integer count of tests run.
- * @property {number} passes - integer count of passing tests.
- * @property {number} pending - integer count of pending tests.
- * @property {number} failures - integer count of failed tests.
- * @property {Date} start - time when testing began.
- * @property {Date} end - time when testing concluded.
- * @property {number} duration - number of msecs that testing took.
- */
-
 var Date = __webpack_require__.g.Date;
 
 /**
@@ -35511,7 +31511,7 @@ var Date = __webpack_require__.g.Date;
  */
 function createStatsCollector(runner) {
   /**
-   * @type StatsCollector
+   * @type {StatsCollector}
    */
   var stats = {
     suites: 0,
@@ -35554,21 +31554,25 @@ function createStatsCollector(runner) {
 module.exports = createStatsCollector;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/suite.js":
+/***/ "./node_modules/mocha/lib/suite.js"
 /*!*****************************************!*\
   !*** ./node_modules/mocha/lib/suite.js ***!
   \*****************************************/
-/***/ ((module, exports, __webpack_require__) => {
+(module, exports, __webpack_require__) {
 
 
+
+/**
+ * @typedef {import('./test.js')} Test
+ */
 
 /**
  * Module dependencies.
  * @private
  */
-const {EventEmitter} = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const {EventEmitter} = __webpack_require__(/*! node:events */ "node:events");
 const Hook = __webpack_require__(/*! ./hook */ "./node_modules/mocha/lib/hook.js");
 var {
   assignNewMochaID,
@@ -35821,7 +31825,7 @@ Suite.prototype.beforeAll = function (title, fn) {
   var hook = this._createHook(title, fn);
   this._beforeAll.push(hook);
   this.emit(constants.EVENT_SUITE_ADD_HOOK_BEFORE_ALL, hook);
-  return this;
+  return hook;
 };
 
 /**
@@ -35845,7 +31849,7 @@ Suite.prototype.afterAll = function (title, fn) {
   var hook = this._createHook(title, fn);
   this._afterAll.push(hook);
   this.emit(constants.EVENT_SUITE_ADD_HOOK_AFTER_ALL, hook);
-  return this;
+  return hook;
 };
 
 /**
@@ -35869,7 +31873,7 @@ Suite.prototype.beforeEach = function (title, fn) {
   var hook = this._createHook(title, fn);
   this._beforeEach.push(hook);
   this.emit(constants.EVENT_SUITE_ADD_HOOK_BEFORE_EACH, hook);
-  return this;
+  return hook;
 };
 
 /**
@@ -35893,7 +31897,7 @@ Suite.prototype.afterEach = function (title, fn) {
   var hook = this._createHook(title, fn);
   this._afterEach.push(hook);
   this.emit(constants.EVENT_SUITE_ADD_HOOK_AFTER_EACH, hook);
-  return this;
+  return hook;
 };
 
 /**
@@ -35951,7 +31955,7 @@ Suite.prototype.fullTitle = function () {
  *
  * @memberof Suite
  * @public
- * @return {string}
+ * @return {string[]}
  */
 Suite.prototype.titlePath = function () {
   var result = [];
@@ -36230,13 +32234,13 @@ var constants = defineConstants(
 Suite.constants = constants;
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/test.js":
+/***/ "./node_modules/mocha/lib/test.js"
 /*!****************************************!*\
   !*** ./node_modules/mocha/lib/test.js ***!
   \****************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+(module, __unused_webpack_exports, __webpack_require__) {
 
 
 var Runnable = __webpack_require__(/*! ./runnable */ "./node_modules/mocha/lib/runnable.js");
@@ -36353,16 +32357,15 @@ Test.prototype.serialize = function serialize() {
 };
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/utils.js":
+/***/ "./node_modules/mocha/lib/utils.js"
 /*!*****************************************!*\
   !*** ./node_modules/mocha/lib/utils.js ***!
   \*****************************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+(__unused_webpack_module, exports, __webpack_require__) {
 
-/* provided dependency */ var Buffer = __webpack_require__(/*! ./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js */ "./node_modules/node-polyfill-webpack-plugin/node_modules/buffer/index.js")["Buffer"];
-/* provided dependency */ var process = __webpack_require__(/*! ./node_modules/process/browser.js */ "./node_modules/process/browser.js");
+/* provided dependency */ var Buffer = __webpack_require__(/*! ./node_modules/buffer */ "./node_modules/buffer/index.js")["Buffer"];
 
 
 /**
@@ -36373,10 +32376,8 @@ Test.prototype.serialize = function serialize() {
 /**
  * Module dependencies.
  */
-
-const {nanoid} = __webpack_require__(/*! nanoid/non-secure */ "./node_modules/nanoid/non-secure/index.cjs");
-var path = __webpack_require__(/*! path */ "?c4b6");
-var util = __webpack_require__(/*! util */ "./node_modules/util/util.js");
+var path = __webpack_require__(/*! node:path */ "node:path");
+var util = __webpack_require__(/*! node:util */ "node:util");
 var he = __webpack_require__(/*! he */ "./node_modules/he/he.js");
 
 const MOCHA_ID_PROP_NAME = '__mocha_id__';
@@ -36441,7 +32442,7 @@ exports.clean = function (str) {
     .replace(/^\uFEFF/, '')
     // (traditional)->  space/name     parameters    body     (lambda)-> parameters       body   multi-statement/single          keep body content
     .replace(
-      /^function(?:\s*|\s+[^(]*)\([^)]*\)\s*\{((?:.|\n)*?)\s*\}$|^\([^)]*\)\s*=>\s*(?:\{((?:.|\n)*?)\s*\}|((?:.|\n)*))$/,
+      /^function(?:\s*|\s[^(]*)\([^)]*\)\s*\{((?:.|\n)*?)\}$|^\([^)]*\)\s*=>\s*(?:\{((?:.|\n)*?)\}|((?:.|\n)*))$/,
       '$1$2$3'
     );
 
@@ -36505,7 +32506,7 @@ function emptyRepresentation(value, typeHint) {
  * canonicalType(global) // 'global'
  * canonicalType(new String('foo') // 'object'
  * canonicalType(async function() {}) // 'asyncfunction'
- * canonicalType(await import(name)) // 'module'
+ * canonicalType(Object.create(null)) // 'null-prototype'
  */
 var canonicalType = (exports.canonicalType = function canonicalType(value) {
   if (value === undefined) {
@@ -36514,7 +32515,10 @@ var canonicalType = (exports.canonicalType = function canonicalType(value) {
     return 'null';
   } else if (Buffer.isBuffer(value)) {
     return 'buffer';
+  } else if (Object.getPrototypeOf(value) === null) {
+    return 'null-prototype';
   }
+
   return Object.prototype.toString
     .call(value)
     .replace(/^\[.+\s(.+?)]$/, '$1')
@@ -36580,7 +32584,7 @@ exports.type = function type(value) {
 exports.stringify = function (value) {
   var typeHint = canonicalType(value);
 
-  if (!~['object', 'array', 'function'].indexOf(typeHint)) {
+  if (!~['object', 'array', 'function', 'null-prototype'].indexOf(typeHint)) {
     if (typeHint === 'buffer') {
       var json = Buffer.prototype.toJSON.call(value);
       // Based on the toJSON result
@@ -36766,8 +32770,12 @@ exports.canonicalize = function canonicalize(value, stack, typeHint) {
         break;
       }
     /* falls through */
+    case 'null-prototype':
     case 'object':
       canonicalizedObj = canonicalizedObj || {};
+      if (typeHint === 'null-prototype' && Symbol.toStringTag in value) {
+        canonicalizedObj['[Symbol.toStringTag]'] = value[Symbol.toStringTag];
+      }
       withStack(value, function () {
         Object.keys(value)
           .sort()
@@ -36903,7 +32911,7 @@ exports.noop = function () {};
  * @param {...*} [obj] - Arguments to `Object.assign()`.
  * @returns {Object} An object with no prototype, having `...obj` properties
  */
-exports.createMap = function (obj) {
+exports.createMap = function () {
   return Object.assign.apply(
     null,
     [Object.create(null)].concat(Array.prototype.slice.call(arguments))
@@ -36980,11 +32988,22 @@ exports.constants = exports.defineConstants({
   MOCHA_ID_PROP_NAME
 });
 
+const uniqueIDBase =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+
 /**
  * Creates a new unique identifier
+ * Does not create cryptographically safe ids.
+ * Trivial copy of nanoid/non-secure
  * @returns {string} Unique identifier
  */
-exports.uniqueID = () => nanoid();
+exports.uniqueID = () => {
+  let id = '';
+  for (let i = 0; i < 21; i++) {
+    id += uniqueIDBase[(Math.random() * 64) | 0];
+  }
+  return id;
+};
 
 exports.assignNewMochaID = obj => {
   const id = exports.uniqueID();
@@ -37004,45 +33023,56 @@ exports.assignNewMochaID = obj => {
 exports.getMochaID = obj =>
   obj && typeof obj === 'object' ? obj[MOCHA_ID_PROP_NAME] : undefined;
 
+/**
+ * Replaces any detected circular dependency with the string '[Circular]'
+ * Mutates original object
+ * @param inputObj {*}
+ * @returns {*}
+ */
+exports.breakCircularDeps = inputObj => {
+  const seen = new Set();
 
-/***/ }),
-
-/***/ "./node_modules/nanoid/non-secure/index.cjs":
-/*!**************************************************!*\
-  !*** ./node_modules/nanoid/non-secure/index.cjs ***!
-  \**************************************************/
-/***/ ((module) => {
-
-let urlAlphabet =
-  'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict'
-let customAlphabet = (alphabet, defaultSize = 21) => {
-  return (size = defaultSize) => {
-    let id = ''
-    let i = size
-    while (i--) {
-      id += alphabet[(Math.random() * alphabet.length) | 0]
+  function _breakCircularDeps(obj) {
+    if (obj && typeof obj !== 'object') {
+      return obj;
     }
-    return id
+
+    if (seen.has(obj)) {
+      return '[Circular]';
+    }
+
+    seen.add(obj);
+    for (const k in obj) {
+      const descriptor = Object.getOwnPropertyDescriptor(obj, k);
+
+      if (descriptor && descriptor.writable) {
+        obj[k] = _breakCircularDeps(obj[k], k);
+      }
+    }
+
+    // deleting means only a seen object that is its own child will be detected
+    seen.delete(obj);
+    return obj;
   }
-}
-let nanoid = (size = 21) => {
-  let id = ''
-  let i = size
-  while (i--) {
-    id += urlAlphabet[(Math.random() * 64) | 0]
-  }
-  return id
-}
-module.exports = { nanoid, customAlphabet }
+
+  return _breakCircularDeps(inputObj);
+};
+
+/**
+ * Checks if provided input can be parsed as a JavaScript Number.
+ */
+exports.isNumeric = input => {
+  return !isNaN(parseFloat(input));
+};
 
 
-/***/ }),
+/***/ },
 
-/***/ "./client-lib/index.mjs":
+/***/ "./client-lib/index.mjs"
 /*!******************************!*\
   !*** ./client-lib/index.mjs ***!
   \******************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -37158,7 +33188,16 @@ class ServiceWrapperProxy {
 				error.response = response
 				throw error
 			}
-			let data = await response.json()
+			if(response.headers.get('content-type').includes('application/json')) {
+				try {
+					let data = await response.json()
+					return data
+				}
+				catch(e) {
+					return undefined
+				}
+			}
+			let data = await response.arrayBuffer()
 			return data
 		}
 	}
@@ -37201,13 +33240,13 @@ function proxyService(options = {}, baseObject = {}) {
 
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/chai/index.mjs":
+/***/ "./node_modules/chai/index.mjs"
 /*!*************************************!*\
   !*** ./node_modules/chai/index.mjs ***!
   \*************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -37240,13 +33279,13 @@ const core = _index_js__WEBPACK_IMPORTED_MODULE_0__.core;
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_index_js__WEBPACK_IMPORTED_MODULE_0__);
 
 
-/***/ }),
+/***/ },
 
-/***/ "./tests-lib/basic-test-cases.mjs":
+/***/ "./tests-lib/basic-test-cases.mjs"
 /*!****************************************!*\
   !*** ./tests-lib/basic-test-cases.mjs ***!
   \****************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -37254,7 +33293,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var chai__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! chai */ "./node_modules/chai/index.mjs");
 /* harmony import */ var _client_lib_index_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../client-lib/index.mjs */ "./client-lib/index.mjs");
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 
 
 
@@ -37347,6 +33385,8 @@ function addTests() {
 				console.log('caught in test. check that server is running.')
 				throw (e)
 			}
+			let data = await service.noReturn()
+			;(0,chai__WEBPACK_IMPORTED_MODULE_0__.assert)(data === undefined)
 		})
 
 		it("proxy unknown functions on a different url", async function () {
@@ -37384,13 +33424,13 @@ function addTests() {
 	})
 }
 
-/***/ }),
+/***/ },
 
-/***/ "./tests-lib/browser-test-cases.mjs":
+/***/ "./tests-lib/browser-test-cases.mjs"
 /*!******************************************!*\
   !*** ./tests-lib/browser-test-cases.mjs ***!
   \******************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -37398,7 +33438,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var chai__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! chai */ "./node_modules/chai/index.mjs");
 /* harmony import */ var _client_lib_index_mjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../client-lib/index.mjs */ "./client-lib/index.mjs");
-/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
 
 
 
@@ -37510,27 +33549,67 @@ function addTests() {
 
 
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/lib/mocharc.json":
+/***/ "./node_modules/mocha/lib/mocharc.json"
 /*!*********************************************!*\
   !*** ./node_modules/mocha/lib/mocharc.json ***!
   \*********************************************/
-/***/ ((module) => {
+(module) {
 
 module.exports = /*#__PURE__*/JSON.parse('{"diff":true,"extension":["js","cjs","mjs"],"package":"./package.json","reporter":"spec","slow":75,"timeout":2000,"ui":"bdd","watch-ignore":["node_modules",".git"]}');
 
-/***/ }),
+/***/ },
 
-/***/ "./node_modules/mocha/package.json":
+/***/ "./node_modules/mocha/package.json"
 /*!*****************************************!*\
   !*** ./node_modules/mocha/package.json ***!
   \*****************************************/
-/***/ ((module) => {
+(module) {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"mocha","version":"9.2.2","type":"commonjs","description":"simple, flexible, fun test framework","keywords":["mocha","test","bdd","tdd","tap","testing","chai","assertion","ava","jest","tape","jasmine","karma"],"author":"TJ Holowaychuk <tj@vision-media.ca>","license":"MIT","repository":{"type":"git","url":"https://github.com/mochajs/mocha.git"},"bugs":{"url":"https://github.com/mochajs/mocha/issues/"},"funding":{"type":"opencollective","url":"https://opencollective.com/mochajs"},"gitter":"https://gitter.im/mochajs/mocha","homepage":"https://mochajs.org/","logo":"https://cldup.com/S9uQ-cOLYz.svg","notifyLogo":"https://ibin.co/4QuRuGjXvl36.png","bin":{"mocha":"./bin/mocha","_mocha":"./bin/_mocha"},"directories":{"lib":"./lib","test":"./test"},"engines":{"node":">= 12.0.0"},"scripts":{"prepublishOnly":"nps test clean build","start":"nps","test":"nps test","version":"nps version","test:smoke":"node ./bin/mocha --no-config test/smoke/smoke.spec.js"},"dependencies":{"@ungap/promise-all-settled":"1.1.2","ansi-colors":"4.1.1","browser-stdout":"1.3.1","chokidar":"3.5.3","debug":"4.3.3","diff":"5.0.0","escape-string-regexp":"4.0.0","find-up":"5.0.0","glob":"7.2.0","growl":"1.10.5","he":"1.2.0","js-yaml":"4.1.0","log-symbols":"4.1.0","minimatch":"4.2.1","ms":"2.1.3","nanoid":"3.3.1","serialize-javascript":"6.0.0","strip-json-comments":"3.1.1","supports-color":"8.1.1","which":"2.0.2","workerpool":"6.2.0","yargs":"16.2.0","yargs-parser":"20.2.4","yargs-unparser":"2.0.0"},"devDependencies":{"@11ty/eleventy":"^0.12.1","@11ty/eleventy-plugin-inclusive-language":"^1.0.3","@babel/eslint-parser":"^7.16.5","@babel/preset-env":"^7.16.11","@mocha/docdash":"^4.0.0","@rollup/plugin-babel":"^5.1.0","@rollup/plugin-commonjs":"^14.0.0","@rollup/plugin-json":"^4.1.0","@rollup/plugin-multi-entry":"^3.0.1","@rollup/plugin-node-resolve":"^8.4.0","assetgraph-builder":"^9.0.0","autoprefixer":"^9.8.6","canvas":"^2.9.0","chai":"^4.3.4","coffee-script":"^1.12.7","configstore":"^5.0.1","core-js":"^3.20.3","coveralls":"^3.1.1","cross-env":"^7.0.2","eslint":"^7.32.0","eslint-config-prettier":"^8.3.0","eslint-config-semistandard":"^16.0.0","eslint-config-standard":"^16.0.3","eslint-plugin-import":"^2.24.2","eslint-plugin-node":"^11.1.0","eslint-plugin-prettier":"^4.0.0","eslint-plugin-promise":"^5.1.0","fail-on-errors-webpack-plugin":"^3.0.0","fs-extra":"^10.0.0","husky":"^4.2.5","hyperlink":"^5.0.4","jsdoc":"^3.6.7","jsdoc-ts-utils":"^2.0.1","karma":"^6.3.11","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-requirejs":"^1.1.0","karma-sauce-launcher":"^4.3.6","lint-staged":"^10.2.11","markdown-it":"^12.3.2","markdown-it-anchor":"^8.4.1","markdown-it-attrs":"^4.1.3","markdown-it-emoji":"^2.0.0","markdown-it-prism":"^2.2.2","markdown-toc":"^1.2.0","markdownlint-cli":"^0.30.0","needle":"^2.5.0","nps":"^5.10.0","nyc":"^15.1.0","pidtree":"^0.5.0","prettier":"^2.4.1","regenerator-runtime":"0.13.7","remark":"^14.0.2","remark-github":"^11.2.2","remark-inline-links":"^6.0.1","requirejs":"^2.3.6","rewiremock":"^3.14.3","rimraf":"^3.0.2","rollup":"^2.66.0","rollup-plugin-node-globals":"^1.4.0","rollup-plugin-node-polyfills":"^0.2.1","rollup-plugin-visualizer":"^5.5.4","sinon":"^9.0.3","strip-ansi":"^6.0.0","svgo":"^1.3.2","through2":"^4.0.2","touch":"^3.1.0","unexpected":"^11.14.0","unexpected-eventemitter":"^2.2.0","unexpected-map":"^2.0.0","unexpected-set":"^3.0.0","unexpected-sinon":"^10.11.2","update-notifier":"^4.1.0","uslug":"^1.0.4","uuid":"^8.3.0","watchify":"^4.0.0","webpack":"^5.67.0","webpack-cli":"^4.9.1"},"files":["bin/*mocha","assets/growl/*.png","lib/**/*.{js,html,json}","index.js","mocha.css","mocha.js","mocha.js.map","mocha-es2018.js","browser-entry.js"],"browser":{"./index.js":"./browser-entry.js","./lib/nodejs/growl.js":"./lib/browser/growl.js","fs":false,"path":false,"supports-color":false,"./lib/nodejs/buffered-worker-pool.js":false,"./lib/nodejs/esm-utils.js":false,"./lib/nodejs/file-unloader.js":false,"./lib/nodejs/parallel-buffered-runner.js":false,"./lib/nodejs/serializer.js":false,"./lib/nodejs/worker.js":false,"./lib/nodejs/reporters/parallel-buffered.js":false,"./lib/cli/index.js":false},"prettier":{"arrowParens":"avoid","bracketSpacing":false,"endOfLine":"auto","singleQuote":true,"trailingComma":"none"},"husky":{"hooks":{"pre-commit":"lint-staged"}}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"mocha","version":"11.7.5","type":"commonjs","description":"simple, flexible, fun test framework","keywords":["mocha","test","bdd","tdd","tap","testing","chai","assertion","ava","jest","tape","jasmine","karma"],"author":"TJ Holowaychuk <tj@vision-media.ca>","license":"MIT","repository":{"type":"git","url":"https://github.com/mochajs/mocha.git"},"bugs":{"url":"https://github.com/mochajs/mocha/issues/"},"discord":"https://discord.gg/KeDn2uXhER","homepage":"https://mochajs.org/","logo":"https://cldup.com/S9uQ-cOLYz.svg","notifyLogo":"https://ibin.co/4QuRuGjXvl36.png","bin":{"mocha":"./bin/mocha.js","_mocha":"./bin/_mocha"},"directories":{"lib":"./lib","test":"./test"},"engines":{"node":"^18.18.0 || ^20.9.0 || >=21.1.0"},"scripts":{"build":"rollup -c ./rollup.config.js","clean":"rimraf mocha.js mocha.js.map","docs-clean":"rimraf docs/_site docs/api","docs-watch":"eleventy --serve","docs:api":"jsdoc -c jsdoc.conf.json","docs:build":"eleventy","docs:build-new":"cd docs-next && npm i && npm run build-with-old","docs:preview":"http-server docs/_site -o","docs":"run-s docs-clean docs:api docs:build docs:build-new","format:eslint":"eslint --fix . \\"bin/*\\"","format:prettier":"prettier --write \\"!(package*).json\\" \\".*.json\\" \\"lib/**/*.json\\" \\"*.yml\\"","format":"run-s format:*","lint:installed-check":"installed-check --engine-check","lint:knip":"knip --cache","lint:code":"eslint . \\"bin/*\\" --max-warnings 0","lint:markdown":"markdownlint \\"*.md\\" \\"docs/**/*.md\\" \\".github/*.md\\" \\"lib/**/*.md\\" \\"test/**/*.md\\" \\"example/**/*.md\\" -i CHANGELOG.md","lint":"run-p lint:*","prepublishOnly":"run-s clean build version","test-browser-run":"cross-env NODE_PATH=. karma start ./karma.conf.js --single-run","test-browser:reporters:bdd":"cross-env MOCHA_TEST=bdd npm run -s test-browser-run","test-browser:reporters:esm":"cross-env MOCHA_TEST=esm npm run -s test-browser-run","test-browser:reporters:qunit":"cross-env MOCHA_TEST=qunit npm run -s test-browser-run","test-browser:reporters:tdd":"cross-env MOCHA_TEST=tdd npm run -s test-browser-run","test-browser:reporters":"run-s test-browser:reporters:*","test-browser:webpack-compat":"webpack --mode development --config ./test/browser-specific/fixtures/webpack/webpack.config.js","test-browser":"run-s clean build test-browser:*","test-coverage-clean":"rimraf .nyc_output coverage","test-coverage-generate":"nyc report --reporter=lcov --reporter=text","test-node-run-only":"nyc --no-clean --reporter=json node bin/mocha.js","test-node-run":"nyc --no-clean --reporter=json node bin/mocha.js --forbid-only","test-node-run:bare":"node bin/mocha.js --grep @bare","test-node:integration":"run-s clean build && npm run -s test-node-run -- --parallel --timeout 10000 --slow 3750 \\"test/integration/**/*.spec.js\\"","test-node:integration:bare":"run-s clean build && npm run -s test-node-run:bare -- --parallel --timeout 10000 --slow 3750 \\"test/integration/**/*.spec.js\\"","test-node:integration:watch":"run-s clean build && npm run -s test-node-run -- --parallel --timeout 10000 --slow 3750 \\"test/integration/options/watch.spec.js\\"","test-node:interfaces:bdd":"npm run -s test-node-run -- --ui bdd test/interfaces/bdd.spec","test-node:interfaces:exports":"npm run -s test-node-run -- --ui exports test/interfaces/exports.spec","test-node:interfaces:qunit":"npm run -s test-node-run -- --ui qunit test/interfaces/qunit.spec","test-node:interfaces:tdd":"npm run -s test-node-run -- --ui tdd test/interfaces/tdd.spec","test-node:interfaces":"run-p test-node:interfaces:*","test-node:jsapi":"node test/jsapi/index.js","test-node:only:bddRequire":"npm run -s test-node-run-only -- --ui qunit test/only/bdd-require.spec --no-parallel","test-node:only:globalBdd":"npm run -s test-node-run-only -- --ui bdd test/only/global/bdd.spec --no-parallel","test-node:only:globalQunit":"npm run -s test-node-run-only -- --ui qunit test/only/global/qunit.spec --no-parallel","test-node:only:globalTdd":"npm run -s test-node-run-only -- --ui tdd test/only/global/tdd.spec --no-parallel","test-node:only":"run-p test-node:only:*","test-node:reporters":"npm run -s test-node-run -- \\"test/reporters/*.spec.js\\"","test-node:requires":"npm run -s test-node-run -- --require coffeescript/register --require test/require/a.js --require test/require/b.coffee --require test/require/c.js --require test/require/d.coffee test/require/require.spec.js","test-node:unit":"npm run -s test-node-run -- \\"test/unit/*.spec.js\\" \\"test/node-unit/**/*.spec.js\\"","test-node":"run-s test-coverage-clean test-node:* test-coverage-generate","test-smoke":"node ./bin/mocha --no-config test/smoke/smoke.spec.js","test":"run-s lint test-node test-browser","tsc":"tsc","version:linkify-changelog":"node scripts/linkify-changelog.mjs","version:update-authors":"node scripts/update-authors.js","version":"run-p version:* && git add -A ./AUTHORS ./CHANGELOG.md"},"dependencies":{"browser-stdout":"^1.3.1","chokidar":"^4.0.1","debug":"^4.3.5","diff":"^7.0.0","escape-string-regexp":"^4.0.0","find-up":"^5.0.0","glob":"^10.4.5","he":"^1.2.0","is-path-inside":"^3.0.3","js-yaml":"^4.1.0","log-symbols":"^4.1.0","minimatch":"^9.0.5","ms":"^2.1.3","picocolors":"^1.1.1","serialize-javascript":"^6.0.2","strip-json-comments":"^3.1.1","supports-color":"^8.1.1","workerpool":"^9.2.0","yargs":"^17.7.2","yargs-parser":"^21.1.1","yargs-unparser":"^2.0.0"},"devDependencies":{"@11ty/eleventy":"^1.0.0","@11ty/eleventy-plugin-inclusive-language":"^1.0.3","@eslint/js":"^8.56.0","@mocha/docdash":"^4.0.1","@rollup/plugin-alias":"^5.1.1","@rollup/plugin-commonjs":"^21.0.2","@rollup/plugin-json":"^4.1.0","@rollup/plugin-multi-entry":"^4.0.1","@rollup/plugin-node-resolve":"^13.1.3","@types/node":"^22.15.3","@types/yargs":"^17.0.33","@test/esm-only-loader":"./test/compiler-fixtures/esm-only-loader","chai":"^4.3.4","coffeescript":"^2.6.1","cross-env":"^7.0.2","eslint":"^8.56.0","eslint-plugin-n":"^17.15.1","fail-on-errors-webpack-plugin":"^3.0.0","globals":"^13.24.0","http-server":"^14.1.1","installed-check":"^9.3.0","jsdoc":"^3.6.7","jsdoc-ts-utils":"^2.0.1","karma":"^6.4.2","karma-chrome-launcher":"^3.2.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-sauce-launcher":"^4.3.6","knip":"^5.61.3","markdown-it":"^12.3.2","markdown-it-anchor":"^8.4.1","markdown-it-attrs":"^4.1.3","markdown-it-emoji":"^2.0.0","markdown-it-prism":"^2.2.2","markdown-toc":"^1.2.0","markdownlint-cli":"^0.30.0","needle":"^2.5.0","npm-run-all2":"^6.2.0","nyc":"^15.1.0","pidtree":"^0.5.0","prettier":"^2.4.1","remark":"^14.0.2","remark-github":"^11.2.2","remark-inline-links":"^6.0.1","rewiremock":"^3.14.3","rimraf":"^3.0.2","rollup":"^2.70.1","rollup-plugin-node-globals":"^1.4.0","rollup-plugin-polyfill-node":"^0.8.0","rollup-plugin-visualizer":"^5.6.0","semver":"^7.7.2","sinon":"^9.0.3","typescript":"^5.8.3","unexpected":"^11.14.0","unexpected-eventemitter":"^2.2.0","unexpected-map":"^2.0.0","unexpected-set":"^3.0.0","unexpected-sinon":"^10.11.2","uslug":"^1.0.4","webpack":"^5.67.0","webpack-cli":"^4.9.1"},"files":["bin/*mocha*","lib/**/*.{js,html,json}","index.js","mocha.css","mocha.js","mocha.js.map","browser-entry.js"],"browser":{"./index.js":"./browser-entry.js","fs":false,"path":false,"supports-color":false,"./lib/nodejs/buffered-worker-pool.js":false,"./lib/nodejs/esm-utils.js":false,"./lib/nodejs/file-unloader.js":false,"./lib/nodejs/parallel-buffered-runner.js":false,"./lib/nodejs/serializer.js":false,"./lib/nodejs/worker.js":false,"./lib/nodejs/reporters/parallel-buffered.js":false,"./lib/cli/index.js":false},"prettier":{"arrowParens":"avoid","bracketSpacing":false,"endOfLine":"auto","singleQuote":true,"trailingComma":"none"},"overrides":{"@types/eslint":"^9.6.1","@types/estree":"^1.0.7","webdriverio":"^7.33.0"}}');
 
-/***/ })
+/***/ },
+
+/***/ "node:events"
+/*!*******************!*\
+  !*** node:events ***!
+  \*******************/
+() {
+
+throw new Error("Module build failed: UnhandledSchemeError: Reading from \"node:events\" is not handled by plugins (Unhandled scheme).\nWebpack supports \"data:\" and \"file:\" URIs by default.\nYou may need an additional plugin to handle \"node:\" URIs.\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1064:13\n    at Hook.eval [as callAsync] (eval at create (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:6:1)\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1058:10\n    at new Promise (<anonymous>)\n    at readResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1055:14)\n    at Object.processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1077:28)\n    at processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:273:11)\n    at iteratePitchingLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:293:10)\n    at runLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:497:2)\n    at NormalModule._doBuild (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1040:3)");
+
+/***/ },
+
+/***/ "node:fs"
+/*!***************!*\
+  !*** node:fs ***!
+  \***************/
+() {
+
+throw new Error("Module build failed: UnhandledSchemeError: Reading from \"node:fs\" is not handled by plugins (Unhandled scheme).\nWebpack supports \"data:\" and \"file:\" URIs by default.\nYou may need an additional plugin to handle \"node:\" URIs.\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1064:13\n    at Hook.eval [as callAsync] (eval at create (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:6:1)\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1058:10\n    at new Promise (<anonymous>)\n    at readResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1055:14)\n    at Object.processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1077:28)\n    at processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:273:11)\n    at iteratePitchingLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:293:10)\n    at runLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:497:2)\n    at NormalModule._doBuild (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1040:3)");
+
+/***/ },
+
+/***/ "node:path"
+/*!*****************!*\
+  !*** node:path ***!
+  \*****************/
+() {
+
+throw new Error("Module build failed: UnhandledSchemeError: Reading from \"node:path\" is not handled by plugins (Unhandled scheme).\nWebpack supports \"data:\" and \"file:\" URIs by default.\nYou may need an additional plugin to handle \"node:\" URIs.\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1064:13\n    at Hook.eval [as callAsync] (eval at create (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:6:1)\n    at Hook.CALL_ASYNC_DELEGATE [as _callAsync] (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/tapable/lib/Hook.js:21:14)\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1058:10\n    at new Promise (<anonymous>)\n    at readResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1055:14)\n    at Object.processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1077:28)\n    at processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:273:11)\n    at iteratePitchingLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:293:10)\n    at runLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:497:2)");
+
+/***/ },
+
+/***/ "node:util"
+/*!*****************!*\
+  !*** node:util ***!
+  \*****************/
+() {
+
+throw new Error("Module build failed: UnhandledSchemeError: Reading from \"node:util\" is not handled by plugins (Unhandled scheme).\nWebpack supports \"data:\" and \"file:\" URIs by default.\nYou may need an additional plugin to handle \"node:\" URIs.\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1064:13\n    at Hook.eval [as callAsync] (eval at create (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/tapable/lib/HookCodeFactory.js:31:10), <anonymous>:6:1)\n    at /home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1058:10\n    at new Promise (<anonymous>)\n    at readResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1055:14)\n    at Object.processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1077:28)\n    at processResource (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:273:11)\n    at iteratePitchingLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:293:10)\n    at runLoaders (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/loader-runner/lib/LoaderRunner.js:497:2)\n    at NormalModule._doBuild (/home/kolz/data/node-repo/webhandle-proxied-object-http-client/node_modules/webpack/lib/NormalModule.js:1040:3)");
+
+/***/ }
 
 /******/ });
 /************************************************************************/
@@ -37552,6 +33631,12 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"mocha","version":"9.2.2","typ
 /******/ 	};
 /******/ 
 /******/ 	// Execute the module function
+/******/ 	if (!(moduleId in __webpack_modules__)) {
+/******/ 		delete __webpack_module_cache__[moduleId];
+/******/ 		var e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 		e.code = 'MODULE_NOT_FOUND';
+/******/ 		throw e;
+/******/ 	}
 /******/ 	__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 
 /******/ 	// Flag the module as loaded
@@ -37613,7 +33698,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"mocha","version":"9.2.2","typ
 /******/ 
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 /*!*****************************!*\
   !*** ./client-js/pages.mjs ***!

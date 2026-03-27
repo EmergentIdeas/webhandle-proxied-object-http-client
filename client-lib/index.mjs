@@ -106,7 +106,16 @@ export class ServiceWrapperProxy {
 				error.response = response
 				throw error
 			}
-			let data = await response.json()
+			if(response.headers.get('content-type').includes('application/json')) {
+				try {
+					let data = await response.json()
+					return data
+				}
+				catch(e) {
+					return undefined
+				}
+			}
+			let data = await response.arrayBuffer()
 			return data
 		}
 	}

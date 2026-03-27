@@ -1,6 +1,6 @@
 {
 	"name": "@webhandle/proxied-object-http-client",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "",
 	"main": "server-lib/service-server.mjs",
 	"browser": "client-lib/index.mjs",

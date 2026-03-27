@@ -90,6 +90,8 @@ export default function addTests() {
 				console.log('caught in test. check that server is running.')
 				throw (e)
 			}
+			let data = await service.noReturn()
+			assert(data === undefined)
 		})
 
 		it("proxy unknown functions on a different url", async function () {

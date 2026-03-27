@@ -43,6 +43,9 @@ export default function (app) {
 			obj.id = id
 			return obj
 		}
+		, noReturn() {
+
+		}
 	}
 
 	let server = new ServiceServer(service, {
