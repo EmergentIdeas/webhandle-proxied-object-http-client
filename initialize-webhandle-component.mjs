@@ -17,12 +17,12 @@ initializeWebhandleComponent.setup = async function(webhandle, config) {
 	let manager = new ComponentManager()
 	manager.config = config
 	
-	webhandle.routers.preDynamic.use((req, res, next) => {
-		if(config.alwaysProvideResources || !initializeWebhandleComponent.supportsMultipleImportMaps(req)) {
+	if(config.alwaysProvideResources) {
+		webhandle.routers.preDynamic.use((req, res, next) => {
 			manager.addExternalResources(res.locals.externalResourceManager)
-		}
-		next()
-	})
+			next()
+		})
+	}
 	
 	manager.addExternalResources = (externalResourceManager, options) => {
 		externalResourceManager.provideResource({
@@ -33,6 +33,16 @@ initializeWebhandleComponent.setup = async function(webhandle, config) {
 		})
 	}
 
+	webhandle.addTemplate(initializeWebhandleComponent.componentName + '/addExternalResources', (data) => {
+		let externalResourceManager = initializeWebhandleComponent.getExternalResourceManager(data)
+		manager.addExternalResources(externalResourceManager)
+	})
+
+	webhandle.addTemplate(initializeWebhandleComponent.componentName + '/renderExternalResources', (data) => {
+		let externalResourceManager = initializeWebhandleComponent.getExternalResourceManager(data)
+		manager.addExternalResources(externalResourceManager)
+		return externalResourceManager.render()
+	})
 
 	// Allow access to the component and style code
 	let filePath = path.join(initializeWebhandleComponent.componentDir, initializeWebhandleComponent.staticFilePath)
